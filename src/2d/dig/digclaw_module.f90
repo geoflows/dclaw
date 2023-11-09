@@ -449,58 +449,58 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          do j=2-mbc,my+mbc-1
 
 
-            h = q(i,j,1)
-            hu = q(i,j,2)
-            hv = q(i,j,3)
+            h = q(1,i,j)
+            hu = q(2,i,j)
+            hv = q(3,i,j)
             if (h<dry_tol) then
-               hu=0.0
-               hv=0.0
+               hu=0.d0
+               hv=0.d0
             endif
-            hm = q(i,j,4)
-            p  = q(i,j,5)
-            b = aux(i,j,1)
+            hm = q(4,i,j)
+            p  = q(5,i,j)
+            b = aux(1,i,j)
             eta = h+b
-            phi = aux(i,j,i_phi)
+            phi = aux(i_phi,i,j)
 
-            hL = q(i-1,j,1)
-            huL= q(i-1,j,2)
-            hvL= q(i-1,j,3)
-            hmL = q(i-1,j,4)
-            pL  = q(i-1,j,5)
-            bL = aux(i-1,j,1)
+            hL = q(1,i-1,j)
+            huL= q(2,i-1,j)
+            hvL= q(3,i-1,j)
+            hmL = q(4,i-1,j)
+            pL  = q(5,i-1,j)
+            bL = aux(1,i-1,j)
             etaL= hL+bL
             if (hL<dry_tol) then
                etaL = min(etaL,eta)
             endif
 
-            hR = q(i+1,j,1)
-            huR= q(i+1,j,2)
-            hvR= q(i+1,j,3)
-            hmR = q(i+1,j,4)
-            pR  = q(i+1,j,5)
-            bR = aux(i+1,j,1)
+            hR = q(1,i+1,j)
+            huR= q(2,i+1,j)
+            hvR= q(3,i+1,j)
+            hmR = q(4,i+1,j)
+            pR  = q(5,i+1,j)
+            bR = aux(1,i+1,j)
             etaR= hR+bR
             if (hR<dry_tol) then
                etaR = min(etaR,eta)
             endif
 
-            hB = q(i,j-1,1)
-            huB= q(i,j-1,2)
-            hvB= q(i,j-1,3)
-            hmB = q(i,j-1,4)
-            pB  = q(i,j-1,5)
-            bB = aux(i,j-1,1)
+            hB = q(1,i,j-1)
+            huB= q(2,i,j-1)
+            hvB= q(3,i,j-1)
+            hmB = q(4,i,j-1)
+            pB  = q(5,i,j-1)
+            bB = aux(1,i,j-1)
             etaB= hB+bB
             if (hB<dry_tol) then
                etaB = min(etaB,eta)
             endif
 
-            hT = q(i,j+1,1)
-            huT= q(i,j+1,2)
-            hvT= q(i,j+1,3)
-            hmT = q(i,j+1,4)
-            pT  = q(i,j+1,5)
-            bT = aux(i,j+1,1)
+            hT = q(1,i,j+1)
+            huT= q(2,i,j+1)
+            hvT= q(3,i,j+1)
+            hmT = q(4,i,j+1)
+            pT  = q(5,i,j+1)
+            bT = aux(1,i,j+1)
             etaT= hT+bT
             if (hT<dry_tol) then
                etaT = min(etaT,eta)
@@ -512,16 +512,16 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             endif
 
             if ((h+hL+hB+hR+hT)<dry_tol) then
-               aux(i,j,i_taudir_x) = 0.0
-               aux(i,j,i_taudir_y) = 0.0
-               aux(i,j,i_fsphi) = 0.0
+               aux(i_taudir_x,i,j) = 0.d0
+               aux(i_taudir_y,i,j) = 0.d0
+               aux(i_fsphi,i,j) = 0.d0
                cycle
             endif
 
             if (bed_normal.eq.1) then
-               theta = aux(i,j,i_theta)
-               thetaL = aux(i-1,j,i_theta)
-               thetaB = aux(i,j-1,i_theta)
+               theta = aux(i_theta,i,j)
+               thetaL = aux(i_theta,i-1,j)
+               thetaB = aux(i_theta,i,j-1)
                gmod = grav*cos(theta)
             else
                theta = 0.d0
@@ -529,7 +529,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                thetaB = 0.d0
             endif
 
-            pm = 0.5 !does not effect tau. only need tau in different cells
+            pm = 0.50d0 !does not effect tau. only need tau in different cells
             call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
             call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
             call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
@@ -544,33 +544,33 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             call auxeval(hT,uT,vT,mT,pT,phi,theta,kappa,S,rhoT,tanpsi,D,tauT,sigbed,kperm,compress,pm)
 
             !minmod gradients
-            FxC = -gmod*h*(EtaR-EtaL)/(2.0*dx) + gmod*h*sin(theta)
-            FyC = -gmod*h*(EtaT-EtaB)/(2.0*dy)
+            FxC = -gmod*h*(EtaR-EtaL)/(2.d0*dx) + gmod*h*sin(theta)
+            FyC = -gmod*h*(EtaT-EtaB)/(2.d0*dy)
 
-            FxL = -gmod*0.5*(h+hL)*(Eta-EtaL)/(dx) + gmod*0.5*(h+hL)*sin(theta)
-            FyL = -gmod*0.5*(h+hB)*(Eta-EtaB)/(dy)
+            FxL = -gmod*0.5d0*(h+hL)*(Eta-EtaL)/(dx) + gmod*0.5d0*(h+hL)*sin(theta)
+            FyL = -gmod*0.5d0*(h+hB)*(Eta-EtaB)/(dy)
 
-            FxR = -gmod*0.5*(h+hR)*(EtaR-Eta)/(dx) + gmod*0.5*(h+hR)*sin(theta)
-            FyR = -gmod*0.5*(h+hT)*(EtaT-Eta)/(dy)
+            FxR = -gmod*0.5d0*(h+hR)*(EtaR-Eta)/(dx) + gmod*0.5d0*(h+hR)*sin(theta)
+            FyR = -gmod*0.5d0*(h+hT)*(EtaT-Eta)/(dy)
 
-            if (FxL*FxR.gt.0.0) then
-               Fx = dsign(min(abs(FxL),abs(FxR)),FxL)
+            if (FxL*FxR>0.d0) then
+               Fx = sign(min(abs(FxL),abs(FxR)),FxL)
             else
-               Fx = 0.0
+               Fx = 0.d0
             endif
 
-            if (FyL*FyR.gt.0.0) then
-               Fy = dsign(min(abs(FyL),abs(FyR)),FyL)
+            if (FyL*FyR>0.d0) then
+               Fy = sign(min(abs(FyL),abs(FyR)),FyL)
             else
-               Fy = 0.0
+               Fy = 0.d0
             endif
 
             vnorm = sqrt(hu**2 + hv**2)
-            if (vnorm>0.0) then
+            if (vnorm>0.d0) then
                aux(i,j,i_taudir_x) = -hu/sqrt(hv**2+hu**2)
                aux(i,j,i_taudir_y) = -hv/sqrt(hv**2+hu**2)
 
-               dot = min(max(0.0,Fx*hu) , max(0.0,Fy*hv))
+               dot = min(max(0.d0,Fx*hu) , max(0.d0,Fy*hv))
                if (dot>0.0) then
                   !friction should oppose direction of velocity
                   !if net force is in same direction, split friction source term
@@ -578,35 +578,35 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   !only split amount up to maximum net force for large velocities
                   !aux has cell centered interpretation in Riemann solver
                   Fproj = dot/vnorm
-                  aux(i,j,i_fsphi) = min(1.0,Fproj*rho/max(tau,1.d-16))
+                  aux(i_fsphi,i,j) = min(1.d0,Fproj*rho/max(tau,1.d-16))
                else
                   !net force is in same direction as friction
                   !if nearly balanced steady state not due to friction
                   !no splitting, integrate friction in src
-                  aux(i,j,i_fsphi) = 0.0
+                  aux(i_fsphi,i,j) = 0.0
                endif
 
 
             else
                !aux now have cell edge interpretation in Riemann solver
                !friction should oppose net force. resolve in Riemann solver
-               if ((FxL**2+Fy**2)>0.0) then
-                  aux(i,j,i_taudir_x) = -FxL/sqrt(FxL**2+Fy**2)
+               if ((FxL**2+Fy**2)>0.d0) then
+                  aux(i_taudir_x,i,j) = -FxL/sqrt(FxL**2+Fy**2)
                else
-                  aux(i,j,i_taudir_x) = 1.0
+                  aux(i_taudir_x,i,j) = 1.d0
                endif
 
                if ((Fx**2+FyL**2)>0.0) then
-                  aux(i,j,i_taudir_y) = -FyL/sqrt(Fx**2+FyL**2)
+                  aux(i_taudir_y,i,j) = -FyL/sqrt(Fx**2+FyL**2)
                else
                   !there is no motion or net force. resolve in src after Riemann
-                  aux(i,j,i_taudir_y) = 1.0
+                  aux(i_taudir_y,i,j) = 1.d0
                endif
 
                if ((aux(i,j,i_taudir_y)**2 + aux(i,j,i_taudir_x)**2)>0.0) then
-                  aux(i,j,i_fsphi) = 1.0
+                  aux(i_fsphi,i,j) = 1.d0
                else
-                  aux(i,j,i_fsphi) = 0.0
+                  aux(i_fsphi,i,j) = 0.d0
                endif
             endif
 
