@@ -24,7 +24,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     use amr_module, only: yhidomain => yupper
     use amr_module, only: xperdom,yperdom,spheredom,NEEDS_TO_BE_SET
 
-    use storm_module, only: set_storm_fields
+    use digclaw_module, only: i_theta,bed_normal
 
     implicit none
 
@@ -38,17 +38,21 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
 
     ! Local storage
     integer :: index,i,j,k,dummy
-    real(kind=8) :: h,u,v
+    real(kind=8) :: h,u,v,sv,theta
 
     ! Check for NaNs in the solution
     call check4nans(meqn,mbc,mx,my,q,t,1)
 
     ! check for h < 0 and reset to zero
     ! check for h < drytolerance
-    ! set hu = hv = 0 in all these cells
-    forall(i=1-mbc:mx+mbc, j=1-mbc:my+mbc,q(1,i,j) < dry_tolerance)
-        q(1,i,j) = max(q(1,i,j),0.d0)
-        q(2:3,i,j) = 0.d0
+    ! set other variables appropriately for these cells
+    forall(i=1-mbc:mx+mbc, j=1-mbc:my+mbc)
+        theta = 0.d0
+        if (bed_normal.eq.1) theta=aux(i_theta,i,j)
+        call admissibleq(q(i,j,1),q(i,j,2),q(i,j,3),q(i,j,4),q(i,j,5),u,v,sv,theta)
+        q(i,j,6) = min(q(i,j,6),q(i,j,1))
+        q(i,j,6) = max(q(i,j,6),0.0)
+        q(i,j,7) = max(q(i,j,7),0.0)
     end forall
 
 
@@ -59,7 +63,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
         call setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux)
     endif
 
-    ! Set wind and pressure aux variables for this grid
-    call set_storm_fields(maux,mbc,mx,my,xlower,ylower,dx,dy,t,aux)
+    ! find factor of safety ratios
+      call calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
 end subroutine b4step2
