@@ -18,9 +18,10 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
     use amr_module, only: yperdom, spheredom, xupper, yupper, alloc
     use amr_module, only: outunit, NEEDS_TO_BE_SET
     use amr_module, only: newstl, iregsz, jregsz
+    use digclaw_module, only: m0,rho_f
 
     use topo_module, only: aux_finalized
-    use geoclaw_module, only: dry_tolerance, sea_level
+    use geoclaw_module, only: dry_tolerance, sea_level, grav
     use refinement_module, only: varRefTime
     use qinit_module, only: variable_eta_init
     use qinit_module, only: force_dry,use_force_dry,mx_fdry, my_fdry
@@ -46,7 +47,7 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
     real(kind=8) :: coarseval(3), dx_coarse, dy_coarse, xl, xr, yb, yt, area
     real(kind=8) :: dividemass, finemass, hvf, s1m, s1p, slopex, slopey, vel
     real(kind=8) :: velmax, velmin, vf, vnew, xoff, yoff
-    logical :: fineflag(3)
+    logical :: fineflag(nvar)
     real(kind=8) :: fliparray((mitot+mjtot)*(nvar+naux))
     real(kind=8) :: aux2(naux,mitot,mjtot)
     integer :: nx, ny
@@ -186,6 +187,9 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
         do i=2, mic-1
             fineflag(1) = .false.
             ! interpolate eta to find depth
+            
+            !!DIG: orig sets etalevel based on max over surrounding cells
+
             do ii=-1,1
                 coarseval(2+ii) = valc(1,i+ii,j)  + auxc(1,i+ii,j)
                 if (valc(1,i+ii,j)  <= dry_tolerance) then
@@ -251,8 +255,9 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
                        finemass = finemass + val(1,ifine,jfine)
                        if (val(1,ifine,jfine) <= dry_tolerance) then
                           fineflag(1) = .true.
-                          val(2,ifine,jfine) = 0.d0
-                          val(3,ifine,jfine) = 0.d0
+                          do ivar=2,nvar
+                              val(ivar,ifine,jfine) = 0.d0
+                          enddo
                        endif
                        
                     endif ! NEEDS_TO_BE_SET
@@ -284,6 +289,16 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
                     else
                         velmax = 0.d0
                         velmin = 0.d0
+                        !!DIG: verify that these are correct...
+                        if (ivar == 4) then
+                            ! solid volume fraction
+                            velmax = m0
+                            velmin = m0
+                         elseif (ivar == 5) then
+                            ! pore pressure
+                            velmax = rho_f*grav
+                            velmin = rho_f*grav
+                         endif
                     endif
                
                     do ii = -1,1,2
@@ -327,8 +342,11 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
                         area = real(refinement_ratio_x * refinement_ratio_y,kind=8)
                         dividemass = max(finemass,valc(1,i,j))
                         Vnew = area * valc(ivar,i,j) / (dividemass)
-
-                            do jco = 1,refinement_ratio_y
+                        if (ivar > 3) then
+                            Vnew = max(velmin,Vnew)
+                            Vnew = min(velmax,Vnew)
+                        endif
+                        do jco = 1,refinement_ratio_y
                             do ico = 1,refinement_ratio_x
                                 jfine = (j-2) * refinement_ratio_y + nghost + jco
                                 ifine = (i-2) * refinement_ratio_x + nghost + ico
