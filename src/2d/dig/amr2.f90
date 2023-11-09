@@ -502,6 +502,7 @@ program amr2
         call read_adjoint_data()          ! Read adjoint solution
         call set_dig()
         call set_pinit()
+        call set_qinit_dig()
 
     else
 
@@ -542,6 +543,7 @@ program amr2
         call read_adjoint_data()          ! Read adjoint solution
         call set_dig()
         call set_pinit()
+        call set_qinit_dig()
 
         cflmax = 0.d0   ! otherwise use previously heckpointed val
 
