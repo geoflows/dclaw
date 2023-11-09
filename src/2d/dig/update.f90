@@ -28,8 +28,9 @@ subroutine update (level, nvar, naux)
     integer :: mi, mj, locf, locfaux, iplo, jplo, iphi, jphi
     integer :: iff, jff, nwet, ico, jco, i, j, ivar, loccaux
     integer :: listgrids(numgrids(level)), lget
-    real(kind=8) :: dt, totrat, bc, etasum, hsum, husum, hvsum
-    real(kind=8) :: hf, bf, huf, hvf, etaf, hav, hc, huc, hvc, capa, etaav
+    real(kind=8) :: dt, totrat, bc, etasum, hsum
+    real(kind=8) :: husum(nvar), huc(nvar), huf(nvar)
+    real(kind=8) :: hf, bf, etaf, hav, hc, capa, etaav
     real(kind=8) :: capac
     character(len=80) :: String
 
@@ -120,8 +121,11 @@ subroutine update (level, nvar, naux)
 
                         etasum = 0.d0
                         hsum = 0.d0
-                        husum = 0.d0
-                        hvsum = 0.d0
+                        !husum = 0.d0
+                        !hvsum = 0.d0
+                        do ivar=2,ivar
+                            husum(ivar) = 0.d0
+                        enddo
 
                         nwet = 0
 
@@ -135,21 +139,20 @@ subroutine update (level, nvar, naux)
 
                                 hf = alloc(iaddf(1,iff+ico-1,jff+jco-1,locf,mi))*capa 
                                 bf = alloc(iaddftopo(iff+ico-1,jff+jco-1,locfaux,mi))*capa
-                                huf= alloc(iaddf(2,iff+ico-1,jff+jco-1,locf,mi))*capa 
-                                hvf= alloc(iaddf(3,iff+ico-1,jff+jco-1,locf,mi))*capa 
+                                do ivar=2,nvar
+                                    huf(ivar) = alloc(iaddf(ivar, &
+                                                    iff+ico-1,jff+jco-1,locf,mi))*capa 
 
                                 if (alloc(iaddf(1,iff+ico-1,jff+jco-1,locf,mi)) > dry_tolerance) then
                                     etaf = hf + bf
                                     nwet = nwet + 1
                                 else
                                     etaf = 0.d0
-                                    huf=0.d0
-                                    hvf=0.d0
+                                    huf=0.d0  !DIG array
                                 endif
 
                                 hsum   = hsum + hf
-                                husum  = husum + huf
-                                hvsum  = hvsum + hvf
+                                husum  = husum + huf  !DIG arrays
                                 etasum = etasum + etaf     
                             enddo
                         enddo
@@ -158,17 +161,16 @@ subroutine update (level, nvar, naux)
                             etaav = etasum/dble(nwet)
                             hav = hsum/dble(nwet)
                             hc = min(hav, (max(etaav-bc*capac, 0.0d0)))
-                            huc = (min(hav, hc) / hsum) * husum
-                            hvc = (min(hav, hc) / hsum) * hvsum
+                            huc(2:nvar) = (min(hav, hc) / hsum) * husum(2:nvar)
                         else
                             hc = 0.0d0
-                            huc = 0.0d0
-                            hvc = 0.0d0
+                            huc = 0.0d0  !DIG array
                         endif
 
                         alloc(iadd(1,i,j,loc,mitot)) = hc / capac 
-                        alloc(iadd(2,i,j,loc,mitot)) = huc / capac 
-                        alloc(iadd(3,i,j,loc,mitot)) = hvc / capac 
+                        do ivar=2,nvar
+                            alloc(iadd(ivar,i,j,loc,mitot)) = huc(ivar) / capac
+                        enddo 
 
                         if (uprint) then
                             String = "(' new vals: ',4e25.15)"
