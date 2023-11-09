@@ -1,15 +1,3 @@
-! ============================================================================
-!  Program:     digclaw_mod
-!  File:        geoclaw_mod.f90
-!  Created:     2012-04-10
-!  Author:      David George
-! ============================================================================
-!      Copyright (C)  2012-04-10 David George <dgeorge@uw.edu>
-!
-!  Distributed under the terms of the Berkeley Software Distribution (BSD)
-!  license
-!                     http://www.opensource.org/licenses/
-! ============================================================================
 
 module digclaw_module
 
@@ -357,7 +345,7 @@ contains
       else
          D = 0.d0
       endif
-      
+
       tanphi = dtan(phi_bed + datan(tanpsi))! + phi_seg_coeff*pmtanh01*dtan(phi_bed)
       !if (S.gt.0.0) then
       !   tanphi = tanphi + 0.38*mu*shear/(shear + 0.005*sigbedc)
@@ -459,7 +447,7 @@ subroutine calc_taudir(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
 
       do i=2-mbc,mx+mbc-1
          do j=2-mbc,my+mbc-1
-            
+
 
             h = q(i,j,1)
             hu = q(i,j,2)
@@ -554,7 +542,7 @@ subroutine calc_taudir(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
             call auxeval(hR,uR,vR,mR,pR,phi,theta,kappa,S,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pm)
             call auxeval(hB,uB,vB,mB,pB,phi,theta,kappa,S,rhoB,tanpsi,D,tauB,sigbed,kperm,compress,pm)
             call auxeval(hT,uT,vT,mT,pT,phi,theta,kappa,S,rhoT,tanpsi,D,tauT,sigbed,kperm,compress,pm)
-            
+
             !minmod gradients
             FxC = -gmod*h*(EtaR-EtaL)/(2.0*dx) + gmod*h*sin(theta)
             FyC = -gmod*h*(EtaT-EtaB)/(2.0*dy)
@@ -576,12 +564,12 @@ subroutine calc_taudir(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
             else
                Fy = 0.0
             endif
-            
+
             vnorm = sqrt(hu**2 + hv**2)
             if (vnorm>0.0) then
                aux(i,j,i_taudir_x) = -hu/sqrt(hv**2+hu**2)
-               aux(i,j,i_taudir_y) = -hv/sqrt(hv**2+hu**2) 
-               
+               aux(i,j,i_taudir_y) = -hv/sqrt(hv**2+hu**2)
+
                dot = min(max(0.0,Fx*hu) , max(0.0,Fy*hv))
                if (dot>0.0) then
                   !friction should oppose direction of velocity
@@ -597,9 +585,9 @@ subroutine calc_taudir(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
                   !no splitting, integrate friction in src
                   aux(i,j,i_fsphi) = 0.0
                endif
-               
 
-            else 
+
+            else
                !aux now have cell edge interpretation in Riemann solver
                !friction should oppose net force. resolve in Riemann solver
                if ((FxL**2+Fy**2)>0.0) then
@@ -609,9 +597,9 @@ subroutine calc_taudir(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
                endif
 
                if ((Fx**2+FyL**2)>0.0) then
-                  aux(i,j,i_taudir_y) = -FyL/sqrt(Fx**2+FyL**2) 
+                  aux(i,j,i_taudir_y) = -FyL/sqrt(Fx**2+FyL**2)
                else
-                  !there is no motion or net force. resolve in src after Riemann 
+                  !there is no motion or net force. resolve in src after Riemann
                   aux(i,j,i_taudir_y) = 1.0
                endif
 
@@ -619,8 +607,8 @@ subroutine calc_taudir(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux
                   aux(i,j,i_fsphi) = 1.0
                else
                   aux(i,j,i_fsphi) = 0.0
-               endif               
-            endif 
+               endif
+            endif
 
          enddo
       enddo
@@ -911,7 +899,7 @@ subroutine calc_pmtanh(pm,seg,pmtanh)
       double precision, intent(out) :: pmtanh
 
       !Locals
-      
+
 
       pmtanh = seg*(0.5*(tanh(40.0*(pm-0.90))+1.0))
       !pmtanh = 0.8*seg*(0.5*(tanh(40.0*(pm-0.98))+1.0))
