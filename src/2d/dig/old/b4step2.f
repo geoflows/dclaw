@@ -59,7 +59,7 @@ c      write(26,*) 'B4STEP2: t, num_dtopo: ', t,num_dtopo
       enddo
 
 c======find factor of safety ratios===================================
-      call calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,
+      call calc_taudir(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,
      &                     q,maux,aux)
 c      call calc_tausplit(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,
 c     &                     q,maux,aux)
