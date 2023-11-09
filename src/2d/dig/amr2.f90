@@ -94,10 +94,10 @@ program amr2
 
 
     ! Data modules
-    use geoclaw_module, only: set_geo, set_flow_grades
+    use geoclaw_module, only: set_geo
     use topo_module, only: read_topo_settings, read_dtopo_settings
     use qinit_module, only: set_qinit
-    use refinement_module, only: set_refinement
+    use refinement_module, only: set_refinement, set_flow_grades
     use storm_module, only: set_storm
     use friction_module, only: setup_variable_friction
     use gauges_module, only: set_gauges, num_gauges
@@ -503,6 +503,7 @@ program amr2
         call set_dig()
         call set_pinit()
         call set_qinit_dig()
+        call set_flow_grades()
 
     else
 
@@ -544,6 +545,7 @@ program amr2
         call set_dig()
         call set_pinit()
         call set_qinit_dig()
+        call set_flow_grades()
 
         cflmax = 0.d0   ! otherwise use previously heckpointed val
 
