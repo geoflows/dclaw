@@ -410,15 +410,15 @@ contains
    !  outputs direction cosines at each interface
    ! ========================================================================
 
-subroutine calc_taudir(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       implicit none
 
       !Input
       double precision :: dx,dy,xlower,ylower
-      double precision :: q(1-mbc:maxmx+mbc, 1-mbc:maxmy+mbc, meqn)
-      double precision :: aux(1-mbc:maxmx+mbc,1-mbc:maxmy+mbc,maux)
-      integer :: maxmx,maxmy,mx,my,mbc,meqn,maux
+      double precision :: q(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
+      double precision :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+      integer :: mx,my,mbc,meqn,maux
 
       !Locals
       double precision :: gmod,dry_tol
