@@ -19,6 +19,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
     use amr_module, only: xperdom, yperdom, spheredom, hxposs, hyposs
     use amr_module, only: intratx, intraty, iregsz, jregsz
     use amr_module, only: NEEDS_TO_BE_SET
+    use dig_module, only: m0, rho_f
 
     use geoclaw_module, only: sea_level, dry_tolerance
     use topo_module, only: topo_finalized
@@ -272,6 +273,8 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
                 endif
             enddo
         enddo
+        
+        !!DIG: Something left out here that sets valcrse for sea level changes
 
         ! Calculate limited gradients of coarse grid eta
         do j_coarse = 2, my_coarse - 1
@@ -396,6 +399,17 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
                     else
                         vel_min(i_coarse,j_coarse) = 0.d0
                         vel_max(i_coarse,j_coarse) = 0.d0
+                        
+                        !!DIG: verify that these are correct...
+                        if (ivar == 4) then
+                            ! solid volume fraction
+                            vel_max(i_coarse,j_coarse) = m0
+                            vel_min(i_coarse,j_coarse) = m0
+                         elseif (ivar == 5) then
+                            ! pore pressure
+                            vel_max(i_coarse,j_coarse) = rho_f*grav
+                            vel_min(i_coarse,j_coarse) = rho_f*grav
+                         endif
                     endif
 
                     ! Look for bounds on velocity around each cell
@@ -482,7 +496,11 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
                                     divide_mass = max(h_coarse, h_fine_average)
                                     h_fine = valbig(1, i_fine + nrowst - 1, j_fine + ncolst - 1)
                                     v_new = valcrse(ivalc(n,i_coarse,j_coarse)) / (divide_mass)
-
+                                    if (ivar > 3) then
+                                        !!DIG change
+                                        v_new = max(vel_min(i_coarse,j_coarse), v_new)
+                                        v_new = min(vel_max(i_coarse,j_coarse), v_new)
+                                    endif
                                     valbig(n,i_fine+nrowst-1,j_fine+ncolst-1) = &
                                         v_new * valbig(1,i_fine+nrowst-1,j_fine+ncolst-1)
                                 else
