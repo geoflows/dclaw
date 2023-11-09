@@ -131,7 +131,6 @@ COMMON_SOURCES += \
   $(GEOLIB)/step2.f90 \
   $(GEOLIB)/flux2fw.f \
   $(GEOLIB)/qad.f \
-  $(GEOLIB)/valout.f90 \
   $(GEOLIB)/bc2amr.f90 \
   $(GEOLIB)/setaux.f90 \
   $(GEOLIB)/flag2refine2.f90  \
@@ -164,6 +163,7 @@ COMMON_SOURCES += \
   $(DIGLIB)/filval.f90 \
   $(DIGLIB)/filpatch.f90 \
   $(DIGLIB)/update.f90 \
+  $(GEOLIB)/valout.f90 \
   $(DIGLIB)/riemannsolvers_dclaw.f \
   $(DIGLIB)/rpn2_dclaw.f \
   $(DIGLIB)/rpt2_dclaw.f \
