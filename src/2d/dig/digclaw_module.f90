@@ -645,41 +645,41 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       dry_tol = drytolerance
       gmod = grav
-      rho = m0*rho_s + (1.0-m0)*rho_f
+      rho = m0*rho_s + (1.d0-m0)*rho_f
 
       do i=2-mbc,mx+mbc-1
          do j=2-mbc,my+mbc-1
 
-            h = q(1,i,j,1)
-            hL = q(1,i-1,j,1)
-            hR = q(1,i+1,j,1)
+            h = q(1,i,j)
+            hL = q(1,i-1,j)
+            hR = q(1,i+1,j)
             if (h<dry_tol) then
-               aux(i,j,i_fsphi) = 1.0
+               aux(i_fsphi,i,j) = 1.d0
                cycle
             endif
 
-            hu = q(i,j,2)
-            hv = q(i,j,3)
-            hm = q(i,j,4)
-            p  = q(i,j,5)
+            hu = q(2,i,j)
+            hv = q(3,i,j)
+            hm = q(4,i,j)
+            p  = q(5,i,j)
 
-            if ((hu**2 + hv**2)==0.0) then
-               aux(i,j,i_fsphi) = 1.0
+            if ((hu**2 + hv**2)==0.d0) then
+               aux(i_fsphi,i,j) = 1.0
                !cycle
             endif
 
-            b = aux(i,j,1)
-            bR = aux(i+1,j,1)
-            bL = aux(i-1,j,1)
-            phi = aux(i,j,i_phi)
+            b = aux(1,i,j,1)
+            bR = aux(2,i+1,j,1)
+            bL = aux(3,i-1,j,1)
+            phi = aux(i_phi,i,j)
 
-            hT = q(i,j+1,1)
-            bT = aux(i,j+1,1)
-            hB = q(i,j-1,1)
-            bB = aux(i,j-1,1)
+            hT = q(1,i,j+1)
+            bT = aux(1,i,j+1)
+            hB = q(1,i,j-1)
+            bB = aux(1,i,j-1)
 
             if (bed_normal.eq.1) then
-               theta = aux(i,j,i_theta)
+               theta = aux(i_theta,i,j)
                gmod = grav*cos(theta)
             else
                theta = 0.d0
@@ -697,8 +697,8 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             endif
             detadxR = (EtaR-Eta)/dx -tan(theta)
             detadxL = (Eta-EtaL)/dx -tan(theta)
-            if (detadxR*detadxL<=0.0) then
-               detadx = 0.0
+            if (detadxR*detadxL<=0.d0) then
+               detadx = 0.d0
             elseif (abs(detadxR)>abs(detadxL)) then
                detadx = detadxL
             else
@@ -717,8 +717,8 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             endif
             detadyT = (EtaT-Eta)/dy
             detadyB = (Eta-EtaB)/dy
-            if (detadyT*detadyB<=0.0) then
-               detady = 0.0
+            if (detadyT*detadyB<=0.d0) then
+               detady = 0.d0
             elseif (abs(detadyT)>abs(detadyB)) then
                detady = detadyB
             else
@@ -728,13 +728,13 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             grad_eta = sqrt(detadx**2 + detady**2)
 
             call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            pm = q(i,j,6)/q(i,j,1)
+            pm = q(6,i,j)/q(1,i,j)
             call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
 
             if (tau>0.0) then
-               aux(i,j,i_fsphi) = min(1.0,grad_eta*rho*gmod*h/tau)
+               aux(i_fsphi,i,j) = min(1.d0,grad_eta*rho*gmod*h/tau)
             else
-               aux(i,j,i_fsphi) = 1.0
+               aux(i_fsphi,i,j) = 1.d0
             endif
          enddo
       enddo
@@ -748,16 +748,16 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
    !  Determines factor of safety and cohesion for static states
    ! ========================================================================
 
-subroutine calc_pmin(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
 
       implicit none
 
       !Input
       double precision :: dx,dy,xlower,ylower
-      double precision :: q(1-mbc:maxmx+mbc, 1-mbc:maxmy+mbc, meqn)
-      double precision :: aux(1-mbc:maxmx+mbc,1-mbc:maxmy+mbc,maux)
-      integer :: maxmx,maxmy,mx,my,mbc,meqn,maux
+      double precision :: q(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
+      double precision :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+      integer :: mx,my,mbc,meqn,maux
 
       !Locals
       double precision :: h,hL,hR,hu,hv,b,bL,bR,bT,bB,hT,hB
@@ -772,45 +772,45 @@ subroutine calc_pmin(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       dry_tol = drytolerance
       gmod = grav
-      rho = m0*rho_s + (1.0-m0)*rho_f
+      rho = m0*rho_s + (1.d0-m0)*rho_f
 
       do i=1,mx
          do j=1,my
 
-            h = q(i,j,1)
-            hL = q(i-1,j,1)
-            hR = q(i+1,j,1)
+            h = q(1,i,j)
+            hL = q(1,i-1,j)
+            hR = q(1,i+1,j)
             if (h<dry_tol) then
-               aux(i,j,i_fs) = 10.0
+               aux(i_fs,i,j) = 10.d0
                cycle
             endif
 
-            hu = q(i,j,2)
-            hv = q(i,j,3)
+            hu = q(2,i,j)
+            hv = q(3,i,j)
 
-            if ((hu**2+hv**2)>0.0) then
-               aux(i,j,i_fs) = 0.0
+            if ((hu**2+hv**2)>0.d0) then
+               aux(i_fs,i,j) = 0.d0
                cycle
             endif
 
-            b = aux(i,j,1)
-            bR = aux(i+1,j,1)
-            bL = aux(i-1,j,1)
-            phi = aux(i,j,i_phi)
+            b = aux(1,i,j)
+            bR = aux(1,i+1,j)
+            bL = aux(1,i-1,j)
+            phi = aux(i_phi,i,j)
 
             if ((phi)==0.0) then
-               aux(i,j,i_fs) = 0.0
-               init_pmin_ratio = 0.0
+               aux(i_fs,i,j) = 0.d0
+               init_pmin_ratio = 0.d0
                cycle
             endif
 
-            hT = q(i,j+1,1)
-            bT = aux(i,j+1,1)
-            hB = q(i,j-1,1)
-            bB = aux(i,j-1,1)
+            hT = q(1,i,j+1)
+            bT = aux(1,i,j+1)
+            hB = q(1,i,j-1)
+            bB = aux(1,i,j-1)
 
             if (bed_normal.eq.1) then
-               theta = aux(i,j,i_theta)
+               theta = aux(i_theta,i,j)
                gmod = grav*cos(theta)
             else
                theta = 0.d0
@@ -828,8 +828,8 @@ subroutine calc_pmin(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             endif
             detadxR = (EtaR-Eta)/dx -tan(theta)
             detadxL = (Eta-EtaL)/dx -tan(theta)
-            if (detadxR*detadxL<=0.0) then
-               detadx = 0.0
+            if (detadxR*detadxL<=0.d0) then
+               detadx = 0.d0
             elseif (abs(detadxR)>abs(detadxL)) then
                detadx = detadxL
             else
@@ -848,8 +848,8 @@ subroutine calc_pmin(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             endif
             detadyT = (EtaT-Eta)/dy
             detadyB = (Eta-EtaB)/dy
-            if (detadyT*detadyB<=0.0) then
-               detady = 0.0
+            if (detadyT*detadyB<=0.d0) then
+               detady = 0.d0
             elseif (abs(detadyT)>abs(detadyB)) then
                detady = detadyB
             else
@@ -858,22 +858,22 @@ subroutine calc_pmin(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             grad_eta = sqrt(detadx**2 + detady**2)
             grad_eta_ave = grad_eta_ave + grad_eta/tan(phi)
-            eta_cell_count = eta_cell_count + 1.0
+            eta_cell_count = eta_cell_count + 1.d0
 
             grad_eta_max = max(grad_eta_max,grad_eta/tan(phi))
 
-            init_pmin_ratio = min(init_pmin_ratio, 1.0-grad_eta/tan(phi))
+            init_pmin_ratio = min(init_pmin_ratio, 1.d0-grad_eta/tan(phi))
 
-            if (grad_eta>0.0) then
+            if (grad_eta>0.d0) then
                aux(i,j,i_fs) = tan(phi)/grad_eta
             else
-               aux(i,j,i_fs) = 10.0
+               aux(i,j,i_fs) = 10.d0
             endif
          enddo
       enddo
 
       if (init_ptype==2.or.init_ptype==4) then
-         init_pmin_ratio = 1.0-(grad_eta_ave/eta_cell_count)
+         init_pmin_ratio = 1.d0-(grad_eta_ave/eta_cell_count)
       endif
       if (init_ptype>0) then
          write(*,*) '--------------------------------------------'
@@ -901,8 +901,8 @@ subroutine calc_pmtanh(pm,seg,pmtanh)
       !Locals
 
 
-      pmtanh = seg*(0.5*(tanh(40.0*(pm-0.90))+1.0))
-      !pmtanh = 0.8*seg*(0.5*(tanh(40.0*(pm-0.98))+1.0))
+      pmtanh = seg*(0.5d0*(tanh(40.d0*(pm-0.9d0))+1.d0))
+      !pmtanh = 0.8d0*seg*(0.5d0*(tanh(40.d0*(pm-0.98d0))+1.d0))
 
       return
 
