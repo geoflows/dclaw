@@ -189,7 +189,7 @@ contains
       double precision :: mlo,mhi,hlo,pmax,phi,plo,rho,dry_tol,m_min,gmod
 
       gmod = grav
-      dry_tol = drytolerance
+      dry_tol = dry_tolerance
       if (bed_normal.eq.1) gmod = grav*dcos(theta)
 
       if (h.le.dry_tol) then
@@ -260,7 +260,7 @@ contains
       double precision :: m_eqn,vnorm,gmod,sigbedc,hbounded,shear,tanphi,rho_fp
       double precision :: seg,pmtanh01,m_crit_m,m_crit_pm
 
-      if (h.lt.drytolerance) return
+      if (h.lt.dry_tolerance) return
 
       hbounded = h!max(h,0.1)
       gmod=grav
@@ -385,7 +385,7 @@ contains
       !local
       double precision :: taushear,drytol,vnorm
 
-      drytol = drytolerance
+      drytol = dry_tolerance
 
       taushear = (tau/rho)*dsign(1.d0,u)
       vnorm = dabs(u)
@@ -441,7 +441,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       integer :: i,j
 
-      dry_tol = drytolerance
+      dry_tol = dry_tolerance
       gmod = grav
 
 
@@ -643,7 +643,7 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       integer :: i,j
 
-      dry_tol = drytolerance
+      dry_tol = dry_tolerance
       gmod = grav
       rho = m0*rho_s + (1.d0-m0)*rho_f
 
@@ -668,9 +668,9 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                !cycle
             endif
 
-            b = aux(1,i,j,1)
-            bR = aux(2,i+1,j,1)
-            bL = aux(3,i-1,j,1)
+            b = aux(1,i,j)
+            bR = aux(1,i+1,j)
+            bL = aux(1,i-1,j)
             phi = aux(i_phi,i,j)
 
             hT = q(1,i,j+1)
@@ -770,7 +770,7 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       integer :: i,j
 
-      dry_tol = drytolerance
+      dry_tol = dry_tolerance
       gmod = grav
       rho = m0*rho_s + (1.d0-m0)*rho_f
 

@@ -43,7 +43,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     use adjoint_module, only : adjoint_flagging,innerprod_index
     
     use auxinit_module ! DIG: should specify which variables
-    use dig_module, only: i_dig,i_phi,i_theta
+    use digclaw_module, only: i_dig,i_phi,i_theta
 
     implicit none
 

@@ -19,7 +19,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
     use amr_module, only: xperdom, yperdom, spheredom, hxposs, hyposs
     use amr_module, only: intratx, intraty, iregsz, jregsz
     use amr_module, only: NEEDS_TO_BE_SET
-    use dig_module, only: m0, rho_f
+    use digclaw_module, only: m0, rho_f
 
     use geoclaw_module, only: sea_level, dry_tolerance
     use topo_module, only: topo_finalized

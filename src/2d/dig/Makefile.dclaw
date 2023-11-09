@@ -29,7 +29,8 @@ COMMON_MODULES += \
 #list of common modules needed for dclaw codes
 COMMON_MODULES += \
  $(DIGLIB)/qinit_module.f90 \
-
+ $(DIGLIB)/auxinit_module.f90 \
+ $(DIGLIB)/digclaw_module.f90 \
 
 
 # list of source files from AMR library. 
