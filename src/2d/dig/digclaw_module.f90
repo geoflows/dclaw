@@ -621,16 +621,16 @@ end subroutine calc_taudir
    !  Determines splitting of tau for rp vs. src.
    ! ========================================================================
 
-subroutine calc_tausplit(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
 
       implicit none
 
       !Input
       double precision :: dx,dy,xlower,ylower
-      double precision :: q(1-mbc:maxmx+mbc, 1-mbc:maxmy+mbc, meqn)
-      double precision :: aux(1-mbc:maxmx+mbc,1-mbc:maxmy+mbc,maux)
-      integer :: maxmx,maxmy,mx,my,mbc,meqn,maux
+      double precision :: q(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
+      double precision :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+      integer :: mx,my,mbc,meqn,maux
 
       !Locals
       double precision :: h,hL,hR,hu,hv,hm,p,b,bL,bR,bT,bB,hT,hB,u,v,m
@@ -650,9 +650,9 @@ subroutine calc_tausplit(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,a
       do i=2-mbc,mx+mbc-1
          do j=2-mbc,my+mbc-1
 
-            h = q(i,j,1)
-            hL = q(i-1,j,1)
-            hR = q(i+1,j,1)
+            h = q(1,i,j,1)
+            hL = q(1,i-1,j,1)
+            hR = q(1,i+1,j,1)
             if (h<dry_tol) then
                aux(i,j,i_fsphi) = 1.0
                cycle

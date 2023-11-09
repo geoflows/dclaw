@@ -61,7 +61,7 @@ c      write(26,*) 'B4STEP2: t, num_dtopo: ', t,num_dtopo
 c======find factor of safety ratios===================================
       call calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,
      &                     q,maux,aux)
-c      call calc_tausplit(maxmx,maxmy,meqn,mbc,mx,my,xlower,ylower,dx,dy,
+c      call calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,
 c     &                     q,maux,aux)
 
 
@@ -87,21 +87,21 @@ c=============mobilization =============================================
 
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
-                  if (q(i,j,1).le.drytolerance) cycle
+                  if (q(1,i,j).le.drytolerance) cycle
                   theta = 0.d0
                   p_ratioij = init_pmin_ratio
                   if (bed_normal.eq.1) then
-                     theta=aux(i,j,i_theta)
+                     theta=aux(i_theta,i,j)
                      gmod = grav*dcos(theta)
                      p_ratioij = init_pmin_ratio*
-     &                 (1.0 + aux(i,j,1)/q(i,j,1)) -aux(i,j,1)/q(i,j,1)
+     &                 (1.d0 + aux(1,i,j)/q(1,i,j)) -aux(1,i,j)/q(1,i,j)
                   endif
-                  call admissibleq(q(i,j,1),q(i,j,2),q(i,j,3),
-     &                           q(i,j,4),q(i,j,5),u,v,sv,theta)
+                  call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j),
+     &                           q(4,i,j),q(5,i,j),u,v,sv,theta)
 
                   rho = sv*rho_s + (1.0-sv)*rho_f
-                  pfail = p_ratioij*rho*gmod*q(i,j,1)
-                  q(i,j,5) = pfail - abs(pfail)*(init_ptf - t)/init_ptf
+                  pfail = p_ratioij*rho*gmod*q(1,i,j)
+                  q(5,i,j) = pfail - abs(pfail)*(init_ptf - t)/init_ptf
 
                enddo
             enddo
