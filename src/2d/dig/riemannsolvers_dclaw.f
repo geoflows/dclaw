@@ -19,7 +19,7 @@ c-----------------------------------------------------------------------
       ! David L George
       !-----------------------------------------------------------------
 
-      use geoclaw_module
+      use geoclaw_module, only: g => grav, drytol => dry_tolerance
       use digclaw_module
 
       implicit none
@@ -59,7 +59,6 @@ c-----------------------------------------------------------------------
       veltol1=1.d-6
       veltol2=0.d0
       criticaltol=1.d-6
-      drytol=drytolerance
 
       do m=1,4
          psi(m) = 0.d0

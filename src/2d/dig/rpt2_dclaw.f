@@ -36,9 +36,9 @@
       real(kind=8), intent(out) ::  bpasdq(meqn,1-mbc:maxm+mbc)
 
       ! local:
-      real(kind=8) ::  s(mwaves), r(meqn,mwaves), beta(mwaves)
+      real(kind=8) ::  s(3), r(meqn,3), beta(3)
       real(kind=8) ::  h,u,v,m,p,rho,gamma
-      real(kind=8) ::  delf1,delf2,delf3
+      real(kind=8) ::  delf1,delf2,delf3,delf4,delf5,delf6
       real(kind=8) ::  dxdcm,dxdcp,topo1,topo3,eta
 
       integer :: i,mw,mu,mv
@@ -194,12 +194,14 @@ c        Set-up eigenvectors
                  bmasdq(mv,i)=bmasdq(mv,i)+ dxdcm*s(mw)*beta(mw)*r(3,mw)
                  bmasdq(4,i) =bmasdq(4,i) + dxdcm*s(mw)*beta(mw)*r(4,mw)
                  bmasdq(5,i) =bmasdq(5,i) + dxdcm*s(mw)*beta(mw)*r(5,mw)
+                 bmasdq(6,i) =bmasdq(6,i) + dxdcm*s(mw)*beta(mw)*r(6,mw)
             elseif ((s(mw) > 0.d0) .and. (eta >= topo3)) then
                  bpasdq(1,i) =bpasdq(1,i) + dxdcp*s(mw)*beta(mw)*r(1,mw)
                  bpasdq(mu,i)=bpasdq(mu,i)+ dxdcp*s(mw)*beta(mw)*r(2,mw)
                  bpasdq(mv,i)=bpasdq(mv,i)+ dxdcp*s(mw)*beta(mw)*r(3,mw)
                  bpasdq(4,i) =bpasdq(4,i) + dxdcp*s(mw)*beta(mw)*r(4,mw)
                  bpasdq(5,i) =bpasdq(5,i) + dxdcp*s(mw)*beta(mw)*r(5,mw)
+                 bpasdq(6,i) =bpasdq(6,i) + dxdcp*s(mw)*beta(mw)*r(6,mw)
             endif
          enddo  ! loop on mw
 
