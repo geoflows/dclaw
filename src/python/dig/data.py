@@ -2,7 +2,7 @@
 
 """
 
-Classes representing parameters for GeoClaw runs
+Classes representing parameters for D-Claw runs
 
 :Classes:
 
@@ -848,44 +848,6 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
         self.self.data_write("keep_fine", description="keep_fine")        
         self.close_data_file()
 
-
-# place DIG attributes and description in one place (since this is documents )
-# This is the best place to see documentation for D-Claw specific input parameters.
-_DIG_ATTRS = {
-    "rho_s": "solid grain density (kg/m^3)",
-    "rho_f": "pore-fluid density  (kg/m^3)",
-    "phi_bed": "basal friction angle (degrees)",
-    "theta_input": "slope angle (degrees)",
-    "delta": "characteristic grain diameter (m)",
-    "kappita": "permeability at m=setdig.m0 (m^2), k0 in G&I eq 2.7 if m0 is 0.6",
-    "mu": "viscosity of pore-fluid (Pa-s)",
-    "alpha_c": "debris compressibility constant (#)",
-    "m_crit": "critical state value of m (#)",
-    "c1": "dilation regularization coefficient 1 (#)",
-    "m0": "initial solid volume fraction (#)",
-    "sigma_0": "baseline stress for definition of compressibility",
-    "alpha_seg": "coefficient of segregation velocity profile. When alpha_seg = 0, no segregation occurs",
-    "bed_normal": "use of bed normal coordinates (0=false, 1=true). bed_normal = 1 requires theta in aux for slope in one direction",
-    "phi_seg_coeff": "adjustment to friction coefficient based on segregation", # not currently used.
-    "entrainment": "flag for entrainment, 0 = no entrainment",
-    "entrainment_rate": "rate of entrainment parameter 0-1",
-    "mom_autostop": "flag for momentum autostop F = no autostop, T = autostop",
-    "mom_perc": "percentage of max momentum for autostop, default is 0.05 (5%)",
-    "momlevel": "level to do momentum calculation IF mom_autostop==True",
-    "src_ftn_num": "number of in-domain sources, if used the file 'sethydrographs.data' is required",
-    "fric_offset_val": "start/stop friction offset (degrees). if this value is >0, then hysteretic friction is used (Rocha, Johnson, Gray, 2019)",
-    "fric_star_val": "deep friction offset (degrees). only used when fric_offset_val > 0 (Rocha, Johnson, Gray, 2019)",
-    "chi_init_val": "initial fraction of species 1, (#). Between 0-1.",
-    "kappita_diff": "permeability multiplier for different size species. Only used when alpha_seg>0. kappita is used for species1, kappita*kappita_diff used for species2",
-    "outaux": "flag for writing aux to output F = not written, T = written",
-    "curvature": "flag for curvature correction 0 = not used, 1 = used",
-    "init_ptype": "-1 = zero pressure or user defined files in qinit, 0 = hydrostatic, 1,2 = failure pressure (1=min, 2=avg), 3,4 = rising pressure (3=min, 4=avg)",
-    "init_pmax_ratio": "p(init_ptf2)= hydro*init_pmax_ratio: pressure will rise to hydrostatic *init_pmax_ratio",
-    "init_ptf": " p(init_ptf) = failure, pressure will rise until t = init_ptf without dilatancy",
-    "init_ptf2": "p(init_ptf2)= hydro*init_pmax_ratio, pressure will rise until t = init_ptf2",
-}
-
-
 class DClawInputData(clawpack.clawutil.data.ClawData):
     r"""
     D-Claw data object
@@ -898,7 +860,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("rho_s", 2700.0)
         self.add_attribute("rho_f", 1000.0)
         self.add_attribute("phi_bed", 40.0)
-        self.add_attribute("theta_input")
+        self.add_attribute("theta_input", 0.0)
         self.add_attribute("delta", 0.01)
         self.add_attribute("kappita", 0.0001)
         self.add_attribute("mu", 0.001)
@@ -929,33 +891,33 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
     def write(self,out_file='setdig.data',data_source='setrun.py'):
         self.open_data_file(out_file,data_source)
 
-        self.self.data_write("rho_s", description=_DIG_ATTRS["rho_s"])
-        self.self.data_write("rho_f", description=_DIG_ATTRS["rho_f"])
-        self.self.data_write("phi_bed", description=_DIG_ATTRS["phi_bed"])
-        self.self.data_write("theta_input", description=_DIG_ATTRS["theta_input"])
-        self.self.data_write("delta", description=_DIG_ATTRS["delta"])
-        self.self.data_write("kappita", description=_DIG_ATTRS["kappita"])
-        self.self.data_write("mu", description=_DIG_ATTRS["mu"])
-        self.self.data_write("alpha_c", description=_DIG_ATTRS["alpha_c"])
-        self.self.data_write("m_crit", description=_DIG_ATTRS["m_crit"])
-        self.self.data_write("c1", description=_DIG_ATTRS["c1"])
-        self.self.data_write("m0", description=_DIG_ATTRS["m0"])
-        self.self.data_write("sigma_0", description=_DIG_ATTRS["sigma_0"])
-        self.self.data_write("alpha_seg", description=_DIG_ATTRS["alpha_seg"])
-        self.self.data_write("bed_normal", description=_DIG_ATTRS["bed_normal"])
-        self.self.data_write("phi_seg_coeff", description=_DIG_ATTRS["phi_seg_coeff"])
-        self.self.data_write("entrainment", description=_DIG_ATTRS["entrainment"])
-        self.self.data_write("entrainment_rate", description=_DIG_ATTRS["entrainment_rate"])
-        self.self.data_write("mom_autostop", description=_DIG_ATTRS["mom_autostop"])
-        self.self.data_write("mom_perc", description=_DIG_ATTRS["mom_perc"])
-        self.self.data_write("src_ftn_num", description=_DIG_ATTRS["src_ftn_num"])
-        self.self.data_write("fric_offset_val", description=_DIG_ATTRS["fric_offset_val"])
-        self.self.data_write("fric_star_val", description=_DIG_ATTRS["fric_star_val"])
-        self.self.data_write("chi_init_val", description=_DIG_ATTRS["chi_init_val"])
-        self.self.data_write("kappita_diff", description=_DIG_ATTRS["kappita_diff"])
-        self.self.data_write("outaux", description=_DIG_ATTRS["outaux"])
-        self.self.data_write("curvature", description=_DIG_ATTRS["curvature"])
-        self.self.data_write("momlevel", description=_DIG_ATTRS["momlevel"])
+        self.self.data_write("rho_s", description="solid grain density (kg/m^3)")
+        self.self.data_write("rho_f", description="pore-fluid density  (kg/m^3)")
+        self.self.data_write("phi_bed", description="basal friction angle (degrees)")
+        self.self.data_write("theta_input", description="slope angle (degrees)")
+        self.self.data_write("delta", description= "characteristic grain diameter (m)")
+        self.self.data_write("kappita", description="permeability at m=setdig.m0 (m^2), k0 in G&I eq 2.7 if m0 is 0.6")
+        self.self.data_write("mu", description="viscosity of pore-fluid (Pa-s)")
+        self.self.data_write("alpha_c", description="debris compressibility constant (#)")
+        self.self.data_write("m_crit", description="critical state value of m (#)")
+        self.self.data_write("c1", description="dilation regularization coefficient 1 (#)")
+        self.self.data_write("m0", description="initial solid volume fraction (#)")
+        self.self.data_write("sigma_0", description="baseline stress for definition of compressibility")
+        self.self.data_write("alpha_seg", description="coefficient of segregation velocity profile. When alpha_seg = 0, no segregation occurs")
+        self.self.data_write("bed_normal", description="use of bed normal coordinates (0=false, 1=true). bed_normal = 1 requires theta in aux for slope in one direction")
+        self.self.data_write("phi_seg_coeff", description="adjustment to friction coefficient based on segregation") # not currently used.)
+        self.self.data_write("entrainment", description="flag for entrainment, 0 = no entrainment")
+        self.self.data_write("entrainment_rate", description="rate of entrainment parameter 0-1")
+        self.self.data_write("mom_autostop", description= "flag for momentum autostop False = no autostop, True = autostop")
+        self.self.data_write("mom_perc", description="percentage of max momentum for autostop, default is 0.05 (5%)")
+        self.self.data_write("src_ftn_num", description="number of in-domain sources, if used the file 'sethydrographs.data' is required")
+        self.self.data_write("fric_offset_val", description="start/stop friction offset (degrees). if this value is >0, then hysteretic friction is used (Rocha, Johnson, Gray, 2019)")
+        self.self.data_write("fric_star_val", "deep friction offset (degrees). only used when fric_offset_val > 0 (Rocha, Johnson, Gray, 2019)")
+        self.self.data_write("chi_init_val", description="initial fraction of species 1, (#). Between 0-1.")
+        self.self.data_write("kappita_diff", description="permeability multiplier for different size species. Only used when alpha_seg>0. kappita is used for species1, kappita*kappita_diff used for species2")
+        self.self.data_write("outaux", description="flag for writing aux to output F = not written, T = written")
+        self.self.data_write("curvature", description="flag for curvature correction 0 = not used, 1 = used")
+        self.self.data_write("momlevel", description="level to do momentum calculation IF mom_autostop==True")
 
         self.close_data_file()
 
@@ -978,9 +940,9 @@ class PInitInputData(clawpack.clawutil.data.ClawData):
 
         print("Creating data file setpinit.data")
         # open file and write a warning header:
-        self.self.data_write("init_ptype", description=_DIG_ATTRS["init_ptype"])
-        self.self.data_write("init_pmax_ratio", description=_DIG_ATTRS["init_pmax_ratio"])
-        self.self.data_write("init_ptf", description=_DIG_ATTRS["init_ptf"])
-        self.self.data_write("init_ptf2", description=_DIG_ATTRS["init_ptf2"])
+        self.self.data_write("init_ptype", description="-1 = zero pressure or user defined files in qinit, 0 = hydrostatic, 1,2 = failure pressure (1=min, 2=avg), 3,4 = rising pressure (3=min, 4=avg)")
+        self.self.data_write("init_pmax_ratio", description="p(init_ptf2)= hydro*init_pmax_ratio: pressure will rise to hydrostatic *init_pmax_ratio")
+        self.self.data_write("init_ptf", description="p(init_ptf) = failure, pressure will rise until t = init_ptf without dilatancy")
+        self.self.data_write("init_ptf2", description="p(init_ptf2)= hydro*init_pmax_ratio, pressure will rise until t = init_ptf2")
 
         self.close_data_file()
