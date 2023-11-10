@@ -152,6 +152,8 @@ COMMON_SOURCES += \
   $(GEOLIB)/prepbigstep.f \
   $(GEOLIB)/prepregstep.f \
   $(GEOLIB)/set_eta_init.f90 \
+  $(GEOLIB)/stepgrid.f \
+
 
 # list of source files from DIGCLAW library. 
 COMMON_SOURCES += \
@@ -163,7 +165,6 @@ COMMON_SOURCES += \
   $(DIGLIB)/valout.f90 \
   $(DIGLIB)/flag2refine2.f90  \
   $(DIGLIB)/setaux.f90 \
-  $(DIGLIB)/stepgrid.f \
   $(DIGLIB)/b4step2.f90 \
   $(DIGLIB)/riemannsolvers_dclaw.f \
   $(DIGLIB)/rpn2_dclaw.f \
