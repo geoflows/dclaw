@@ -11,7 +11,7 @@ CLAWMAKE = $(CLAW)/clawutil/src/Makefile.common
 # Adjust these variables if desired:
 # ----------------------------------
 
-CLAW_PKG = geoclaw                  # Clawpack package to use
+CLAW_PKG = dclaw                  # Clawpack package to use
 
 
 EXE = $(PWD)/xgeoclaw

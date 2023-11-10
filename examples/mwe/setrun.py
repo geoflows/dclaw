@@ -37,7 +37,6 @@ def setrun(claw_pkg='dclaw'):
     """
 
     from clawpack.clawutil import data
-
     assert claw_pkg.lower() == 'dclaw',  "Expected claw_pkg = 'dclaw'"
 
     num_dim = 2
@@ -286,9 +285,9 @@ def setrun(claw_pkg='dclaw'):
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
-    amrdata.refinement_ratios_x = []
-    amrdata.refinement_ratios_y = []
-    amrdata.refinement_ratios_t = []
+    amrdata.refinement_ratios_x = [2]
+    amrdata.refinement_ratios_y = [2]
+    amrdata.refinement_ratios_t = [2]
 
 
 
@@ -385,7 +384,7 @@ def setrun(claw_pkg='dclaw'):
     topofiles = rundata.topo_data.topofiles
     # for topography, append lines of the form
     #    [topotype, fname]
-    topofiles.append([3, 'topo.tt3'])
+    topofiles.append([3, 'input_files/topo.tt3'])
 
     # == setdtopo.data values ==
     dtopo_data = rundata.dtopo_data
@@ -394,7 +393,7 @@ def setrun(claw_pkg='dclaw'):
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
     qinitdclaw_data.qinitfiles = []
-    qinitdclaw_data.qinitfiles.append([2, 1, 1, 1, 'q1.tt3'])
+    qinitdclaw_data.qinitfiles.append([2, 1, 1, 1, 'input_files/q1.tt3'])
     
     # for qinit perturbations append lines of the form
     #   [qinitftype,iqinit, minlev, maxlev, fname]
@@ -408,7 +407,7 @@ def setrun(claw_pkg='dclaw'):
     auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
 
     auxinitdclaw_data.auxinitfiles = []
-    auxinitdclaw_data.auxinitfiles.append([2, 5, 1, 1, 'aux5.tt3'])
+    auxinitdclaw_data.auxinitfiles.append([2, 5, 1, 1, 'input_files/aux5.tt3'])
     # for auxinit perturbations append lines of the form
     #   [auxinitftype,iauxinit, minlev, maxlev, fname]
 
@@ -427,7 +426,6 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.rho_f = 1000.0
     dclaw_data.rho_s = 2700.0
     dclaw_data.phi_bed = 36.0
-    dclaw_data.phi_int = 36.0
     dclaw_data.theta_input = 0.0
     dclaw_data.mu = 0.005
     dclaw_data.m0 = 0.62
@@ -446,7 +444,6 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.mom_autostop = True
     dclaw_data.momlevel = 1
     dclaw_data.mom_perc = 0.0
-    dclaw_data.phys_tol = rundata.geodata.drytolerance # I think this is not used.
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
