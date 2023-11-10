@@ -121,7 +121,6 @@ COMMON_SOURCES += \
 # list of source files from GEOCLAW library. 
 COMMON_SOURCES += \
   $(GEOLIB)/setprob.f90 \
-  $(GEOLIB)/qinit.f90 \
   $(GEOLIB)/topo_update.f90 \
   $(GEOLIB)/cellgridintegrate2.f \
   $(GEOLIB)/topointegral.f \
@@ -157,6 +156,7 @@ COMMON_SOURCES += \
 # list of source files from DIGCLAW library. 
 COMMON_SOURCES += \
   $(DIGLIB)/amr2.f90 \
+  $(DIGLIB)/qinit.f90 \
   $(DIGLIB)/filval.f90 \
   $(DIGLIB)/filpatch.f90 \
   $(DIGLIB)/update.f90 \
