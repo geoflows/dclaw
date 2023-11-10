@@ -41,7 +41,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
     real(kind=8) :: h, hu, hv, eta
     real(kind=8), allocatable :: qeta(:)
     real(kind=4), allocatable :: qeta4(:), aux4(:)
-    integer :: lenaux4
+    integer :: lenaux4, ivar
 
 #ifdef HDF5
     ! HDF writing
@@ -191,7 +191,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
 
                             !write(out_unit, "(50e26.16)") h, hu, hv, eta
                             write(out_unit, "(50e26.16)") &
-                                 (alloc(iadd(ivar,i,j)), ivar=1,nvar), eta
+                                 (alloc(iadd(ivar,i,j)), ivar=1,num_eqn), eta
                         end do
                         write(out_unit, *) ' '
                     end do

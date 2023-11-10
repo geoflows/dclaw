@@ -21,7 +21,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
     use amr_module, only: NEEDS_TO_BE_SET
     use digclaw_module, only: m0, rho_f
 
-    use geoclaw_module, only: sea_level, dry_tolerance
+    use geoclaw_module, only: sea_level, dry_tolerance, grav
     use topo_module, only: topo_finalized
     use qinit_module, only: variable_eta_init
     use qinit_module, only: force_dry,use_force_dry,mx_fdry, my_fdry
@@ -79,6 +79,8 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
     integer :: nghost_patch, lencrse
     logical :: use_force_dry_this_level
     real(kind=8) :: ddxy
+
+    integer :: ivar
 
     ! Stack storage
     !  use stack-based scratch arrays instead of alloc, since dont really

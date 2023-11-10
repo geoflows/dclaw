@@ -24,6 +24,9 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
 
     use amr_module, only: mxnest, t0, DOFLAG, UNSET
     use amr_module, only: lfine, lstart, node, rnode  ! DIG
+    use amr_module, only: cornxlo, cornylo, levelptr, mxnest, ndihi, ndilo
+    use amr_module, only: ndjhi, ndjlo, store1, store2, storeaux
+    use amr_module, only: alloc, hxposs, hyposs
 
     use geoclaw_module, only:dry_tolerance, sea_level
     use geoclaw_module, only: spherical_distance, coordinate_system
@@ -68,7 +71,8 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
     
     real(kind=8) :: flowgradenorm, flowgradegrad, depth, momentum, surface
     real(kind=8) :: xlow,xhi,ylow,yhi,xxlow,xxhi,yylow,yyhi
-    integer :: nx,ny,loc,locaux,mitot,mjtot,mptr
+    real(kind=8) :: flowgrademeasure, h,hu,hv
+    integer :: nx,ny,loc,locaux,mitot,mjtot,mptr,iflow,ii,jj
     
 
     if(adjoint_flagging) then
@@ -123,7 +127,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
 
                       elseif (iflowgradevariable(iflow).eq.3) then
 
-                        if (depth.gt.drytolerance) then
+                        if (depth.gt.dry_tolerance) then
                           flowgradenorm=dabs(surface)
                           flowgradegrad=dabs(surface)
                         else
@@ -167,13 +171,13 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                     ny      = node(ndjhi,mptr) - node(ndjlo,mptr) + 1
                     loc     = node(store1, mptr)
                     locaux  = node(storeaux,mptr)
-                    mitot   = nx + 2*nghost
-                    mjtot   = ny + 2*nghost
+                    mitot   = nx + 2*mbc
+                    mjtot   = ny + 2*mbc
 
                     xlow = rnode(cornxlo,mptr)
                     ylow = rnode(cornylo,mptr)
                     xhi = xlow + nx*hxposs(lfine)
-                    yhi = ylow + ny*hxposs(lfine)
+                    yhi = ylow + ny*hyposs(lfine)
 
                     ! if there is overlap between the fine grid and this
                     ! location on the coarse grid, flag.
@@ -183,36 +187,36 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                                 y_hi.gt.ylow.and.y_low.lt.yhi) then
 
                        ! this loop includes ghosts, update extent and
-                       mitot   = nx + 2*nghost
-                       mjtot   = ny + 2*nghost
-                       xlow = rnode(cornxlo,mptr)-nghost*hxposs(lfine)
-                       ylow = rnode(cornylo,mptr)-nghost*hxposs(lfine)
+                       mitot   = nx + 2*mbc
+                       mjtot   = ny + 2*mbc
+                       xlow = rnode(cornxlo,mptr)-mbc*hxposs(lfine)
+                       ylow = rnode(cornylo,mptr)-mbc*hyposs(lfine)
                        xhi = xlow + mitot*hxposs(lfine)
-                       yhi = ylow + mjtot*hxposs(lfine)
+                       yhi = ylow + mjtot*hyposs(lfine)
 
                        ! get pointers
                        loc     = node(store1, mptr)
                        locaux  = node(storeaux,mptr)
 
                        ! loop through fine grid cells.
-                       do jj = nghost+1, mjtot-nghost
-                          do ii = nghost+1, mitot-nghost
+                       do jj = mbc+1, mjtot-mbc
+                          do ii = mbc+1, mitot-mbc
                             ! check overlap between fine and coarse cells
                             ! ignore ghost cells
                             xxlow = xlow + hxposs(lfine)*ii
                             xxhi = xxlow + hxposs(lfine)
-                            yylow = ylow + hxposs(lfine)*jj
-                            yyhi = yylow + hxposs(lfine)
+                            yylow = ylow + hyposs(lfine)*jj
+                            yyhi = yylow + hyposs(lfine)
 
                             ! if fine grid cell is inside of coarse grid cell
                             ! calculate flowgrade values
                             if (x_hi.gt.xxlow.and.x_low.lt.xxhi.and. &
                                    y_hi.gt.yylow.and.y_low.lt.yyhi) then
-                              h = alloc(iadd(ii,jj,1))
-                              hu = alloc(iadd(ii,jj,2))
-                              hv = alloc(iadd(ii, jj,3))
+                              h = alloc(iadd(1,ii,jj))
+                              hu = alloc(iadd(2,ii,jj))
+                              hv = alloc(iadd(3,ii, jj))
                               momentum = sqrt((hu**2)+(hv**2))
-                              surface = h + alloc(iaddaux(ii,jj,1))
+                              surface = h + alloc(iaddaux(1,ii,jj))
 
                     ! check flowgrade values on fine grid.
                     do iflow=1,mflowgrades
@@ -223,7 +227,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                         flowgradenorm=momentum
                         flowgradegrad=momentum
                       elseif (iflowgradevariable(iflow).eq.3) then
-                        if (depth.gt.drytolerance) then
+                        if (depth.gt.dry_tolerance) then
                           flowgradenorm=dabs(surface)
                           flowgradegrad=dabs(surface)
                         else
@@ -322,4 +326,21 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
 
         enddo x_loop
     enddo y_loop
+    
+contains
+
+    ! Index into q array
+    pure integer function iadd(m, i, j)
+        implicit none
+        integer, intent(in) :: m, i, j
+        iadd = loc + m - 1 + meqn * ((j - 1) * (mitot + 2 * mbc) + i - 1)
+    end function iadd
+
+    ! Index into aux array
+    pure integer function iaddaux(m, i, j)
+        implicit none
+        integer, intent(in) :: m, i, j
+        iaddaux = locaux + m - 1 + maux * (i - 1) + maux * (mitot + 2 * mbc) * (j - 1)
+    end function iaddaux
+    
 end subroutine flag2refine2

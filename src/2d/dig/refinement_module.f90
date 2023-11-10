@@ -24,7 +24,7 @@ module refinement_module
     integer, allocatable :: iflowgradevariable(:), iflowgradetype(:)
     integer, allocatable :: iflowgrademinlevel(:)
     integer :: mflowgrades
-    logical, parameter :: keep_fine = False  !!DIG - add to setrun
+    logical, parameter :: keep_fine = .false.  !!DIG - add to setrun
     
 contains
     
