@@ -93,7 +93,7 @@ def setrun(claw_pkg='dclaw'):
     clawdata.num_aux = 10
 
     # Index of aux array corresponding to capacity function, if there is one:
-    clawdata.capa_index = 2
+    clawdata.capa_index = 0
 
     
     
@@ -393,7 +393,7 @@ def setrun(claw_pkg='dclaw'):
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
     qinitdclaw_data.qinitfiles = []
-    qinitdclaw_data.qinitfiles.append([2, 1, 1, 1, 'input_files/q1.tt3'])
+    qinitdclaw_data.qinitfiles.append([3, 1, 1, 1, 'input_files/q1.tt3'])
     
     # for qinit perturbations append lines of the form
     #   [qinitftype,iqinit, minlev, maxlev, fname]
@@ -407,7 +407,7 @@ def setrun(claw_pkg='dclaw'):
     auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
 
     auxinitdclaw_data.auxinitfiles = []
-    auxinitdclaw_data.auxinitfiles.append([2, 5, 1, 1, 'input_files/aux5.tt3'])
+    auxinitdclaw_data.auxinitfiles.append([3, 5, 1, 1, 'input_files/aux5.tt3'])
     # for auxinit perturbations append lines of the form
     #   [auxinitftype,iauxinit, minlev, maxlev, fname]
 
