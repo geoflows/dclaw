@@ -177,7 +177,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   q(6,i,j) = q(1,i,j)*q(6,i,j)
                endif
                if (initu.eq.1) then
-                  q(2,i,j) = q1(1,i,j)*q(2,i,j)
+                  q(2,i,j) = q(1,i,j)*q(2,i,j)
                endif
                if (initv.eq.1) then
                   q(3,i,j) = q(1,i,j)*q(3,i,j)

@@ -96,7 +96,7 @@ program amr2
     ! Data modules
     use geoclaw_module, only: set_geo
     use topo_module, only: read_topo_settings, read_dtopo_settings
-    use qinit_module, only: set_qinit
+    use qinit_module, only: set_qinit, set_qinit_dig
     use refinement_module, only: set_refinement, set_flow_grades
     use storm_module, only: set_storm
     use friction_module, only: setup_variable_friction

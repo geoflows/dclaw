@@ -373,3 +373,203 @@ c      del(4) = del(4) - 0.5d0*dx*psi(4)
       end !subroutine riemann_dig2_aug_sswave_ez
 
 c-----------------------------------------------------------------------
+
+c=============================================================================
+      subroutine riemanntype(hL,hR,uL,uR,hm,s1m,s2m,rare1,rare2,
+     &             maxiter,drytol,g)
+
+      !determine the Riemann structure (wave-type in each family)
+
+
+      implicit none
+
+      !input
+      double precision hL,hR,uL,uR,drytol,g
+      integer maxiter
+
+      !output
+      double precision s1m,s2m
+      logical rare1,rare2
+
+      !local
+      double precision hm,u1m,u2m,um,delu
+      double precision h_max,h_min,h0,F_max,F_min,dfdh,F0,slope,gL,gR
+      integer iter
+
+
+
+c     !Test for Riemann structure
+
+      h_min=min(hR,hL)
+      h_max=max(hR,hL)
+      delu=uR-uL
+
+      if (h_min.le.drytol) then
+         hm=0.d0
+         um=0.d0
+         s1m=uR+uL-2.d0*dsqrt(g*hR)+2.d0*dsqrt(g*hL)
+         s2m=uR+uL-2.d0*dsqrt(g*hR)+2.d0*dsqrt(g*hL)
+         if (hL.le.0.d0) then
+            rare2=.true.
+            rare1=.false.
+         else
+            rare1=.true.
+            rare2=.false.
+         endif
+
+      else
+         F_min= delu+2.d0*(dsqrt(g*h_min)-dsqrt(g*h_max))
+         F_max= delu +
+     &         (h_max-h_min)*(dsqrt(.5d0*g*(h_max+h_min)/(h_max*h_min)))
+
+         if (F_min.gt.0.d0) then !2-rarefactions
+
+            hm=(1.d0/(16.d0*g))*
+     &               max(0.d0,-delu+2.d0*(dsqrt(g*hL)+dsqrt(g*hR)))**2
+            um=dsign(1.d0,hm)*(uL+2.d0*(dsqrt(g*hL)-dsqrt(g*hm)))
+
+            s1m=uL+2.d0*dsqrt(g*hL)-3.d0*dsqrt(g*hm)
+            s2m=uR-2.d0*dsqrt(g*hR)+3.d0*dsqrt(g*hm)
+
+            rare1=.true.
+            rare2=.true.
+
+         elseif (F_max.le.0.d0) then !2 shocks
+
+c           !root finding using a Newton iteration on dsqrt(h)===
+            h0=h_max
+            do iter=1,maxiter
+               gL=dsqrt(.5d0*g*(1/h0 + 1/hL))
+               gR=dsqrt(.5d0*g*(1/h0 + 1/hR))
+               F0=delu+(h0-hL)*gL + (h0-hR)*gR
+               dfdh=gL-g*(h0-hL)/(4.d0*(h0**2)*gL)+
+     &                   gR-g*(h0-hR)/(4.d0*(h0**2)*gR)
+               slope=2.d0*dsqrt(h0)*dfdh
+               h0=(dsqrt(h0)-F0/slope)**2
+            enddo
+               hm=h0
+               u1m=uL-(hm-hL)*dsqrt((.5d0*g)*(1/hm + 1/hL))
+               u2m=uR+(hm-hR)*dsqrt((.5d0*g)*(1/hm + 1/hR))
+               um=.5d0*(u1m+u2m)
+
+               s1m=u1m-dsqrt(g*hm)
+               s2m=u2m+dsqrt(g*hm)
+               rare1=.false.
+               rare2=.false.
+
+         else !one shock one rarefaction
+            h0=h_min
+
+            do iter=1,maxiter
+               F0=delu + 2.d0*(dsqrt(g*h0)-dsqrt(g*h_max))
+     &                  + (h0-h_min)*dsqrt(.5d0*g*(1/h0+1/h_min))
+               slope=(F_max-F0)/(h_max-h_min)
+               h0=h0-F0/slope
+            enddo
+
+            hm=h0
+            if (hL.gt.hR) then
+               um=uL+2.d0*dsqrt(g*hL)-2.d0*dsqrt(g*hm)
+               s1m=uL+2.d0*dsqrt(g*hL)-3.d0*dsqrt(g*hm)
+               s2m=uL+2.d0*dsqrt(g*hL)-dsqrt(g*hm)
+               rare1=.true.
+               rare2=.false.
+            else
+               s2m=uR-2.d0*dsqrt(g*hR)+3.d0*dsqrt(g*hm)
+               s1m=uR-2.d0*dsqrt(g*hR)+dsqrt(g*hm)
+               um=uR-2.d0*dsqrt(g*hR)+2.d0*dsqrt(g*hm)
+               rare2=.true.
+               rare1=.false.
+            endif
+         endif
+      endif
+
+      return
+
+      end ! subroutine riemanntype----------------------------------------------------------------
+
+c=======================================================================
+c  file: gaussj
+c  routine: gaussj
+c  solves linear system ax=b directly using Guassian Elimination
+c  a(1:n,1:n) is the input matrix of size np by np
+c  b(1:n,1:m) is the right hand side (can solve for m vectors)
+c  On output a is replaced by it's inverse, and b replaced by x.
+
+      SUBROUTINE gaussj(a,n,np,b,m,mp)
+      INTEGER m,mp,n,np,NMAX
+      DOUBLE PRECISION a(np,np),b(np,mp)
+      PARAMETER (NMAX=50)
+      INTEGER i,icol,irow,j,k,l,ll,indxc(NMAX),indxr(NMAX),ipiv(NMAX)
+      DOUBLE PRECISION big,dum,pivinv
+      do 11 j=1,n
+        ipiv(j)=0
+11    continue
+      do 22 i=1,n
+        big=0.
+        do 13 j=1,n
+          if(ipiv(j).ne.1)then
+            do 12 k=1,n
+              if (ipiv(k).eq.0) then
+                if (dabs(a(j,k)).ge.big)then
+                  big=dabs(a(j,k))
+                  irow=j
+                  icol=k
+                endif
+
+              else if (ipiv(k).gt.1) then
+                write(*,*) 'singular matrix in gaussj'
+              endif
+12          continue
+          endif
+13      continue
+        ipiv(icol)=ipiv(icol)+1
+        if (irow.ne.icol) then
+          do 14 l=1,n
+            dum=a(irow,l)
+            a(irow,l)=a(icol,l)
+            a(icol,l)=dum
+14        continue
+          do 15 l=1,m
+            dum=b(irow,l)
+            b(irow,l)=b(icol,l)
+            b(icol,l)=dum
+15        continue
+        endif
+        indxr(i)=irow
+        indxc(i)=icol
+        if (a(icol,icol).eq.0.) write(*,*) 'singular matrix in gaussj'
+
+        pivinv=1./a(icol,icol)
+        a(icol,icol)=1.
+        do 16 l=1,n
+          a(icol,l)=a(icol,l)*pivinv
+16      continue
+        do 17 l=1,m
+          b(icol,l)=b(icol,l)*pivinv
+17      continue
+        do 21 ll=1,n
+          if(ll.ne.icol)then
+            dum=a(ll,icol)
+            a(ll,icol)=0.
+            do 18 l=1,n
+              a(ll,l)=a(ll,l)-a(icol,l)*dum
+18          continue
+            do 19 l=1,m
+              b(ll,l)=b(ll,l)-b(icol,l)*dum
+19          continue
+          endif
+21      continue
+22    continue
+      do 24 l=n,1,-1
+        if(indxr(l).ne.indxc(l))then
+
+          do 23 k=1,n
+            dum=a(k,indxr(l))
+            a(k,indxr(l))=a(k,indxc(l))
+            a(k,indxc(l))=dum
+23        continue
+        endif
+24    continue
+      return
+      END
