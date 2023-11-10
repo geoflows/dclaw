@@ -481,7 +481,7 @@ contains
       allocate(qinitwork(mqinitsize))
 
       do i=1,mqinitfiles
-            call read_qinit(mxqinit(i),myqinit(i),qinitftype(i),qinitfname(i), &
+            call read_qinit_dig(mxqinit(i),myqinit(i),qinitftype(i),qinitfname(i), &
                 qinitwork(i0qinit(i):i0qinit(i)+mqinit(i)-1))
       enddo
 

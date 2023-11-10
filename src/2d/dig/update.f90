@@ -48,9 +48,9 @@ subroutine update (level, nvar, naux)
 !$OMP                    ilo,jlo,ihi,jhi,mkid,iclo,ichi, &
 !$OMP                    jclo,jchi,mi,mj,locf,locfaux,iplo,iphi, &
 !$OMP                    jplo,jphi,iff,jff,totrat,i,j,ivar,capac, &
-!$OMP                    capa,bc,etasum,hsum,husum,hvsum, &
-!$OMP                    levSt,ico,jco,hf,bf,huf,hvf, &
-!$OMP                    etaf,etaav,hav,nwet,hc,huc,hvc, String), &
+!$OMP                    capa,bc,etasum,hsum,husum, &
+!$OMP                    levSt,ico,jco,hf,bf,huf, &
+!$OMP                    etaf,etaav,hav,nwet,hc,huc, String), &
 !$OMP             SHARED(numgrids,listOfGrids,level,intratx,intraty, &
 !$OMP                   nghost,uprint,nvar,naux,mcapa,node,listsp, &
 !$OMP                   alloc,lstart,dry_tolerance,listStart,lget), &
@@ -142,6 +142,7 @@ subroutine update (level, nvar, naux)
                                 do ivar=2,nvar
                                     huf(ivar) = alloc(iaddf(ivar, &
                                                     iff+ico-1,jff+jco-1,locf,mi))*capa 
+                                enddo
 
                                 if (alloc(iaddf(1,iff+ico-1,jff+jco-1,locf,mi)) > dry_tolerance) then
                                     etaf = hf + bf

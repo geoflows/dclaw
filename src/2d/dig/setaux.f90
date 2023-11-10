@@ -43,7 +43,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     use adjoint_module, only : adjoint_flagging,innerprod_index
     
     use auxinit_module ! DIG: should specify which variables
-    use dig_module, only: i_dig,i_phi,i_theta
+    use digclaw_module, only: i_dig,i_phi,i_theta,phi_bed,theta_input
 
     implicit none
 
@@ -60,11 +60,13 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     integer :: skipcount,iaux,ilo,jlo
     
     !DIG: Need to declare D-Claw variables...
-    integer :: mf,istart,iend,jstart,jend
+    integer :: mf,istart,iend,jstart,jend,i,j
     real(kind=8) :: xhigher,yhigher,xintlow,xinthi,yintlow,yinthi
     real(kind=8) :: xim,xip,yjm,yjp,xipc,ximc,xc,yjpc,yjmc,yc,daux
     real(kind=8) :: b_x,b_y,gradang,kappa,phi_tread
     logical :: use_phi_bed,use_theta_input,friction_correction
+    ! Topography integral function
+    real(kind=8) :: topointegral
     
     ! Lat-Long coordinate system in use, check input variables
     if (coordinate_system == 2) then
@@ -336,8 +338,8 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
               b_y = (aux(i,j+1,1)-aux(i,j-1,1))/(2.d0*dy)
               gradang = atan(sqrt(b_x**2+b_y**2))
               kappa=1.d0
-              phi_tread = tan(aux(i,j,i_phi)-gradang)
-     &            +2.d0*kappa*tan(gradang)
+              phi_tread = tan(aux(i,j,i_phi)-gradang) &
+                    +2.d0*kappa*tan(gradang)
               aux(i,j,i_phi) = phi_tread
             enddo
          enddo
