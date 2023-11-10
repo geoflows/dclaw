@@ -3,3 +3,4 @@
 .DS_store
 *.o
 *.mod
+*.pyc
