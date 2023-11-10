@@ -17,7 +17,7 @@
 
 !-----------------------last modified October 2020 ----------------------
 
-      use geoclaw_module, only: g => grav, tol => dry_tolerance
+      use geoclaw_module, only: grav, dry_tolerance
       use geoclaw_module, only: coordinate_system,earth_radius,deg2rad
       use digclaw_module, only: rho_f,rho_s,bed_normal,i_theta
 
@@ -37,7 +37,7 @@
 
       ! local:
       real(kind=8) ::  s(3), r(meqn,3), beta(3)
-      real(kind=8) ::  h,u,v,m,p,rho,gamma
+      real(kind=8) ::  h,u,v,m,p,rho,gamma,g
       real(kind=8) ::  delf1,delf2,delf3,delf4,delf5,delf6
       real(kind=8) ::  dxdcm,dxdcp,topo1,topo3,eta
 
@@ -71,7 +71,7 @@
             h = ql(1,i)
          endif
 
-         if (h <= tol) then
+         if (h <= dry_tolerance) then
              ! fluctuation going into a dry cell, don't know how to split,
              ! so leave bmadsq(:,i)=bpasdq(:,i)=0 and go on to next i:
              cycle  
@@ -166,14 +166,14 @@ c        Set-up eigenvectors
          r(1,1) = 1.d0
          r(2,1) = u    ! v5.8.0: fixed bug, u not s(2)=v
          r(3,1) = s(1)
-         r(4,1) = mL
+         r(4,1) = m
          r(5,1) = gamma*rho*g
          r(6,1) = 0.0
 
          r(1,3) = 1.d0
          r(2,3) = u    ! v5.8.0: fixed bug, u not s(2)=v
          r(3,3) = s(3)
-         r(4,3) = mR
+         r(4,3) = m
          r(5,3) = gamma*rho*g
          r(6,3) = 0.0
 

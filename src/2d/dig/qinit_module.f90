@@ -1,7 +1,7 @@
 module qinit_module
 
     ! Updated to include D-Claw files as e.g. set_qinit_dig
-    ! which reads data from setqinit_dig.data
+    ! which reads data from setqinit_dclaw.data
     
     use amr_module, only: rinfinity
 
@@ -378,7 +378,7 @@ contains
 
 
     ! ========================================================================
-    ! Read qinit files as specified in setqinit_dig.data
+    ! Read qinit files as specified in setqinit_dclaw.data
     !
     ! Each file has a type stored in qinitftype(i).
     !   qinittype = 1:  standard GIS format: 3 columns: x,y,z(m)
@@ -420,7 +420,7 @@ contains
       if (present(fname)) then
          file_name = fname
       else
-         file_name  = 'setqinit_dig.data'
+         file_name  = 'setqinit_dclaw.data'
       endif
       inquire(file=file_name,exist=found_file)
       if (.not. found_file) then

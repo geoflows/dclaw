@@ -266,10 +266,6 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
         self.close_data_file()
 
 
-    def write(self,data_source='setrun.py', out_file='setqinit_dclaw.data'):
-
-        self.open_data_file(out_file, data_source)
-        self.close_data_file()
 
 class PInitDClawInputData(clawpack.clawutil.data.ClawData):
     r"""

@@ -1,7 +1,7 @@
 
 module digclaw_module
 
-   use geoclaw_module
+   use geoclaw_module, only: dry_tolerance, grav, pi
 
    implicit none
 
@@ -52,7 +52,7 @@ contains
          if (present(fname)) then
             file_name = fname
          else
-            file_name = 'setdig.data'
+            file_name = 'setdclaw.data'
          endif
          inquire(file=file_name,exist=found_file)
          if (.not. found_file) then
@@ -134,7 +134,7 @@ contains
          if (present(fname)) then
             file_name = fname
          else
-            file_name = 'setpinit.data'
+            file_name = 'setpinit_dclaw.data'
          endif
          inquire(file=file_name,exist=found_file)
          if (.not. found_file) then
