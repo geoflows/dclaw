@@ -170,6 +170,13 @@ c        Set-up eigenvectors
          r(5,1) = gamma*rho*g
          r(6,1) = 0.0
 
+         r(1,3) = 1.d0
+         r(2,3) = u    ! v5.8.0: fixed bug, u not s(2)=v
+         r(3,3) = s(3)
+         r(4,3) = mR
+         r(5,3) = gamma*rho*g
+         r(6,3) = 0.0
+
          r(1,2) = 0.d0
          r(2,2) = 1.d0
          r(3,2) = 0.d0
@@ -177,12 +184,7 @@ c        Set-up eigenvectors
          r(5,2) = delf5 - beta(1)*r(5,1) - beta(3)*r(5,3)
          r(6,2) = delf6
 
-         r(1,3) = 1.d0
-         r(2,3) = u    ! v5.8.0: fixed bug, u not s(2)=v
-         r(3,3) = s(3)
-         r(4,3) = mR
-         r(5,3) = gamma*rho*g
-         r(6,3) = 0.0
+
 
 
          ! compute fluctuations

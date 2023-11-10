@@ -25,10 +25,6 @@ c
 !
 !      # This Riemann solver is for debris flow equations
 !
-!
-!
-!           for information contact
-!           David George <dgeorge@uw.edu
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       use geoclaw_module, only: g => grav, drytol => dry_tolerance

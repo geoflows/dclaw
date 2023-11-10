@@ -9,14 +9,10 @@ c-----------------------------------------------------------------------
       ! solve the dig Riemann problem for debris flow eqn
       ! this is for 2d version
       !
-      !           for information contact
-      !           David George <dgeorge@uw.edu
-      !
       ! This solver is an extension of that described in:
       ! J. Comput. Phys. (6): 3089-3113, March 2008
       ! Augmented Riemann Solvers for the Shallow Equations,
       !                   with Steady States and Inundation
-      ! David L George
       !-----------------------------------------------------------------
 
       use geoclaw_module, only: g => grav, drytol => dry_tolerance
