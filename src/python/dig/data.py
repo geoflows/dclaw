@@ -468,67 +468,74 @@ class ForceDry(clawpack.clawutil.data.ClawData):
         self.add_attribute('fname','')
 
 
-class QinitData(clawpack.clawutil.data.ClawData):
+class QinitDClawData(clawpack.clawutil.data.ClawData):
 
     def __init__(self):
-
-        super(QinitData,self).__init__()
-
-        # Qinit data
-        self.add_attribute('qinit_type',0)
+        super(QinitDClawData,self).__init__()
         self.add_attribute('qinitfiles',[])
-        self.add_attribute('variable_eta_init',False)
-        self.add_attribute('force_dry_list',[])
-        self.add_attribute('num_force_dry',0)
 
-    def write(self,data_source='setrun.py', out_file='qinit.data'):
+    def write(self,data_source='setrun.py', out_file='setqinit_dclaw.data'):
 
-        # Initial perturbation
         self.open_data_file(out_file, data_source)
-        self.self.data_write('qinit_type')
+        self.nqinits = len(self.qinitfiles)
 
-        # Perturbation requested
-        if self.qinit_type == 0:
-            pass
-        else:
-            # Check to see if each qinit file is present and then write the data
-            for tfile in self.qinitfiles:
+        self.self.data_write("nqinits", description="nqinits")    
+        self._out_file.write("\n")
 
-                if len(tfile) == 3:
-                    w = '\n  *** WARNING: qinit specs changed in v5.8.0 -- ' + \
-                          'Flag level info now ignored'
-                    warnings.warn(w, UserWarning)
-                    tfile = [tfile[-1]]  # drop minlevel,maxlevel
-                elif len(tfile) == 1:
-                    pass  # now expect only filename
-                else:
-                    raise ValueError('Unexpected len(tfile) = %i' % len(tfile))
+        for tfile in self.qinitfiles:
+            try:
+                fname = "'%s'" % os.path.abspath(tfile[-1])
+            except:
+                raise ValueError(f"*** Error: file not valid string {tfile[-1]}")
 
-                # if path is relative in setrun, assume it's relative to the
-                # same directory that out_file comes from
-                fname = os.path.abspath(os.path.join(os.path.dirname(out_file),tfile[-1]))
-                self._out_file.write("\n'%s' \n" % fname)
-        # else:
-        #     raise ValueError("Invalid qinit_type parameter %s." % self.qinit_type)
+            if len(fname) > 150:
+                raise ValueError(f"*** Error: file name too long (must be <150)  {tfile[-1]}")
 
-
-        self.self.data_write('variable_eta_init')
-
-        self.num_force_dry = len(self.force_dry_list)
-        self.self.data_write('num_force_dry')
-
-        for force_dry in self.force_dry_list:
-
-            # if path is relative in setrun, assume it's relative to the
-            # same directory that out_file comes from
-            fname = os.path.abspath(os.path.join(os.path.dirname(out_file),\
-                    force_dry.fname))
-            self._out_file.write("\n'%s' \n" % fname)
-            self._out_file.write("%.3f \n" % force_dry.tend)
-
+            if not os.path.exists(tfile[-1]):
+                raise ValueError(f"*** Error: file not found: {tfile[-1]}")
+            
+            self._out_file.write("\n%s  \n" % fname)
+            self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
 
         self.close_data_file()
 
+
+class AuxInitDClawData(clawpack.clawutil.data.ClawData):
+
+    def __init__(self):
+        super(AuxInitDClawData,self).__init__()
+        self.add_attribute('auxinitfiles',[])
+
+    def write(self,data_source='setrun.py', out_file='setauxinit.data'):
+
+        self.open_data_file(out_file, data_source)
+        self.nauxinits = len(self.auxinitfiles)
+
+        self.self.data_write("nauxinits", description="nauxinits")    
+        self._out_file.write("\n")
+
+        for tfile in self.auxinitfiles:
+            try:
+                fname = "'%s'" % os.path.abspath(tfile[-1])
+            except:
+                raise ValueError(f"*** Error: file not valid string {tfile[-1]}")
+
+            if len(fname) > 150:
+                raise ValueError(f"*** Error: file name too long (must be <150)  {tfile[-1]}")
+
+            if not os.path.exists(tfile[-1]):
+                raise ValueError(f"*** Error: file not found: {tfile[-1]}")
+            
+            self._out_file.write("\n%s  \n" % fname)
+            self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
+
+        self.close_data_file()
+
+
+    def write(self,data_source='setrun.py', out_file='setqinit_dclaw.data'):
+
+        self.open_data_file(out_file, data_source)
+        self.close_data_file()
 
 # Storm data
 class SurgeData(clawpack.clawutil.data.ClawData):
@@ -822,6 +829,24 @@ class BoussData1D(clawpack.clawutil.data.ClawData):
 
         self.close_data_file()
 
+class FlowGradesData(clawpack.clawutil.data.ClawData):
+    r"""
+    Flowgrades data object.
+    """
+    def __init__(self):
+        super(FlowGradesData,self).__init__()
+        self.add_attribute("flowgrades", [])
+        self.add_attribute("keep_fine", False)
+
+    def write(self,out_file='"setflowgrades.data"',data_source='setrun.py'):
+        self.nflowgrades = len(self.flowgrades)
+        self.open_data_file(out_file,data_source)
+        self.self.data_write("nflowgrades", description="nflowgrades")        
+        self._out_file.write("\n")
+        for flowgrade in self.flowgrades:
+            self._out_file.write(4 * "%g  " % tuple(flowgrade) + "\n")
+        self.self.data_write("keep_fine", description="keep_fine")        
+        self.close_data_file()
 
 
 # place DIG attributes and description in one place (since this is documents )
@@ -898,6 +923,8 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("curvature", 1)
         self.add_attribute("momlevel", 1)
 
+        self.close_data_file()
+
 
     def write(self,out_file='setdig.data',data_source='setrun.py'):
         self.open_data_file(out_file,data_source)
@@ -930,7 +957,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.self.data_write("curvature", description=_DIG_ATTRS["curvature"])
         self.self.data_write("momlevel", description=_DIG_ATTRS["momlevel"])
 
-
+        self.close_data_file()
 
 class PInitInputData(clawpack.clawutil.data.ClawData):
     r"""
@@ -955,3 +982,5 @@ class PInitInputData(clawpack.clawutil.data.ClawData):
         self.self.data_write("init_pmax_ratio", description=_DIG_ATTRS["init_pmax_ratio"])
         self.self.data_write("init_ptf", description=_DIG_ATTRS["init_ptf"])
         self.self.data_write("init_ptf2", description=_DIG_ATTRS["init_ptf2"])
+
+        self.close_data_file()
