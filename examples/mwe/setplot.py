@@ -13,10 +13,6 @@ import matplotlib.pyplot as plt
 from clawpack.geoclaw import topotools
 import os,sys
 
-cmax = 0.5
-cmin = -cmax
-
-cmax_land = 2.
 
 #--------------------------
 def setplot(plotdata=None):
@@ -30,7 +26,7 @@ def setplot(plotdata=None):
     """
 
 
-    from clawpack.visclaw import colormaps, geoplot
+    import clawpack.dclaw.plot as dplot
     from numpy import linspace
 
     if plotdata is None:
@@ -83,100 +79,25 @@ def setplot(plotdata=None):
     plotaxes.afteraxes = aa
 
 
-    # Water
-    plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    #plotitem.plot_var = geoplot.surface
-    plotitem.plot_var = geoplot.surface_or_depth
-    plotitem.pcolor_cmap = geoplot.tsunami_colormap
-    plotitem.pcolor_cmin = cmin
-    plotitem.pcolor_cmax = cmax
-    plotitem.add_colorbar = True
-    plotitem.colorbar_shrink = 0.7
-    plotitem.amr_celledges_show = [0,0,0]
-    plotitem.amr_patchedges_show = [0,0,0,0]
-    plotitem.amr_data_show = [1,1,1,1,1,0,0]
-
-    # Land
-    plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    plotitem.plot_var = geoplot.land
-    plotitem.pcolor_cmap = geoplot.land_colors
-    plotitem.pcolor_cmin = 0.0
-    plotitem.pcolor_cmax = cmax_land
-    plotitem.add_colorbar = False
-    plotitem.amr_celledges_show = [0]
-    plotitem.amr_patchedges_show = [0,0,0,0]
-    plotitem.amr_data_show = [1,1,1,1,1,0,0]
-
-    # add contour lines of bathy if desired:
+    # Surface
     plotitem = plotaxes.new_plotitem(plot_type='2d_contour')
-    plotitem.show = False
-    plotitem.plot_var = geoplot.topo
-    plotitem.contour_levels = linspace(-3000,-3000,1)
+    plotitem.plot_var = dplot.surface
+    plotitem.contour_levels = linspace(0,100,10)
     plotitem.amr_contour_colors = ['y']  # color on each level
     plotitem.kwargs = {'linestyles':'solid','linewidths':2}
     plotitem.amr_contour_show = [1,0,0]
     plotitem.celledges_show = 0
     plotitem.patchedges_show = 0
 
-    #-----------------------------------------
-    # Figure for coastal area
-    #-----------------------------------------
-    x1,x2,y1,y2 = [-0.005, 0.016, -0.01, 0.01]
-
-    plotfigure = plotdata.new_plotfigure(name="coastal area", figno=11)
-    plotfigure.show = True
-    plotfigure.kwargs = {'figsize': (6,7)}
-
-    # Set up for axes in this figure:
-    plotaxes = plotfigure.new_plotaxes()
-    plotaxes.scaled = False
-
-    plotaxes.xlimits = [x1, x2]
-    plotaxes.ylimits = [y1, y2]
-
-    def aa_withbox(current_data):
-        from pylab import plot
-        x1,x2,y1,y2 = (-0.009259, 0.013796, -0.005093, 0.005000)
-        if current_data.t > 5*60.:
-            plot([x1,x1,x2,x2,x1], [y1,y2,y2,y1,y1], 'w--')
-        aa(current_data)
-        
-    plotaxes.afteraxes = aa_withbox
-
-    # Water
+    # Depth
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    plotitem.plot_var = geoplot.surface
-    #plotitem.plot_var = geoplot.surface_or_depth
-    plotitem.pcolor_cmap = geoplot.tsunami_colormap
-    plotitem.pcolor_cmin = cmin
-    plotitem.pcolor_cmax = cmax
-    plotitem.add_colorbar = True
-    plotitem.colorbar_shrink = 0.4
-    plotitem.amr_celledges_show = [0,0,0]
-    plotitem.patchedges_show = 0
-
-    # Land
-    plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    plotitem.plot_var = geoplot.land
-    plotitem.pcolor_cmap = geoplot.land_colors
+    plotitem.plot_var = dplot.depth
     plotitem.pcolor_cmin = 0.0
-    plotitem.pcolor_cmax = cmax_land
-    plotitem.add_colorbar = False
+    plotitem.pcolor_cmax = 5
+    plotitem.add_colorbar = True
     plotitem.amr_celledges_show = [0]
-    plotitem.patchedges_show = 0
-
-    # add contour lines of bathy if desired:
-    plotitem = plotaxes.new_plotitem(plot_type='2d_contour')
-    #plotitem.show = False
-    plotitem.plot_var = geoplot.topo
-    plotitem.contour_levels = [-2,-1,0,1,2]
-    plotitem.amr_contour_colors = ['yellow']  # color on each level
-    plotitem.kwargs = {'linestyles':'solid','linewidths':1}
-    plotitem.amr_contour_show = [0,0,0,1]
-    plotitem.celledges_show = 0
-    plotitem.patchedges_show = 0
-
-
+    plotitem.amr_patchedges_show = [0,0,0,0]
+    plotitem.amr_data_show = [1,1,1,1,1,0,0]
 
     # Plots of timing (CPU and wall time):
 
