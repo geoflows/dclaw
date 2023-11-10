@@ -3,10 +3,7 @@ Useful things for plotting D-Claw results.
 """
 
 import numpy as np
-from matplotlib.colors import Normalize
 from numpy import ma as ma
-from pyclaw.geotools import topotools
-from pyclaw.plotters import colormaps
 
 
 # Indicies to elements of q and aux
