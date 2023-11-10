@@ -1,0 +1,5 @@
+*.data
+*.tt3
+.DS_store
+*.o
+*.mod
