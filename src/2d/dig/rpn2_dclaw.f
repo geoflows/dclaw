@@ -27,7 +27,7 @@ c
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-      use geoclaw_module, only: g => grav, drytol => dry_tolerance
+      use geoclaw_module, only: grav, dry_tolerance
       use geoclaw_module, only: earth_radius, deg2rad
       use amr_module, only: mcapa
 
@@ -48,7 +48,7 @@ c
       double precision  auxr(maux,1-mbc:maxm+mbc)
 
       !local
-      integer m,i,mw,maxiter,mhu,nhv,mcapa,icom,jcom,waves
+      integer m,i,mw,maxiter,mhu,nhv,waves
       double precision dtcom,dxcom,dycom,tcom
       double precision wall(3),fw(6,3),sw(3),wave(6,3)
       double precision lamL(3),lamR(3),beta(3)
@@ -69,6 +69,7 @@ c
       gmod=grav
       veltol = 1.d-3
       waves = 3
+      drytol = dry_tolerance
 
       !loop through Riemann problems at each grid cell
       do i=2-mbc,mx+mbc
@@ -323,12 +324,16 @@ c============= compute fluctuations=============================================
          do i=2-mbc,mx+mbc
             do  mw=1,mwaves
                if (s(mw,i) < 0.d0) then
-                     amdq(1:meqn,i) = amdq(1:meqn,i) + fwave(1:meqn,mw,i)
+                     amdq(1:meqn,i) = amdq(1:meqn,i)
+     &                              + fwave(1:meqn,mw,i)
                else if (s(mw,i) > 0.d0) then
-                  apdq(1:meqn,i)  = apdq(1:meqn,i) + fwave(1:meqn,mw,i)
+                  apdq(1:meqn,i)  = apdq(1:meqn,i)
+     &                          + fwave(1:meqn,mw,i)
                else
-                 amdq(1:meqn,i) = amdq(1:meqn,i) + 0.5d0 * fwave(1:meqn,mw,i)
-                 apdq(1:meqn,i) = apdq(1:meqn,i) + 0.5d0 * fwave(1:meqn,mw,i)
+                 amdq(1:meqn,i) = amdq(1:meqn,i)
+     &                              + 0.5d0 * fwave(1:meqn,mw,i)
+                 apdq(1:meqn,i) = apdq(1:meqn,i)
+     &                              + 0.5d0 * fwave(1:meqn,mw,i)
                endif
             enddo
          enddo

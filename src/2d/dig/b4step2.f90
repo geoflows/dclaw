@@ -24,7 +24,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     use amr_module, only: yhidomain => yupper
     use amr_module, only: xperdom,yperdom,spheredom,NEEDS_TO_BE_SET
 
-    use digclaw_module, only: i_theta,bed_normal
+    use digclaw_module, only: i_theta,bed_normal,admissibleq,calc_taudir
 
     implicit none
 

@@ -1,7 +1,7 @@
 
 module digclaw_module
 
-   use geoclaw_module
+   use geoclaw_module, only: dry_tolerance, grav, pi
 
    implicit none
 
