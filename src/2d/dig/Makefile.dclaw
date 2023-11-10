@@ -168,3 +168,12 @@ COMMON_SOURCES += \
   $(DIGLIB)/riemannsolvers_dclaw.f \
   $(DIGLIB)/rpn2_dclaw.f \
   $(DIGLIB)/rpt2_dclaw.f \
+
+# Construct input data
+input:
+	$(CLAW_PYTHON) setinput.py
+
+postprocess: 
+	$(CLAW_PYTHON) postprocess 
+
+
