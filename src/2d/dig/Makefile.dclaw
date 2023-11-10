@@ -153,7 +153,6 @@ COMMON_SOURCES += \
   $(GEOLIB)/prepbigstep.f \
   $(GEOLIB)/prepregstep.f \
   $(GEOLIB)/set_eta_init.f90 \
-  $(GEOLIB)/stepgrid.f \
 
 
 # list of source files from DIGCLAW library. 
@@ -177,5 +176,3 @@ input:
 
 postprocess: 
 	$(CLAW_PYTHON) postprocess 
-
-
