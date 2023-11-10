@@ -12,12 +12,18 @@ Classes representing parameters for D-Claw runs
  - FixedGridData
  - FGmaxData
  - DTopoData
- - QinitData
  - SurgeData
  - MultilayerData
- - FrictionData 
+ - FrictionData  
  - GridData1D
- - BoussData1D
+ - BoussData1D * remove?
+
+ - DClawInputData
+ - QinitDClawData
+ - AuxInitDClawData
+ - PInitDClawInputData
+ - FlowGradesData
+
 
 :Constants:
 
@@ -468,75 +474,6 @@ class ForceDry(clawpack.clawutil.data.ClawData):
         self.add_attribute('fname','')
 
 
-class QinitDClawData(clawpack.clawutil.data.ClawData):
-
-    def __init__(self):
-        super(QinitDClawData,self).__init__()
-        self.add_attribute('qinitfiles',[])
-
-    def write(self,data_source='setrun.py', out_file='setqinit_dclaw.data'):
-
-        self.open_data_file(out_file, data_source)
-        self.nqinits = len(self.qinitfiles)
-
-        self.self.data_write("nqinits", description="nqinits")    
-        self._out_file.write("\n")
-
-        for tfile in self.qinitfiles:
-            try:
-                fname = "'%s'" % os.path.abspath(tfile[-1])
-            except:
-                raise ValueError(f"*** Error: file not valid string {tfile[-1]}")
-
-            if len(fname) > 150:
-                raise ValueError(f"*** Error: file name too long (must be <150)  {tfile[-1]}")
-
-            if not os.path.exists(tfile[-1]):
-                raise ValueError(f"*** Error: file not found: {tfile[-1]}")
-            
-            self._out_file.write("\n%s  \n" % fname)
-            self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
-
-        self.close_data_file()
-
-
-class AuxInitDClawData(clawpack.clawutil.data.ClawData):
-
-    def __init__(self):
-        super(AuxInitDClawData,self).__init__()
-        self.add_attribute('auxinitfiles',[])
-
-    def write(self,data_source='setrun.py', out_file='setauxinit.data'):
-
-        self.open_data_file(out_file, data_source)
-        self.nauxinits = len(self.auxinitfiles)
-
-        self.self.data_write("nauxinits", description="nauxinits")    
-        self._out_file.write("\n")
-
-        for tfile in self.auxinitfiles:
-            try:
-                fname = "'%s'" % os.path.abspath(tfile[-1])
-            except:
-                raise ValueError(f"*** Error: file not valid string {tfile[-1]}")
-
-            if len(fname) > 150:
-                raise ValueError(f"*** Error: file name too long (must be <150)  {tfile[-1]}")
-
-            if not os.path.exists(tfile[-1]):
-                raise ValueError(f"*** Error: file not found: {tfile[-1]}")
-            
-            self._out_file.write("\n%s  \n" % fname)
-            self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
-
-        self.close_data_file()
-
-
-    def write(self,data_source='setrun.py', out_file='setqinit_dclaw.data'):
-
-        self.open_data_file(out_file, data_source)
-        self.close_data_file()
-
 # Storm data
 class SurgeData(clawpack.clawutil.data.ClawData):
     r"""Data object describing storm surge related parameters"""
@@ -752,9 +689,6 @@ class MultilayerData(clawpack.clawutil.data.ClawData):
         self.close_data_file()
 
 
-
-
-
 #  Gauge data object removed, version from amrclaw works in 1d
 #class GaugeData1D(clawpack.clawutil.data.ClawData):
 
@@ -829,28 +763,12 @@ class BoussData1D(clawpack.clawutil.data.ClawData):
 
         self.close_data_file()
 
-class FlowGradesData(clawpack.clawutil.data.ClawData):
-    r"""
-    Flowgrades data object.
-    """
-    def __init__(self):
-        super(FlowGradesData,self).__init__()
-        self.add_attribute("flowgrades", [])
-        self.add_attribute("keep_fine", False)
-
-    def write(self,out_file='"setflowgrades.data"',data_source='setrun.py'):
-        self.nflowgrades = len(self.flowgrades)
-        self.open_data_file(out_file,data_source)
-        self.self.data_write("nflowgrades", description="nflowgrades")        
-        self._out_file.write("\n")
-        for flowgrade in self.flowgrades:
-            self._out_file.write(4 * "%g  " % tuple(flowgrade) + "\n")
-        self.self.data_write("keep_fine", description="keep_fine")        
-        self.close_data_file()
 
 class DClawInputData(clawpack.clawutil.data.ClawData):
     r"""
     D-Claw data object
+
+    See description text for explaination.
     """
 
     def __init__(self, ndim):
@@ -921,13 +839,170 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
 
         self.close_data_file()
 
-class PInitInputData(clawpack.clawutil.data.ClawData):
+class QinitDClawData(clawpack.clawutil.data.ClawData):
+    r"""
+    Qinit data class for D-Claw
+
+    To set input data files for the q array, similar to setting 
+    topo files append lists with the following elements:
+    
+        [qinitftype,iqinit, minlev, maxlev, fname]
+
+    where:
+    
+    - qinitftype: 
+        file-type, same as topo files, ie: 1, 2 or 3
+    - iqinit: 
+        The following values are allowed for iqinit:
+            n=1,meqn perturbation of q(i,j,n)
+            except for n=7 (b_eroded)
+            n=meqn+1: surface elevation eta is defined by 
+            the file and results in h=max(eta-b,0)
+
+            TODO, if h and eta are both defined, which wins
+    
+    - minlev:
+    - maxlev: 
+    - fname: 
+
+    TODO: will this way of setting flagregions work win 5.x?
+
+    The elements of q accessible through setqinit are:
+    - q1, h: 
+        depth (most common value to be set this way)
+    - q2, hu: 
+        depth * x-directed velocity (unlikley to be set 
+        in this way)
+        If specified in this way, provide u rather than h*u
+        If not provided, hu is initialized to 0
+    - q3, hv: 
+        depth * y-directed velocity (unlikley to be set 
+        in this way)
+        If specified in this way, provide v rather than h*v
+        If not provided, hu is initialized to 0
+    - q4, hm: 
+        depth * solid volume fraction (provide m to 
+        setqinit, not h*m)
+        If not specified, hm is initialized as h*m0
+    - q5, pb: 
+        basal pressure
+        Provided as pb/h rather than the absolute value
+        of pb
+    - q6, hchi: 
+        depth * chi, the fraction of species 1
+        If specified this way, provide chi rather than h*chi
+        TODO: should be chi_init_val rather than 0.5 by default
+
+    - q7, b_eroded: depth of material removed by
+      entrainment (cannot be set in this way as it
+      must start as zero).
+    - q8, eta: h+b 
+
+
+    """
+    def __init__(self):
+        super(QinitDClawData,self).__init__()
+        self.add_attribute('qinitfiles',[])
+
+    def write(self,data_source='setrun.py', out_file='setqinit_dclaw.data'):
+
+        self.open_data_file(out_file, data_source)
+        self.nqinits = len(self.qinitfiles)
+
+        self.self.data_write("nqinits", description="nqinits")    
+        self._out_file.write("\n")
+
+        for tfile in self.qinitfiles:
+            try:
+                fname = "'%s'" % os.path.abspath(tfile[-1])
+            except:
+                raise ValueError(f"*** Error: file not valid string {tfile[-1]}")
+
+            if len(fname) > 150:
+                raise ValueError(f"*** Error: file name too long (must be <150)  {tfile[-1]}")
+
+            if not os.path.exists(tfile[-1]):
+                raise ValueError(f"*** Error: file not found: {tfile[-1]}")
+            
+            self._out_file.write("\n%s  \n" % fname)
+            self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
+
+        self.close_data_file()
+
+class AuxInitDClawData(clawpack.clawutil.data.ClawData):
+    r"""
+    AuxInit data class for D-Claw
+
+    To set input data files for the aux array, similar to setting 
+    topo files append lists with the following elements:
+    
+        [auxinitftype,iauxinit, minlev, maxlev, fname]
+
+    where:
+    
+    - auxinitftype: 
+        file-type, same as topo files, ie: 1, 2 or 3
+    - iauxinit: 
+        The following values are allowed for iauxinit:
+            n=1,maux perturbation of aux(i,j,n)
+    - minlev:
+    - maxlev: 
+    - fname: 
+
+    The elements of aux that are accessible in this way are:
+
+    - aux1, topographic elevation, b
+    - aux2 and aux3, capacity arrays for handling latitude and longitude.
+    - aux4, phi, friction angle (TODO remove)
+    - aux5, depth of erodible material OR theta, slope angle in X direction (TODO change so these do not share)
+    - aux6, fs, factor of safety (TODO remove?)
+    - aux7,fsphi, (TODO what is this?)
+    - aux8, taudir_x, friction direction
+    - aux9, taudir_y, friction direction
+
+    """
+    def __init__(self):
+        super(AuxInitDClawData,self).__init__()
+        self.add_attribute('auxinitfiles',[])
+
+    def write(self,data_source='setrun.py', out_file='setauxinit.data'):
+
+        self.open_data_file(out_file, data_source)
+        self.nauxinits = len(self.auxinitfiles)
+
+        self.self.data_write("nauxinits", description="nauxinits")    
+        self._out_file.write("\n")
+
+        for tfile in self.auxinitfiles:
+            try:
+                fname = "'%s'" % os.path.abspath(tfile[-1])
+            except:
+                raise ValueError(f"*** Error: file not valid string {tfile[-1]}")
+
+            if len(fname) > 150:
+                raise ValueError(f"*** Error: file name too long (must be <150)  {tfile[-1]}")
+
+            if not os.path.exists(tfile[-1]):
+                raise ValueError(f"*** Error: file not found: {tfile[-1]}")
+            
+            self._out_file.write("\n%s  \n" % fname)
+            self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
+
+        self.close_data_file()
+
+
+    def write(self,data_source='setrun.py', out_file='setqinit_dclaw.data'):
+
+        self.open_data_file(out_file, data_source)
+        self.close_data_file()
+
+class PInitDClawInputData(clawpack.clawutil.data.ClawData):
     r"""
     D-Claw pressure initialization data object
     """
 
     def __init__(self, ndim):
-        super(PInitInputData, self).__init__()
+        super(PInitDClawInputData, self).__init__()
 
         # Set default values:
         self.add_attribute("init_ptype", 0)
@@ -935,7 +1010,7 @@ class PInitInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("init_ptf", 1.0)
         self.add_attribute("init_ptf2", 0.0)
 
-    def write(self,out_file='setpinit.data',data_source='setrun.py'):
+    def write(self,out_file='setpinit_dclaw.data',data_source='setrun.py'):
         self.open_data_file(out_file,data_source)   
 
         print("Creating data file setpinit.data")
@@ -945,4 +1020,53 @@ class PInitInputData(clawpack.clawutil.data.ClawData):
         self.self.data_write("init_ptf", description="p(init_ptf) = failure, pressure will rise until t = init_ptf without dilatancy")
         self.self.data_write("init_ptf2", description="p(init_ptf2)= hydro*init_pmax_ratio, pressure will rise until t = init_ptf2")
 
+        self.close_data_file()
+
+class FlowGradesData(clawpack.clawutil.data.ClawData):
+    r"""
+    Flowgrades data object.
+
+    For using flowgrades for refinement append lines of the form
+    
+    [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
+    
+    where:
+    
+    - flowgradevalue: 
+        floating point relevant flowgrade value for following measure:
+    - flowgradevariable: 
+        1=depth, 
+        2= momentum, 
+        3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
+    - flowgradetype: 
+        1 = norm(flowgradevariable), 
+        2 = norm(grad(flowgradevariable))
+    - flowgrademinlevel: 
+        refine to at least this level if flowgradevalue is exceeded.
+
+    flowgradesdata.flowgrades = []
+    flowgradesdata.flowgrades.append([1.0e-6, 2, 1, 1])
+
+    Additionally, to turn on "keep fine" refinement, set
+
+    flowgradesdata.keep_fine = True
+
+    If the finest grid level meets the flowgrades refinement criteria, 
+    a coarser grid containing it that does not itself meet the refinement
+    criteria will stay refined.
+    
+    """
+    def __init__(self):
+        super(FlowGradesData,self).__init__()
+        self.add_attribute("flowgrades", [])
+        self.add_attribute("keep_fine", False)
+
+    def write(self,out_file='"setflowgrades.data"',data_source='setrun.py'):
+        self.nflowgrades = len(self.flowgrades)
+        self.open_data_file(out_file,data_source)
+        self.self.data_write("nflowgrades", description="nflowgrades")        
+        self._out_file.write("\n")
+        for flowgrade in self.flowgrades:
+            self._out_file.write(4 * "%g  " % tuple(flowgrade) + "\n")
+        self.self.data_write("keep_fine", description="keep_fine")        
         self.close_data_file()
