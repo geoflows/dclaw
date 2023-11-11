@@ -87,10 +87,10 @@ c
          !Initialize Riemann problem for grid interface
 
          do mw=1,mwaves
-            s(i,mw)=0.d0
+            s(mw,i)=0.d0
             !entropy(mw)=.false.
             do m=1,meqn
-               fwave(i,m,mw)=0.d0
+               fwave(m,mw,i)=0.d0
             enddo
          enddo
          do mw=1,waves
@@ -252,11 +252,11 @@ c        !eliminate ghost fluxes for wall
             enddo
          enddo
 
-         s(i,1) = sw(1)
-         s(i,2) = sw(2)
-         s(i,3) = sw(2)
-         s(i,4) = sw(2)
-         s(i,5) = sw(3)
+         s(1,i) = sw(1)
+         s(2,i) = sw(2)
+         s(3,i) = sw(2)
+         s(4,i) = sw(2)
+         s(5,i) = sw(3)
 
          fwave(1,1,i) =   fw(1,1)
          fwave(1,mhu,i) = fw(2,1)

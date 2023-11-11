@@ -23,6 +23,7 @@ COMMON_MODULES += \
  $(GEOLIB)/gauges_module.f90 \
  $(GEOLIB)/multilayer/multilayer_module.f90 \
  $(GEOLIB)/friction_module.f90 \
+ $(DIGLIB)/refinement_module.f90 \
  $(GEOLIB)/adjointsup_module.f90 
 
 #list of common modules needed for dclaw codes
@@ -30,7 +31,6 @@ COMMON_MODULES += \
  $(DIGLIB)/qinit_module.f90 \
  $(DIGLIB)/auxinit_module.f90 \
  $(DIGLIB)/digclaw_module.f90 \
- $(DIGLIB)/refinement_module.f90 \
 
 
 # list of source files from AMR library. 
