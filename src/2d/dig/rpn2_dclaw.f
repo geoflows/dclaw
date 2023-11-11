@@ -259,39 +259,39 @@ c        !eliminate ghost fluxes for wall
          s(5,i) = sw(3)
 
          fwave(1,1,i) =   fw(1,1)
-         fwave(1,mhu,i) = fw(2,1)
-         fwave(1,nhv,i) = fw(3,1)
-         fwave(1,4,i)   = fw(4,1)
-         fwave(1,5,i) =   fw(5,1)
-         !fwave(1,6,i) =   fw(6,1)
+         fwave(mhu,1,i) = fw(2,1)
+         fwave(nhv,1,i) = fw(3,1)
+         fwave(4,1,i)   = fw(4,1)
+         fwave(5,1,i) =   fw(5,1)
+         fwave(6,1,i) =   fw(6,1)
 
-         fwave(5,1,i) =   fw(1,3)
-         fwave(5,mhu,i) = fw(2,3)
-         fwave(5,nhv,i) = fw(3,3)
-         fwave(5,4,i)   = fw(4,3)
+         fwave(1,5,i) =   fw(1,3)
+         fwave(mhu,5,i) = fw(2,3)
+         fwave(nhv,5,i) = fw(3,3)
+         fwave(4,5,i)   = fw(4,3)
          fwave(5,5,i) =   fw(5,3)
-         !fwave(5,6,i) =   fw(6,3)
+         fwave(6,5,i) =   fw(6,3)
 
-         fwave(2,1,i) =   fw(1,2)
-         fwave(2,mhu,i) = fw(2,2)
-         fwave(2,nhv,i) = fw(3,2)
-         fwave(2,4,i)   = 0.0
-         fwave(2,5,i) =  0.0
-         !fwave(2,6,i) = fw(6,2)
+         fwave(1,2,i) =   fw(1,2)
+         fwave(mhu,2,i) = fw(2,2)
+         fwave(nhv,2,i) = fw(3,2)
+         fwave(4,2,i)   = 0.0
+         fwave(5,i) =  0.0
+         fwave(6,2,i) = fw(6,2)
 
-         fwave(3,1,i) =   0.0
-         fwave(3,mhu,i) = 0.0
-         fwave(3,nhv,i) = 0.0
-         fwave(3,4,i)   = fw(4,2)
-         fwave(3,5,i) =  0.0
-         !fwave(3,6,i) =  0.0
+         fwave(1,3,i) =   0.0
+         fwave(mhu,3,i) = 0.0
+         fwave(nhv,3,i) = 0.0
+         fwave(4,3,i)   = fw(4,2)
+         fwave(5,3,i) =  0.0
+         fwave(6,3,i) =  0.0
 
-         fwave(4,1,i) =   0.0
-         fwave(4,mhu,i) = 0.0
-         fwave(4,nhv,i) = 0.0
+         fwave(1,4,i) =   0.0
+         fwave(mhu,4,i) = 0.0
+         fwave(nhv,4,i) = 0.0
          fwave(4,4,i)   = 0.0
-         fwave(4,5,i) =  fw(5,2)
-         !fwave(4,6,i) =  0.0
+         fwave(5,4,i) =  fw(5,2)
+         fwave(6,4,i) =  0.0
 
  30      continue
       enddo
