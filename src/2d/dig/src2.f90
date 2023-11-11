@@ -51,7 +51,7 @@
                dtheta = -(aux(i_theta,i+1,j) - theta)/dx
             endif
 
-            !call admissibleq(q(i,j,1),q(i,j,2),q(i,j,3),q(i,j,4),q(i,j,5),u,v,m,theta)
+            !call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j),q(4,i,j),q(5,i,j),u,v,m,theta)
             h = q(1,i,j)
             if (h<=dry_tolerance) cycle
             hu = q(2,i,j)
