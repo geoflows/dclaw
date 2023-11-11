@@ -567,8 +567,8 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             vnorm = sqrt(hu**2 + hv**2)
             if (vnorm>0.d0) then
-               aux(i,j,i_taudir_x) = -hu/sqrt(hv**2+hu**2)
-               aux(i,j,i_taudir_y) = -hv/sqrt(hv**2+hu**2)
+               aux(i_taudir_x,i,j) = -hu/sqrt(hv**2+hu**2)
+               aux(i_taudir_y,i,j) = -hv/sqrt(hv**2+hu**2)
 
                dot = min(max(0.d0,Fx*hu) , max(0.d0,Fy*hv))
                if (dot>0.0) then
