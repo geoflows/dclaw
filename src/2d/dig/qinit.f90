@@ -3,13 +3,14 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     
     use geoclaw_module, only: sea_level
     use amr_module, only: t0
-    use qinit_module, only: qinit_type,add_perturbation
-    use qinit_module, only: variable_eta_init
-    use qinit_module, only: force_dry,use_force_dry,mx_fdry, my_fdry
-    use qinit_module, only: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry
-    use qinit_module, only: dx_fdry, dy_fdry
-    use qinit_module, only: tend_force_dry
-    use qinit_module, only: qinitwork
+    !use qinit_module, only: qinit_type,add_perturbation
+    !use qinit_module, only: variable_eta_init
+    !use qinit_module, only: force_dry,use_force_dry,mx_fdry, my_fdry
+    !use qinit_module, only: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry
+    !use qinit_module, only: dx_fdry, dy_fdry
+    !use qinit_module, only: tend_force_dry
+    !use qinit_module, only: qinitwork
+    use qinit_module
     use digclaw_module  !!DIG specify which variables
 
     
@@ -131,12 +132,15 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
                      i1 = i0qinit(mf)
                      i2 = i0qinit(mf)+mqinit(mf)-1
-                     dq = topointegral(ximc,xc,xipc,yjmc,yc,yjpc, &
+                     dq = topointegral(ximc,xipc,yjmc,yjpc, &
                         xlowqinit(mf),ylowqinit(mf), &
                         dxqinit(mf),dyqinit(mf), &
                         mxqinit(mf),myqinit(mf), &
                         qinitwork(i1:i2), 1)
                          ! qinitwork(i0qinit(mf):i0qinit(mf)+mqinit(mf)-1) ,1)
+                     write(*,*) dq
+                     write(*,*) ((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+         
                      dq=dq/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
 
                      if (iqinit(mf).le.meqn) then

@@ -15,13 +15,13 @@ print('Input files will be put in directory %s' % inputdir)
 ### Create topography as a simple slope
 
 # Define piecewise linear function (unequally spaced):
-xland = np.array([-1,0, 100, 200, 300, 400,401])
+xland = np.array([-5,0, 100, 200, 300, 400,405])
 zland = np.array([101,100, 50, 25, 12, 0,-1])
 
 # Set dx, ymin, and ymax
-dx = 10
-ymin = -1
-ymax = 51
+dx = 2
+ymin = -5
+ymax = 55
 
 # Interpolate to equally spaced grid for topofile:
 xo = np.arange(xland.min(), xland.max(), dx)

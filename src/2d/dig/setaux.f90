@@ -102,45 +102,9 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
         end do
     end if
 
-    ! Storm fields if used
-    if (wind_forcing) then
-        aux(wind_index, :, :) = 0.d0
-        aux(wind_index + 1, :, :) = 0.d0
-    endif
-    if (pressure_forcing) then
-        aux(pressure_index, :, :) = ambient_pressure
-    endif
-
-    ! Innerproduct field if used
-    if (adjoint_flagging) then
-        do jj=1-mbc,my+mbc
-            do ii=1-mbc,mx+mbc
-                if (aux(1,ii,jj) .eq. NEEDS_TO_BE_SET) then
-                    aux(innerprod_index,ii,jj) = 0.d0
-                endif
-            enddo
-        enddo
-    endif
-
-
-    ! ==========================================================================
-    !  Set Bathymetry
-    ! Set analytical bathymetry here if requested
-    if (test_topography > 0) then
-        do jj = 1 - mbc, my + mbc
-            ym = ylower + (jlo+jj-1.d0) * dy
-            yp = ylower + (jlo+jj) * dy
-            y = 0.5d0*(ym+yp)
-            do ii = 1 - mbc, mx + mbc
-                xm = xlower + (ilo+ii-1.d0) * dx
-                xp = xlower + (ilo+ii) * dx
-                x = 0.5d0*(xm+xp)
-                aux(1,ii,jj) = test_topo(x)
-            end do
-        end do
 
     ! Set bathymetry based on input files
-    else if (mtopofiles > 0) then
+    if (mtopofiles > 0) then
 
         do jj=1-mbc,my+mbc
             ym = ylower + (jlo+jj-1.d0) * dy
@@ -233,10 +197,6 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
         enddo
     endif
 
-    ! If using a variable friction field initialize the coefficients to 0
-    if (variable_friction) then
-        call set_friction_field(mx, my, mbc, maux, xlow, ylow, dx, dy, aux)
-    endif
     
     !=================================
     !DIG:  Adapted from D-Claw...
@@ -293,14 +253,18 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
                      yjmc=dmax1(yjm,ylowauxinit(mf))
                      yc=0.5d0*(yjmc+yjpc)
 
-                     daux =topointegral(ximc,xc,xipc,yjmc,yc,yjpc, &
+                     daux =topointegral(ximc,xipc,yjmc,yjpc, &
                              xlowauxinit(mf),ylowauxinit(mf), &
                              dxauxinit(mf),dyauxinit(mf), &
                              mxauxinit(mf),myauxinit(mf), &
                              auxinitwork(i0auxinit(mf):i0auxinit(mf) &
                              +mauxinit(mf)-1), 1)
-                     daux=daux/((xipc-ximc)*(yjpc-yjmc)*aux(i,j,2))
-                     aux(i,j,iauxinit(mf)) = aux(i,j,iauxinit(mf))+daux
+
+                     write(*,*) daux
+                     write(*,*) ((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     daux=daux/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+
+                     aux(iauxinit(mf),i,j) = aux(iauxinit(mf),i,j)+daux
                   endif
                enddo
             enddo
@@ -317,7 +281,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
       if (use_phi_bed) then
          do j=1-mbc,my+mbc
             do i=1-mbc,mx+mbc
-               aux(i,j,i_phi) = phi_bed
+               aux(i_phi,i,j) = phi_bed
             enddo
          enddo
       endif
@@ -325,7 +289,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
       if (use_theta_input) then
          do j=1-mbc,my+mbc
             do i=1-mbc,mx+mbc
-               aux(i,j,i_theta) = theta_input
+               aux(i_theta,i,j) = theta_input
             enddo
          enddo
       endif
@@ -334,13 +298,13 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
       if (friction_correction) then
         do j=1-mbc+1,my+mbc-1
             do i=1-mbc+1,mx+mbc-1
-              b_x = (aux(i+1,j,1)-aux(i-1,j,1))/(2.d0*dx)
-              b_y = (aux(i,j+1,1)-aux(i,j-1,1))/(2.d0*dy)
+              b_x = (aux(1,i+1,j)-aux(1,i-1,j))/(2.d0*dx)
+              b_y = (aux(1,i,j+1)-aux(1,i,j-1))/(2.d0*dy)
               gradang = atan(sqrt(b_x**2+b_y**2))
               kappa=1.d0
-              phi_tread = tan(aux(i,j,i_phi)-gradang) &
+              phi_tread = tan(aux(i_phi,i,j)-gradang) &
                     +2.d0*kappa*tan(gradang)
-              aux(i,j,i_phi) = phi_tread
+              aux(i_phi,i,j) = phi_tread
             enddo
          enddo
       endif
