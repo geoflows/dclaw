@@ -138,9 +138,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                         mxqinit(mf),myqinit(mf), &
                         qinitwork(i1:i2), 1)
                          ! qinitwork(i0qinit(mf):i0qinit(mf)+mqinit(mf)-1) ,1)
-                     write(*,*) dq
-                     write(*,*) ((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
-         
+
                      dq=dq/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
 
                      if (iqinit(mf).le.meqn) then

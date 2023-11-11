@@ -263,8 +263,6 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
                              auxinitwork(i0auxinit(mf):i0auxinit(mf) &
                              +mauxinit(mf)-1), 1)
 
-                     write(*,*) daux
-                     write(*,*) ((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
                      daux=daux/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
 
                      aux(iauxinit(mf),i,j) = aux(iauxinit(mf),i,j)+daux

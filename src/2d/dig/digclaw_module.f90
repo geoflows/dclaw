@@ -603,7 +603,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   aux(i_taudir_y,i,j) = 1.d0
                endif
 
-               if ((aux(i,j,i_taudir_y)**2 + aux(i,j,i_taudir_x)**2)>0.0) then
+               if ((aux(i_taudir_y,i,j)**2 + aux(i_taudir_x,i,j)**2)>0.0) then
                   aux(i_fsphi,i,j) = 1.d0
                else
                   aux(i_fsphi,i,j) = 0.d0
