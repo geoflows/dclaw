@@ -3,7 +3,7 @@
    !=========================================================
       subroutine src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)
    !=========================================================
-      use geoclaw_module
+      use geoclaw_module, only: grav, dry_tolerance,deg2rad
       use digclaw_module
 
       implicit none
@@ -32,7 +32,7 @@
 
       gmod=grav
       coeff = coeffmanning
-      tol = drytolerance !# to prevent divide by zero in gamma
+      tol = dry_tolerance !# to prevent divide by zero in gamma
       curvature = 0 !add friction due to curvature acceleration
       !write(*,*) 'src:init,value',p_initialized,init_pmin_ratio
       if (entrainment>0) then
@@ -53,7 +53,7 @@
 
             !call admissibleq(q(i,j,1),q(i,j,2),q(i,j,3),q(i,j,4),q(i,j,5),u,v,m,theta)
             h = q(1,i,j)
-            if (h<=drytolerance) cycle
+            if (h<=dry_tolerance) cycle
             hu = q(2,i,j)
             hv = q(3,i,j)
             hm = q(4,i,j)
@@ -86,11 +86,11 @@
 
 
             if (hvnorm>0.d0.and.curvature==1) then
-               b_xx=(aux(1,i+1,j)-2.d0*aux(1,i,j,1)+aux(1,i-1,j))/(dx**2)
+               b_xx=(aux(1,i+1,j)-2.d0*aux(1,i,j)+aux(1,i-1,j))/(dx**2)
                b_yy=(aux(1,i,j+1)-2.d0*aux(1,i,j)+aux(1,i,j-1))/(dy**2)
                b_xy=(aux(1,i+1,j+1)-aux(1,i-1,j+1) -aux(1,i+1,j-1)+aux(1,i-1,j-1))/(4.0*dx*dy)
                chi = (u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy)/gmod
-               chi = max(chi,-1.0)
+               chi = max(chi,-1.d0)
                taucf = chi*tau
                hvnorm = dmax1(0.d0,hvnorm - dti*taucf/rho)
                taucf = u**2*dtheta*tau/gmod
@@ -180,11 +180,11 @@
             vlow = 0.1d0
 
             if (ent.and.vnorm.gt.vlow.and.(aux(i,j,i_theta)>0.d0)) then
-               b_x = (aux(i+1,j,1)+q(i+1,j,7)-aux(i-1,j,1)-q(i-1,j,7))/(2.d0*dx)
-               b_y = (aux(i,j+1,1)+q(i,j+1,7)-aux(i,j-1,1)-q(i,j-1,7))/(2.d0*dy)
+               b_x = (aux(1,i+1,j)+q(7,i+1,j)-aux(1,i-1,j)-q(7,i-1,j))/(2.d0*dx)
+               b_y = (aux(1,i,j+1)+q(7,i,j+1)-aux(1,i,j-1)-q(7,i,j-1))/(2.d0*dy)
                dbdv = (u*b_x+v*b_y)/vnorm
                slopebound = 1.d10
-               b_eroded = q(i,j,7)
+               b_eroded = q(7,i,j)
                if (dbdv<slopebound.and.b_eroded<aux(i,j,i_theta)) then
                   b_remaining = aux(i,j,i_theta)-b_eroded
                   m2 = 0.6d0
@@ -213,7 +213,7 @@
                   dh = min(dh,b_remaining)
                   h = h + dh
                   hm = hm + dh*m2
-                  q(i,j,7) = q(i,j,7) + dh
+                  q(7,i,j) = q(7,i,j) + dh
 
                   call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                   call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
@@ -252,7 +252,7 @@
                   phi = aux(i_phi,i,j)
                   theta = aux(i_theta,i,j)
                   call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                  if (h<tol) cycle
+                  if (h<dry_tol) cycle
                   pm = q(6,i,j)/h
                   pm = max(0.0,pm)
                   pm = min(1.0,pm)
