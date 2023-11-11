@@ -45,7 +45,7 @@ print('Created ', topofile)
 ### Create initial value for q1, depth
 
 # Define piecewise linear function (unequally spaced):
-xdepth = np.array([10, 20])
+xdepth = np.array([100, 120])
 zdepth = np.array([5, 5])
 
 # Set dx, ymin, and ymax

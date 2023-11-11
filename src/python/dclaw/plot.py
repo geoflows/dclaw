@@ -86,10 +86,10 @@ def surface(current_data):
     Surface is eta = h+topo, assumed to be output as 4th column of fort.q
     files.
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 1e-3  #current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
-    eta = q[:, :, i_eta]
+    h = q[i_h, :, :]
+    eta = q[i_eta, :, :]
     water = ma.masked_where(h <= drytol, eta)
     return water
 
@@ -100,7 +100,7 @@ def surface_solid_frac_lt03(current_data):
     Surface is eta = h+topo, assumed to be output as 4th column of fort.q
     files.
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 1e-3  #current_data.plotdata.drytolerance
     q = current_data.q
     h = q[:, :, i_h]
     eta = q[:, :, i_eta]
@@ -119,10 +119,10 @@ def depth(current_data):
     """
     Return a masked array containing the depth of fluid only in wet cells.
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 1e-3  #current_data.plotdata.drytolerance
     # drytol = 5.e-2
     q = current_data.q
-    h = q[:, :, i_h]
+    h = q[i_h, :, :]
     depth = ma.masked_where(h <= drytol, h)
     return depth
 

@@ -72,14 +72,14 @@ def setrun(claw_pkg='dclaw'):
 
 
     # Lower and upper edge of computational domain:
-    clawdata.lower[0] = 0
-    clawdata.upper[0] = 100
-    clawdata.lower[1] = 0
-    clawdata.upper[1] = 50
+    clawdata.lower[0] = 10
+    clawdata.upper[0] = 380
+    clawdata.lower[1] = 10
+    clawdata.upper[1] = 40
 
     # choose mx and my so coarsest grid has 2 minute resolution:
     clawdata.num_cells[0] = 100
-    clawdata.num_cells[1] = 50
+    clawdata.num_cells[1] = 25
 
 
     # ---------------
