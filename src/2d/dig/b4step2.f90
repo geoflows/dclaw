@@ -50,10 +50,10 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
         do i=1-mbc,mx+mbc
             theta = 0.d0
             if (bed_normal.eq.1) theta=aux(i_theta,i,j)
-            call admissibleq(q(i,j,1),q(i,j,2),q(i,j,3),q(i,j,4),q(i,j,5),u,v,sv,theta)
-            q(i,j,6) = min(q(i,j,6),q(i,j,1))
-            q(i,j,6) = max(q(i,j,6),0.0)
-            q(i,j,7) = max(q(i,j,7),0.0)
+            call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j),q(4,i,j),q(5,i,j),u,v,sv,theta)
+            q(6,i,j) = min(q(6,i,j),q(1,i,j))
+            q(6,i,j) = max(q(6,i,j),0.0d0)
+            q(7,i,j) = max(q(7,i,j),0.0d0)
         enddo
     enddo
 
