@@ -189,7 +189,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                if (initpv.eq.1) then
                   q(5,i,j) = q(1,i,j)*q(5,i,j)
                endif
-               if (q(1,i,j).le.drytolerance) then
+               if (q(1,i,j).le.dry_tolerance) then
                   do m = 1,meqn
                      q(m,i,j) = 0.d0
                   enddo
@@ -218,7 +218,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
                   p_ratioij = init_pmin_ratio
-                  if (q(1,i,j).le.drytolerance) then
+                  if (q(1,i,j).le.dry_tolerance) then
                      q(5,i,j) = init_pmin_ratio*rho_f*gmod*q(1,i,j)
                      cycle
                   endif
@@ -240,7 +240,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
                  p_ratioij = init_pmin_ratio
-                 if (q(1,i,j).le.drytolerance) then
+                 if (q(1,i,j).le.dry_tolerance) then
                      q(5,i,j) = init_pmin_ratio*rho_f*gmod*q(1,i,j)
                      cycle
                  endif

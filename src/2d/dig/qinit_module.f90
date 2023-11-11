@@ -665,9 +665,8 @@ contains
                 read(iunit,*) my
                 read(iunit,*) xll
                 read(iunit,*) yll
-                read(iunit,*) dx
+                read(iunit,*) dx, dy
                 read(iunit,*) nodata_value
-                dy = dx
                 xhi = xll + (mx-1)*dx
                 yhi = yll + (my-1)*dy
 
