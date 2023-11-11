@@ -252,6 +252,7 @@ c        !eliminate ghost fluxes for wall
             enddo
          enddo
 
+         ! DIG : Check all indexing. 
          s(1,i) = sw(1)
          s(2,i) = sw(2)
          s(3,i) = sw(2)

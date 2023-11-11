@@ -123,7 +123,7 @@ subroutine update (level, nvar, naux)
                         hsum = 0.d0
                         !husum = 0.d0
                         !hvsum = 0.d0
-                        do ivar=2,ivar
+                        do ivar=2,nvar
                             husum(ivar) = 0.d0
                         enddo
 
