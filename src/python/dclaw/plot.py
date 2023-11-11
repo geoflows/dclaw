@@ -42,7 +42,7 @@ def gmod(current_data):
 
     if bed_normal == 1:
         aux = current_data.aux
-        theta = aux[:, :, i_theta]
+        theta = aux[i_theta,:, :]
         gmod = grav * np.cos(theta)
 
     return gmod
@@ -54,7 +54,7 @@ def eta(current_data):
     Return eta
     """
     q = current_data.q
-    eta = q[:, :, i_eta]
+    eta = q[i_eta,:, :]
     return eta
 
 
@@ -63,8 +63,8 @@ def topo(current_data):
     Return topography = eta - h.
     """
     q = current_data.q
-    h = q[:, :, i_h]
-    eta = q[:, :, i_eta]
+    h = q[i_h,:, :]
+    eta = q[i_eta,:, :]
     topo = eta - h
     return topo
 
@@ -73,10 +73,10 @@ def land(current_data):
     """
     Return a masked array containing the surface elevation only in dry cells.
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
-    eta = q[:, :, i_eta]
+    h = q[i_h,:, :]
+    eta = q[i_eta,:, :]
     land = ma.masked_where(h > drytol, eta)
     return land
 
@@ -102,9 +102,9 @@ def surface_solid_frac_lt03(current_data):
     """
     drytol = 1e-3  #current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
-    eta = q[:, :, i_eta]
-    hm = q[:, :, i_hm]
+    h = q[i_h,:, :]
+    eta = q[i_eta,:, :]
+    hm = q[i_hm,:, :]
 
     with np.errstate(divide="ignore", invalid="ignore"):
         m = hm / h
@@ -135,10 +135,10 @@ def surface_or_depth(current_data):
     Surface is eta = h+topo, assumed to be output as 4th column of fort.q
     files.
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
-    eta = q[:, :, i_eta]
+    h = q[i_h,:, :]
+    eta = q[i_eta,:, :]
     topo = eta - h
     surface = ma.masked_where(h <= drytol, eta)
     depth = ma.masked_where(h <= drytol, h)
@@ -151,10 +151,10 @@ def velocity_u(current_data):
     """
     Return a masked array containing velocity u in wet cells.
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
-    hu = q[:, :, i_hu]
+    h = q[i_h,:, :]
+    hu = q[i_hu,:, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         u = ma.masked_where(h <= drytol, hu / h)
     return u
@@ -164,11 +164,11 @@ def velocity_v(current_data):
     """
     Return a masked array containing velocity v in wet cells.
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     drytol = 1.0
     q = current_data.q
-    h = q[:, :, i_h]
-    hv = q[:, :, i_hv]
+    h = q[i_h,:, :]
+    hv = q[i_hv,:, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         v = ma.masked_where(h <= drytol, hv / h)
     return v
@@ -180,11 +180,11 @@ def velocity(current_data):
 
     velocity defined as sqrt(u**2 + v**2)
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
-    hu = q[:, :, i_hu]
-    hv = q[:, :, i_hv]
+    h = q[i_h,:, :]
+    hu = q[i_hu,:, :]
+    hv = q[i_hv,:, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         u = ma.masked_where(h <= drytol, hu / h)
         v = ma.masked_where(h <= drytol, hv / h)
@@ -197,11 +197,11 @@ def velocity_magnitude(current_data):
 
     velocity defined as sqrt(u**2 + v**2)
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
-    hu = q[:, :, i_hu]
-    hv = q[:, :, i_hv]
+    h = q[i_h,:, :]
+    hu = q[i_hu,:, :]
+    hv = q[i_hv,:, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         u = hu / h
         v = hv / h
@@ -213,10 +213,10 @@ def velocity_magnitude(current_data):
 
 
 def solid_frac(current_data):
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
-    hm = q[:, :, i_hm]
+    h = q[i_h,:, :]
+    hm = q[i_hm,:, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         m = ma.masked_where(h < drytol, hm / h)
     return m
@@ -229,9 +229,9 @@ def solid_frac_gt03(current_data):
 
 def basalP(current_data):
     # basal pressure.
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    basalP = ma.masked_where(q[:, :, i_h] < drytol, q[:, :, i_pb])
+    basalP = ma.masked_where(q[i_h,:, :] < drytol, q[i_pb,:, :])
     return basalP
 
 
@@ -239,11 +239,11 @@ def species1_fraction(current_data):
     """
     Return a masked array containing the fraction of species 1 in wet cells.
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     # drytol = 1.0
     q = current_data.q
-    h = q[:, :, i_h]
-    hchi = q[:, :, i_hchi]
+    h = q[i_h,:, :]
+    hchi = q[i_h,:, :chi]
     with np.errstate(divide="ignore", invalid="ignore"):
         chi1 = ma.masked_where(h <= drytol, hchi / h)
     return chi1
@@ -253,11 +253,11 @@ def species2_fraction(current_data):
     """
     Return a masked array containing the fraction of species 2 in wet cells.
     """
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     # drytol = 1.0
     q = current_data.q
-    h = q[:, :, i_h]
-    hchi = q[:, :, i_hchi]
+    h = q[i_h,:, :]
+    hchi = q[i_h,:, :chi]
     with np.errstate(divide="ignore", invalid="ignore"):
         chi2 = ma.masked_where(h <= drytol, 1.0 - (hchi / h))
     return chi2
@@ -266,7 +266,7 @@ def species2_fraction(current_data):
 def b_eroded(current_data):
     # eroded depth
     q = current_data.q
-    b_eroded = q[:, :, i_beroded]
+    b_eroded = q[i_beroded,:, :]
     return b_eroded
 
 
@@ -394,7 +394,7 @@ def basal_pressure_over_hydrostatic(current_data):
 
 def lithostaticP(current_data):
     # lithostatic pressure
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
     h = depth(current_data)
     rho = density(current_data)
@@ -404,7 +404,7 @@ def lithostaticP(current_data):
 
 def hydrostaticP(current_data):
     # hydrostatic pressure
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
     h = depth(current_data)
     rho_f = current_data.plotdata.rho_f
@@ -435,11 +435,11 @@ def sigma_e_over_lithostatic(current_data):
     return sigma_e(current_data) / lithostaticP(current_data)
 
 def liquefaction_ratio(current_data):
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    p = ma.masked_where(q[:, :, i_h] < drytol, q[:, :, i_pb])
+    p = ma.masked_where(q[i_h,:, :] < drytol, q[i_pb,:, :])
     litho = lithostaticP(current_data)
-    ratio = ma.masked_where(q[:, :, i_h] < drytol, p / litho)
+    ratio = ma.masked_where(q[i_h,:, :] < drytol, p / litho)
     return ratio
 
 
@@ -455,9 +455,9 @@ def nondimentional_c(current_data):
 
     c = np.array((rho_f*g*kappita)/(mu*U), dtype=float)
 
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
+    h = q[i_h,:, :]
 
     #set to zero if nan or inf
     c[np.isnan(c)] = 0
@@ -501,12 +501,12 @@ def local_slope(current_data):
     bed_normal = current_data.plotdata.bed_normal
     eta = surface(current_data)
 
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     
 
     if bed_normal == 1:
         q = current_data.q
-        theta = q[:, :, i_theta]
+        theta = q[i_theta,:, :]
         sintheta = np.sin(theta)
     else:
         sintheta = 0.0
@@ -525,10 +525,10 @@ def local_slope(current_data):
 
     row, col = eta.shape
     detadx = np.zeros((row, col, 4))
-    detadx[:, :, i_h] = np.abs((eta - etaL) / (dx))
-    detadx[:, :, i_hu] = np.abs((eta - etaB) / (dy))
-    detadx[:, :, i_hv] = np.abs((etaR - eta) / (dx))
-    detadx[:, :, i_hm] = np.abs((etaT - eta) / (dy))
+    detadx[i_h,:, :] = np.abs((eta - etaL) / (dx))
+    detadx[i_hu,:, :] = np.abs((eta - etaB) / (dy))
+    detadx[i_hu,:, :] = np.abs((etaR - eta) / (dx))
+    detadx[i_hm,:, :] = np.abs((etaT - eta) / (dy))
 
     maxdetadx=np.max(detadx, axis=-1)
     slope = np.rad2deg(np.arctan(maxdetadx))
@@ -546,7 +546,7 @@ def Fgravitational(current_data):
 
     if bed_normal == 1:
         q = current_data.q
-        theta = q[:, :, i_theta]
+        theta = q[i_theta,:, :]
         sintheta = np.sin(theta)
     else:
         sintheta = 0.0
@@ -656,7 +656,7 @@ def phi(current_data):
 
         if bed_normal == 1:
             aux = current_data.aux
-            theta = aux[:, :, i_theta]
+            theta = aux[i_theta,:, :]
         else:
             theta = 0.0
 
@@ -760,11 +760,11 @@ def fs(current_data):
     Return a masked array containing factor of safety.
     """
 
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
+    h = q[i_h,:, :]
     aux = current_data.aux
-    fs = aux[:, :, i_fs]
+    fs = aux[i_fs,:, :]
     fs = ma.masked_where(h <= drytol, fs)
     return fs
 
@@ -774,11 +774,11 @@ def cohesion(current_data):
     Return a masked array containing cohesion.
     """
 
-    drytol = current_data.plotdata.drytolerance
+    drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
-    h = q[:, :, i_h]
+    h = q[i_h,:, :]
     aux = current_data.aux
-    c = aux[:, :, i_cohesion]
+    c = aux[i_cohesion,:, :]
     c = ma.masked_where(h <= drytol, c)
 
     return c
