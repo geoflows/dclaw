@@ -15,7 +15,7 @@ import numpy as np
 try:
     CLAW = os.environ['CLAW']
 except:
-    raise Exception("*** Must first set CLAW enviornment variable")
+    raise Exception("*** Must first set CLAW environment variable")
 
 from clawpack.geoclaw.data import ForceDry
 from clawpack.amrclaw.data import FlagRegion
@@ -72,13 +72,13 @@ def setrun(claw_pkg='dclaw'):
 
 
     # Lower and upper edge of computational domain:
-    clawdata.lower[0] = 10
-    clawdata.upper[0] = 380
-    clawdata.lower[1] = 10
-    clawdata.upper[1] = 40
+    clawdata.lower[0] = 0
+    clawdata.upper[0] = 400
+    clawdata.lower[1] = 0
+    clawdata.upper[1] = 50
 
     # choose mx and my so coarsest grid has 2 minute resolution:
-    clawdata.num_cells[0] = 100
+    clawdata.num_cells[0] = 200
     clawdata.num_cells[1] = 25
 
 

@@ -15,13 +15,13 @@ print('Input files will be put in directory %s' % inputdir)
 ### Create topography as a simple slope
 
 # Define piecewise linear function (unequally spaced):
-xland = np.array([0, 100, 200, 300, 400])
-zland = np.array([100, 50, 25, 12, 0])
+xland = np.array([-1,0, 100, 200, 300, 400,401])
+zland = np.array([101,100, 50, 25, 12, 0,-1])
 
 # Set dx, ymin, and ymax
 dx = 10
-ymin = 0
-ymax = 50
+ymin = -1
+ymax = 51
 
 # Interpolate to equally spaced grid for topofile:
 xo = np.arange(xland.min(), xland.max(), dx)
@@ -76,7 +76,7 @@ print('Created ', topofile)
 ### Create initial value for aux5, depth of entrainable material
 
 # Define piecewise linear function (unequally spaced):
-xdepth = np.array([25, 50])
+xdepth = np.array([140, 200])
 zdepth = np.array([5, 5])
 
 # Set dx, ymin, and ymax

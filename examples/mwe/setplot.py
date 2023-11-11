@@ -10,7 +10,6 @@ function setplot is called to set the plot parameters.
 import numpy as np
 import matplotlib.pyplot as plt
 
-from clawpack.geoclaw import topotools
 import os,sys
 
 
