@@ -865,9 +865,9 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             init_pmin_ratio = min(init_pmin_ratio, 1.d0-grad_eta/tan(phi))
 
             if (grad_eta>0.d0) then
-               aux(i,j,i_fs) = tan(phi)/grad_eta
+               aux(i_fs,i,j) = tan(phi)/grad_eta
             else
-               aux(i,j,i_fs) = 10.d0
+               aux(i_fs,i,j) = 10.d0
             endif
          enddo
       enddo
