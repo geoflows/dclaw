@@ -76,9 +76,13 @@ c
 
       !-----------------------Initializing-----------------------------------
          !inform of a bad Riemann problem from the start
-c         if((qr(i-1,1).lt.0.d0).or.(ql(i,1) .lt. 0.d0)) then
-c            write(*,*) 'Negative input: hl,hr,i=',qr(i-1,1),ql(i,1),i
-c         endif
+         if((qr(1,i-1).lt.0.d0).or.(ql(1,i) .lt. 0.d0)) then
+            write(*,*) 'Negative input: hl,hr,i=',qr(i-1,1),ql(i,1),i
+            call admissibleq(ql(1,i),ql(mhu,i),ql(nhv,i),
+     &            ql(4,i),ql(5,i),uR,vR,mR,thetaR)
+            call admissibleq(qr(1,i-1),qr(mhu,i-1),qr(nhv,i-1),
+     &            qr(4,i-1),qr(5,i-1),uL,vL,mL,thetaL)
+         endif
 
          !Initialize Riemann problem for grid interface
 
@@ -98,7 +102,7 @@ c         endif
          enddo
 
          !skip problem if in a completely dry area
-         if (qr(i-1,1).le.drytol.and.ql(i,1).le.drytol) then
+         if (qr(1,i-1).le.drytol.and.ql(1,i).le.drytol) then
             go to 30
          endif
 
@@ -107,22 +111,22 @@ c        !set normal direction
             mhu=2
             nhv=3
             dx = dxcom
-            taudirR = auxl(i,i_taudir_x)
-            taudirL = auxr(i-1,i_taudir_x)
+            taudirR = auxl(i_taudir_x,i)
+            taudirL = auxr(i_taudir_x,i-1)
          else
             mhu=3
             nhv=2
             dx = dycom
-            taudirR = auxl(i,i_taudir_y)
-            taudirL = auxr(i-1,i_taudir_y)
+            taudirR = auxl(i_taudir_y,i)
+            taudirL = auxr(i_taudir_y,i-1)
          endif
 
-         fsL = auxr(i-1,i_fsphi)
-         fsR = auxl(i,i_fsphi)
+         fsL = auxr(i_fsphi,i-1)
+         fsR = auxl(i_fsphi,i)
 
          if (bed_normal.eq.1) then
-            thetaL = auxr(i-1,i_theta)
-            thetaR = auxl(i,i_theta)
+            thetaL = auxr(i_theta,i-1)
+            thetaR = auxl(i_theta,i)
             theta = 0.5d0*(thetaL+thetaR)
             gmod = grav*dcos(0.5d0*(thetaL+thetaR))
          else
@@ -132,30 +136,30 @@ c        !set normal direction
          endif
 
          !zero (small) negative values if they exist and set velocities
-         call admissibleq(ql(i,1),ql(i,mhu),ql(i,nhv),
-     &            ql(i,4),ql(i,5),uR,vR,mR,thetaR)
+         call admissibleq(ql(1,i),ql(mhu,i),ql(nhv,i),
+     &            ql(4,i),ql(5,i),uR,vR,mR,thetaR)
 
-         call admissibleq(qr(i-1,1),qr(i-1,mhu),qr(i-1,nhv),
-     &            qr(i-1,4),qr(i-1,5),uL,vL,mL,thetaL)
+         call admissibleq(qr(1,i-1),qr(mhu,i-1),qr(nhv,i-1),
+     &            qr(4,i-1),qr(5,i-1),uL,vL,mL,thetaL)
 
 
          !Riemann problem variables
-         hL = qr(i-1,1)
-         hR = ql(i,1)
-         huL = qr(i-1,mhu)
-         huR = ql(i,mhu)
-         hvL=qr(i-1,nhv)
-         hvR=ql(i,nhv)
-         hmL = qr(i-1,4)
-         hmR = ql(i,4)
-         pL = qr(i-1,5)
-         pR = ql(i,5)
-         bL = auxr(i-1,1)  - qr(i-1,7)
-         bR = auxl(i,1) - ql(i,7)
-         phi_bedL = auxr(i-1,i_phi)
-         phi_bedR = auxl(i,i_phi)
-         chiHL = qr(i-1,6)
-         chiHR = ql(i,6)
+         hL = qr(1,i-1)
+         hR = ql(1,i)
+         huL = qr(mhu,i-1)
+         huR = ql(mhu,i)
+         hvL=qr(nhv,i-1)
+         hvR=ql(nhv,i)
+         hmL = qr(4,i-1)
+         hmR = ql(4,i)
+         pL = qr(5,i-1)
+         pR = ql(5,i)
+         bL = auxr(1,i-1)  - qr(7,i-1)
+         bR = auxl(1,i) - ql(7,i)
+         phi_bedL = auxr(i_phi,i-1)
+         phi_bedR = auxl(i_phi,i)
+         chiHL = qr(6,i-1)
+         chiHR = ql(6,i)
 
          if (hL.ge.drytol) then
             chiL = chiHL/hL
@@ -254,40 +258,40 @@ c        !eliminate ghost fluxes for wall
          s(i,4) = sw(2)
          s(i,5) = sw(3)
 
-         fwave(1,i,1) =   fw(1,1)
-         fwave(1,i,mhu) = fw(2,1)
-         fwave(1,i,nhv) = fw(3,1)
-         fwave(1,i,4)   = fw(4,1)
-         fwave(1,i,5) =   fw(5,1)
-         fwave(1,i,6) =   fw(6,1)
+         fwave(1,1,i) =   fw(1,1)
+         fwave(1,mhu,i) = fw(2,1)
+         fwave(1,nhv,i) = fw(3,1)
+         fwave(1,4,i)   = fw(4,1)
+         fwave(1,5,i) =   fw(5,1)
+         fwave(1,6,i) =   fw(6,1)
 
-         fwave(5,i,1) =   fw(1,3)
-         fwave(5,i,mhu) = fw(2,3)
-         fwave(5,i,nhv) = fw(3,3)
-         fwave(5,i,4)   = fw(4,3)
-         fwave(5,i,5) =   fw(5,3)
-         fwave(5,i,6) =   fw(6,3)
+         fwave(5,1,i) =   fw(1,3)
+         fwave(5,mhu,i) = fw(2,3)
+         fwave(5,nhv,i) = fw(3,3)
+         fwave(5,4,i)   = fw(4,3)
+         fwave(5,5,i) =   fw(5,3)
+         fwave(5,6,i) =   fw(6,3)
 
-         fwave(2,i,1) =   fw(1,2)
-         fwave(2,i,mhu) = fw(2,2)
-         fwave(2,i,nhv) = fw(3,2)
-         fwave(2,i,4)   = 0.0
-         fwave(2,i,5) =  0.0
-         fwave(2,i,6) = fw(6,2)
+         fwave(2,1,i) =   fw(1,2)
+         fwave(2,mhu,i) = fw(2,2)
+         fwave(2,nhv,i) = fw(3,2)
+         fwave(2,4,i)   = 0.0
+         fwave(2,5,i) =  0.0
+         fwave(2,6,i) = fw(6,2)
 
-         fwave(3,i,1) =   0.0
-         fwave(3,i,mhu) = 0.0
-         fwave(3,i,nhv) = 0.0
-         fwave(3,i,4)   = fw(4,2)
-         fwave(3,i,5) =  0.0
-         fwave(3,i,6) =  0.0
+         fwave(3,1,i) =   0.0
+         fwave(3,mhu,i) = 0.0
+         fwave(3,nhv,i) = 0.0
+         fwave(3,4,i)   = fw(4,2)
+         fwave(3,5,i) =  0.0
+         fwave(3,6,i) =  0.0
 
-         fwave(4,i,1) =   0.0
-         fwave(4,i,mhu) = 0.0
-         fwave(4,i,nhv) = 0.0
-         fwave(4,i,4)   = 0.0
-         fwave(4,i,5) =  fw(5,2)
-         fwave(4,i,6) =  0.0
+         fwave(4,1,i) =   0.0
+         fwave(4,mhu,i) = 0.0
+         fwave(4,nhv,i) = 0.0
+         fwave(4,4,i)   = 0.0
+         fwave(4,5,i) =  fw(5,2)
+         fwave(4,6,i) =  0.0
 
  30      continue
       enddo
