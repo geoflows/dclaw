@@ -60,7 +60,7 @@ c
       double precision hR,hL,huR,huL,uR,uL,hvR,hvL,vR,vL
       double precision pR,pL,hmL,hmR,mL,mR,phi_bedL,phi_bedR
       double precision hstar,hstartest,s1m,s2m,bL,bR
-      double precision dxdc,taudirL,taudirR !, dx
+      double precision dxdc,taudirL,taudirR,dx
       double precision theta,thetaL,thetaR
       double precision h1M,h2M,hu1M,hu2M,u1M,u2M,heR,heL
       double precision sE1,sE2
@@ -78,10 +78,8 @@ c
          !inform of a bad Riemann problem from the start
          !if((qr(1,i-1).lt.0.d0).or.(ql(1,i) .lt. 0.d0)) then
          !   write(*,*) 'Negative input: hl,hr,i=',qr(i-1,1),ql(i,1),i
-         !   call admissibleq(ql(1,i),ql(mhu,i),ql(nhv,i),
-     !&            ql(4,i),ql(5,i),uR,vR,mR,thetaR)
-         !   call admissibleq(qr(1,i-1),qr(mhu,i-1),qr(nhv,i-1),
-     !&            qr(4,i-1),qr(5,i-1),uL,vL,mL,thetaL)
+         !   call admissibleq(ql(1,i),ql(mhu,i),ql(nhv,i),ql(4,i),ql(5,i),uR,vR,mR,thetaR)
+         !   call admissibleq(qr(1,i-1),qr(mhu,i-1),qr(nhv,i-1),qr(4,i-1),qr(5,i-1),uL,vL,mL,thetaL)
          !endif
 
          !Initialize Riemann problem for grid interface
