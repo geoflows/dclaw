@@ -567,8 +567,9 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             vnorm = sqrt(hu**2 + hv**2)
             if (vnorm>0.d0) then
-               aux(i_taudir_x,i,j) = -hu/sqrt(hv**2+hu**2)
-               aux(i_taudir_y,i,j) = -hv/sqrt(hv**2+hu**2)
+               !DIG: check to see if adding dx and dy works everywhere. added in 4.x-->5.0
+               aux(i_taudir_x,i,j) = -dx*hu/sqrt(hv**2+hu**2)
+               aux(i_taudir_y,i,j) = -dy*hv/sqrt(hv**2+hu**2)
 
                dot = min(max(0.d0,Fx*hu) , max(0.d0,Fy*hv))
                if (dot>0.0) then
@@ -590,17 +591,18 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             else
                !aux now have cell edge interpretation in Riemann solver
                !friction should oppose net force. resolve in Riemann solver
+               !DIG: check to see if adding dx and dy works everywhere. added in 4.x-->5.0
                if ((FxL**2+Fy**2)>0.d0) then
-                  aux(i_taudir_x,i,j) = -FxL/sqrt(FxL**2+Fy**2)
+                  aux(i_taudir_x,i,j) = -dx*FxL/sqrt(FxL**2+Fy**2)
                else
-                  aux(i_taudir_x,i,j) = 1.d0
+                  aux(i_taudir_x,i,j) = dx*1.d0
                endif
 
                if ((Fx**2+FyL**2)>0.0) then
-                  aux(i_taudir_y,i,j) = -FyL/sqrt(Fx**2+FyL**2)
+                  aux(i_taudir_y,i,j) = -dy*FyL/sqrt(Fx**2+FyL**2)
                else
                   !there is no motion or net force. resolve in src after Riemann
-                  aux(i_taudir_y,i,j) = 1.d0
+                  aux(i_taudir_y,i,j) = dy*1.d0
                endif
 
                if ((aux(i_taudir_y,i,j)**2 + aux(i_taudir_x,i,j)**2)>0.0) then

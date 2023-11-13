@@ -253,7 +253,8 @@ c     !find bounds in case of critical state resonance, or negative states
 *     !determine the source term
 
       if (ixy.eq.1) then
-         source2dx = source2dx + dx*hbar*grav*dsin(theta)
+         ! DIG: note that theta = 0.0 unless bed_normal is true. For now, assume bed_normal is false. Resolve if dx is needed later.
+         source2dx = source2dx !+ dx*hbar*grav*dsin(theta)
       endif
 
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
@@ -278,10 +279,11 @@ c     !find bounds in case of critical state resonance, or negative states
          if ((uR**2 + vR**2)>0.0) then
             taudirR = -uR/sqrt(uR**2 + vR**2)
          endif
-         
-         tausource =  0.0*dx*0.5*(taudirL*tauL/rhoL + tauR*taudirR/rhoR)
+         !DIG: deterine if we can redefine tau or an aux array to eliminate need for dx
+         tausource =  0.0!*dx*0.5*(taudirL*tauL/rhoL + tauR*taudirR/rhoR)
       !elseif (dx*max(abs(tauL*taudirL/rhoL),abs(tauR*taudirR/rhoR))
-      elseif (dx*0.5*abs(taudirR*tauR/rhoR + tauL*taudirR/rhoL)
+      !DIG: check dx
+      elseif (0.5*abs(taudirR*tauR/rhoR + tauL*taudirR/rhoL)!*dx
      &      .gt.abs(del(2) - source2dx)) then 
       
          !no failure
@@ -295,7 +297,7 @@ c     !find bounds in case of critical state resonance, or negative states
          !tausource =   sign(abs(dx*0.5*tau/rho)
          !tausource =   dx*taudir*tauR/rhoR
          
-         tausource = 0.5*dx*((taudirR*tauR/rhoR)+(tauL*taudirR/rhoL))
+         tausource = 0.5*((taudirR*tauR/rhoR)+(tauL*taudirR/rhoL))!*dx
          tausource = dsign(tausource,del(2)-source2dx)
       endif
       if (wallprob) then
