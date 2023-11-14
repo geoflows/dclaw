@@ -103,7 +103,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write("mom_perc", description="percentage of max momentum for autostop, default is 0.05 (5%)")
         self.data_write("src_ftn_num", description="number of in-domain sources, if used the file 'sethydrographs.data' is required")
         self.data_write("fric_offset_val", description="start/stop friction offset (degrees). if this value is >0, then hysteretic friction is used (Rocha, Johnson, Gray, 2019)")
-        self.data_write("fric_star_val", "deep friction offset (degrees). only used when fric_offset_val > 0 (Rocha, Johnson, Gray, 2019)")
+        self.data_write("fric_star_val", description="deep friction offset (degrees). only used when fric_offset_val > 0 (Rocha, Johnson, Gray, 2019)")
         self.data_write("chi_init_val", description="initial fraction of species 1, (#). Between 0-1.")
         self.data_write("kappita_diff", description="permeability multiplier for different size species. Only used when alpha_seg>0. kappita is used for species1, kappita*kappita_diff used for species2")
         self.data_write("outaux", description="flag for writing aux to output F = not written, T = written")
