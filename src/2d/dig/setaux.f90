@@ -140,17 +140,11 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
                         call wrap_coords(x,y,xperm,xper,xperp,yperm,yper, &
                                          yperp,dx,dy)
                         call cellgridintegrate(topo_integral,  &
-                            xperm,xper,xperp,yperm,yper,yperp, &
-                            xlowtopo,ylowtopo,xhitopo,yhitopo,dxtopo,dytopo, &
-                            mxtopo,mytopo,mtopo,i0topo,mtopoorder, &
-                            mtopofiles,mtoposize,topowork)
+                                               xperm,xperp,yperm,yperp)
                     endif
                 else
                     ! Cell does not extend outside of physical domain
-                    call cellgridintegrate(topo_integral,xm,x,xp,ym,y,yp, &
-                            xlowtopo,ylowtopo,xhitopo,yhitopo,dxtopo,dytopo, &
-                            mxtopo,mytopo,mtopo,i0topo,mtopoorder, &
-                            mtopofiles,mtoposize,topowork)
+                    call cellgridintegrate(topo_integral,xm,xp,ym,yp)
                 endif
 
                 ! Correct for geometry
@@ -263,6 +257,8 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
                              auxinitwork(i0auxinit(mf):i0auxinit(mf) &
                              +mauxinit(mf)-1), 1)
 
+                     write(*,*) daux
+                     write(*,*) ((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
                      daux=daux/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
 
                      aux(iauxinit(mf),i,j) = aux(iauxinit(mf),i,j)+daux
