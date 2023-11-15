@@ -122,7 +122,7 @@
             sigebar = rho*gmod*h - p + sigma_0
             shear = 2.d0*vnorm/h
             krate = 1.5d0*shear*m*tanpsi/alpha
-            sigebar = sigebar*exp(krate*dti)
+            !sigebar = sigebar*exp(krate*dti)
             !p = rho*gmod*h + sigma_0 - sigebar
             if (compress<1.d15) then !elasticity is = 0.0 but compress is given 1d16 in auxeval
                p = p - dti*3.d0*vnorm*tanpsi/(h*compress)

@@ -269,7 +269,7 @@ c     !find bounds in case of critical state resonance, or negative states
          !   write(*,*) 'fsR', fsR
          !   write(*,*) 'ixy', ixy
          !endif
-
+         !DIG: check -- why are taudirL and taudirR treated differently?
          if ((uL**2 + vL**2)==0.0) then
             taudirL = taudirR
          else
@@ -280,6 +280,7 @@ c     !find bounds in case of critical state resonance, or negative states
             taudirR = -uR/sqrt(uR**2 + vR**2)
          endif
          !DIG: deterine if we can redefine tau or an aux array to eliminate need for dx
+         !DIG: note: below tausource was 0.0 in 4.x also (friction ignored for moving material, treated in src2.)
          tausource =  0.0!*dx*0.5*(taudirL*tauL/rhoL + tauR*taudirR/rhoR)
       !elseif (dx*max(abs(tauL*taudirL/rhoL),abs(tauR*taudirR/rhoR))
       !DIG: check dx
