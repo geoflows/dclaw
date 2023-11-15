@@ -187,14 +187,14 @@
             vnorm = sqrt(u**2 + v**2)
             vlow = 0.1d0
 
-            if (ent.and.vnorm.gt.vlow.and.(aux(i,j,i_theta)>0.d0)) then
+            if (ent.and.vnorm.gt.vlow.and.(aux(i_theta,i,j)>0.d0)) then
                b_x = (aux(1,i+1,j)+q(7,i+1,j)-aux(1,i-1,j)-q(7,i-1,j))/(2.d0*dx)
                b_y = (aux(1,i,j+1)+q(7,i,j+1)-aux(1,i,j-1)-q(7,i,j-1))/(2.d0*dy)
                dbdv = (u*b_x+v*b_y)/vnorm
                slopebound = 1.d10
                b_eroded = q(7,i,j)
-               if (dbdv<slopebound.and.b_eroded<aux(i,j,i_theta)) then
-                  b_remaining = aux(i,j,i_theta)-b_eroded
+               if (dbdv<slopebound.and.b_eroded<aux(i_theta,i,j)) then
+                  b_remaining = aux(i_theta,i,j)-b_eroded
                   m2 = 0.6d0
                   rho2 = m2*2700.d0 + (1.d0-m2)*1000.d0
                   beta2 = 0.66d0
