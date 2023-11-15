@@ -137,7 +137,7 @@
       		else
          		seg = 1.d0
                call calc_pmtanh(pm,seg,pmtanh01)
-               rho_fp = max(0.d0,(1.dd0-pmtanh01))*rho_f
+               rho_fp = max(0.d0,(1.d0-pmtanh01))*rho_f
       		endif
             !pmtanh01 = seg*(0.5*(tanh(20.0*(pm-0.80))+1.0))
             !pmtanh01 = seg*(0.5*(tanh(40.0*(pm-0.90))+1.0))
