@@ -3,26 +3,30 @@
    !=========================================================
       subroutine src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)
    !=========================================================
-      use geoclaw_module, only: grav, dry_tolerance,deg2rad
+      use geoclaw_module, only: grav, dry_tolerance,deg2rad,friction_depth,manning_coefficient,friction_forcing
       use digclaw_module
 
       implicit none
 
-      !i/o
-      real(kind=8), intent(in) :: q(meqn,1-mbc:maxmx+mbc,1-mbc:maxmy+mbc)
-      real(kind=8), intent(in) :: aux(maux, 1-mbc:maxmx+mbc,1-mbc:maxmy+mbc)
-      real(kind=8), intent(in) :: :: xlower,ylower,dx,dy,t,dt
-      integer :: meqn,mbc,mx,my,maux
+      ! Input parameters
+      integer, intent(in) :: meqn,mbc,mx,my,maux
+      double precision, intent(in) :: xlower,ylower,dx,dy,t,dt
+      
+      ! Output
+      double precision, intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+      double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
       !local
-      double real(kind=8), :: gmod,h,hu,hv,hm,u,v,m,p,phi,kappa,S,rho,tanpsi,dti
-      double real(kind=8), :: D,tau,sigbed,kperm,compress,pm,coeff,tol
-      double real(kind=8), :: vnorm,hvnorm,theta,dtheta,w,taucf,fsphi,hvnorm0
-      double real(kind=8), :: shear,sigebar,pmtanh01,rho_fp,seg
-      double real(kind=8), :: b_xx,b_yy,b_xy,chi,beta
-      double real(kind=8), :: t1bot,t2top,beta2,dh,rho2,prat,b_x,b_y,dbdv
-      double real(kind=8), :: vlow,m2,vreg,slopebound
-      double real(kind=8), :: b_eroded,b_remaining,dtcoeff
+      real(kind=8) :: gmod,h,hu,hv,hm,u,v,m,p,phi,kappa,S,rho,tanpsi,dti
+      real(kind=8) :: D,tau,sigbed,kperm,compress,pm,coeff,tol
+      real(kind=8) :: vnorm,hvnorm,theta,dtheta,w,taucf,fsphi,hvnorm0
+      real(kind=8) :: shear,sigebar,pmtanh01,rho_fp,seg
+      real(kind=8) :: b_xx,b_yy,b_xy,chi,beta
+      real(kind=8) :: t1bot,t2top,beta2,dh,rho2,prat,b_x,b_y,dbdv
+      real(kind=8) :: vlow,m2,vreg,slopebound
+      real(kind=8) :: b_eroded,b_remaining,dtcoeff
+      real(kind=8) :: gamma,zeta,krate,p_eq,p_litho,p_hydro,dry_tol,dgamma
+
       integer :: i,j,ii,jj,jjend,icount,curvature
       logical :: ent
 
@@ -31,7 +35,11 @@
       call check4nans(meqn,mbc,mx,my,q,t,2)
 
       gmod=grav
-      coeff = coeffmanning
+      coeff = manning_coefficient(1) ! Current implementation of friction has manning as an array 
+      ! take the first element for now. If only one value is provided to geo_data.manning_coefficient 
+      ! it will be manning_coefficient(1)
+      ! DIG: FIX.
+
       tol = dry_tolerance !# to prevent divide by zero in gamma
       curvature = 0 !add friction due to curvature acceleration
       !write(*,*) 'src:init,value',p_initialized,init_pmin_ratio
