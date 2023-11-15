@@ -35,8 +35,8 @@ i_taudir_y = i_dig + 5
 
 # Gravity, adjusted for bed normal.
 def gmod(current_data):
-    grav = current_data.plotdata.gravity
-    bed_normal = current_data.plotdata.bed_normal
+    grav = 9.81# DIG: fix hardcode current_data.plotdata.gravity
+    bed_normal = 0# dIg fix hardcode current_data.plotdata.bed_normal
 
     gmod = grav
 
@@ -275,14 +275,14 @@ def b_eroded(current_data):
 def density(current_data):
     # new segregation might modify.
     m = solid_frac(current_data)
-    rho_f = current_data.plotdata.rho_f
-    rho_s = current_data.plotdata.rho_s
+    rho_f = 2700# DIG fix hard code current_data.plotdata.rho_f
+    rho_s = 1000# DIG fix hard code current_data.plotdata.rho_s
     rho = (1.0 - m) * rho_f + m * rho_s
     return rho
 
 def kperm(current_data):
     # permeability (m^2)
-    kappita = current_data.plotdata.kappita
+    kappita = 1e-8# DIG fix hard codecurrent_data.plotdata.kappita
     m0 = current_data.plotdata.m0
     #print(current_data.attributes)
     kappita_diff = current_data.plotdata.kappita_diff
@@ -302,7 +302,7 @@ def shear(current_data):
 
 def dilatency(current_data):
     # depth averaged dilatency rate (m/s)
-    mu = current_data.plotdata.mu
+    mu = 0.05 #DIG current_data.plotdata.mu
     h = depth(current_data)
     # Royal Society, Part 2, Eq 2.6
     D = (
@@ -407,7 +407,7 @@ def hydrostaticP(current_data):
     drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
     h = depth(current_data)
-    rho_f = current_data.plotdata.rho_f
+    rho_f = 2700# DIG fix hard code current_data.plotdata.rho_f    
     return gmod(current_data) * rho_f * h
 
 
@@ -447,10 +447,10 @@ def liquefaction_ratio(current_data):
 
 def nondimentional_c(current_data):
 
-    rho_f = current_data.plotdata.rho_f
-    kappita = current_data.plotdata.kappita # could change this to kperm (spatially variable)
+    rho_f = 1000# DIG fix hard codecurrent_data.plotdata.kappita
+    kappita = 1e-8# DIG fix hard codecurrent_data.plotdata.kappita
     U = velocity_magnitude(current_data)
-    mu = current_data.plotdata.mu
+    mu = 0.05 #DIG current_data.plotdata.mu
     g = gmod(current_data)
 
     c = np.array((rho_f*g*kappita)/(mu*U), dtype=float)
@@ -467,21 +467,21 @@ def nondimentional_c(current_data):
 
 def Iv(current_data):
     # inertial number
-    mu = current_data.plotdata.mu
+    mu = 0.05 #DIG current_data.plotdata.mu
     gamma = shear(current_data)
     return (mu * gamma) / sigma_e(current_data)
 
 
 def Stokes(current_data):
     # stokes number
-    mu = current_data.plotdata.mu
+    mu = 0.05 #DIG current_data.plotdata.mu
     rho_s = current_data.plotdata.rho_s
     delta = current_data.plotdata.delta
     gamma = shear(current_data)
     return rho_s * gamma * delta ** 2 / mu
 
 def N(current_data):  # dimensionless state parameter N
-    mu = current_data.plotdata.mu
+    mu = 0.05 #DIG current_data.plotdata.mu
     rho_s = current_data.plotdata.rho_s
     delta = current_data.plotdata.delta
     gamma = shear(current_data)
@@ -617,7 +617,7 @@ def Fdrag(current_data):  # units of force per unit area
     # conservative form (ie. derivatives on hu not u). I think it might be
     # similar to a drag term that appears on fully two-phase equations for solid
     # and fluid velocity fields.
-    rho_f = current_data.plotdata.rho_f
+    rho_f = 2700# DIG fix hard code current_data.plotdata.rho_f    
     h = depth(current_data)
     vnorm = velocity_magnitude(current_data)
     D = dilatency(current_data)
@@ -632,7 +632,7 @@ def Fdrag(current_data):  # units of force per unit area
 
 def Ffluid(current_data):  # units of force per unit area
     # Resisting force due to fluid.
-    mu = current_data.plotdata.mu
+    mu = 0.05 #DIG current_data.plotdata.mu
     h = depth(current_data)
     m = solid_frac(current_data)
     vnorm = velocity_magnitude(current_data)
