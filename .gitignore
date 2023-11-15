@@ -4,3 +4,13 @@
 *.o
 *.mod
 *.pyc
+fort*
+*png
+*html
+*.log
+timing.txt
+timing.csv
+xgeoclaw
+.plots
+.output
+*.tex
