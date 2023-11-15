@@ -57,26 +57,32 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("delta", 0.01)
         self.add_attribute("kappita", 0.0001)
         self.add_attribute("mu", 0.001)
-        self.add_attribute("alpha_c", 1.0)
+        self.add_attribute("alpha_c", 1.0) # DIG: is this the right default value?
         self.add_attribute("m_crit", 0.62)
         self.add_attribute("c1", 1.0)
         self.add_attribute("m0", 0.52)
         self.add_attribute("sigma_0", 1.0e3)
         self.add_attribute("alpha_seg", 0.0)
         self.add_attribute("bed_normal", 0)
-        self.add_attribute("phi_seg_coeff")
+        self.add_attribute("phi_seg_coeff",0.0) # Not currently used
         self.add_attribute("entrainment", 0)
         self.add_attribute("entrainment_rate", 0.2)
-        self.add_attribute("mom_autostop", False)
-        self.add_attribute("mom_perc", 0.05)
-        self.add_attribute("src_ftn_num", 0)
-        self.add_attribute("fric_offset_val", 0.0)
-        self.add_attribute("fric_star_val", 0.0)
-        self.add_attribute("chi_init_val", 0.0)
-        self.add_attribute("kappita_diff", 1.0)
-        self.add_attribute("outaux", False)
-        self.add_attribute("curvature", 1)
-        self.add_attribute("momlevel", 1)
+
+        # DIG: currently unused self.add_attribute("curvature", 1)
+        # DIG: currently unused self.add_attribute("momlevel", 1)
+        # DIG: currently unused self.add_attribute("mom_autostop", False)
+
+        # DIG: currently unused self.add_attribute("mom_perc", 0.05)
+        # DIG: currently unused self.add_attribute("src_ftn_num", 0)
+        # DIG: currently unused self.add_attribute("fric_offset_val", 0.0)
+        # DIG: currently unused self.add_attribute("fric_star_val", 0.0)
+        # DIG: currently unused self.add_attribute("chi_init_val", 0.0)
+        # DIG: currently unused self.add_attribute("kappita_diff", 1.0)
+        # DIG: currently unused self.add_attribute("outaux", False)
+
+
+        # DIG: KRB would prefer to add back momlevel & mom autostop. It could go 
+        # elsewhere. 
 
 
     def write(self,out_file='setdclaw.data',data_source='setrun.py'):
@@ -99,16 +105,16 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write("phi_seg_coeff", description="adjustment to friction coefficient based on segregation") # not currently used.)
         self.data_write("entrainment", description="flag for entrainment, 0 = no entrainment")
         self.data_write("entrainment_rate", description="rate of entrainment parameter 0-1")
-        self.data_write("mom_autostop", description= "flag for momentum autostop False = no autostop, True = autostop")
-        self.data_write("mom_perc", description="percentage of max momentum for autostop, default is 0.05 (5%)")
-        self.data_write("src_ftn_num", description="number of in-domain sources, if used the file 'sethydrographs.data' is required")
-        self.data_write("fric_offset_val", description="start/stop friction offset (degrees). if this value is >0, then hysteretic friction is used (Rocha, Johnson, Gray, 2019)")
-        self.data_write("fric_star_val", description="deep friction offset (degrees). only used when fric_offset_val > 0 (Rocha, Johnson, Gray, 2019)")
-        self.data_write("chi_init_val", description="initial fraction of species 1, (#). Between 0-1.")
-        self.data_write("kappita_diff", description="permeability multiplier for different size species. Only used when alpha_seg>0. kappita is used for species1, kappita*kappita_diff used for species2")
-        self.data_write("outaux", description="flag for writing aux to output F = not written, T = written")
-        self.data_write("curvature", description="flag for curvature correction 0 = not used, 1 = used")
-        self.data_write("momlevel", description="level to do momentum calculation IF mom_autostop==True")
+        # DIG: These currently unused: self.data_write("mom_autostop", description= "flag for momentum autostop False = no autostop, True = autostop")
+        # DIG: These currently unused: self.data_write("mom_perc", description="percentage of max momentum for autostop, default is 0.05 (5%)")
+        # DIG: These currently unused: self.data_write("src_ftn_num", description="number of in-domain sources, if used the file 'sethydrographs.data' is required")
+        # DIG: These currently unused: self.data_write("fric_offset_val", description="start/stop friction offset (degrees). if this value is >0, then hysteretic friction is used (Rocha, Johnson, Gray, 2019)")
+        # DIG: These currently unused: self.data_write("fric_star_val", description="deep friction offset (degrees). only used when fric_offset_val > 0 (Rocha, Johnson, Gray, 2019)")
+        # DIG: These currently unused: self.data_write("chi_init_val", description="initial fraction of species 1, (#). Between 0-1.")
+        # DIG: These currently unused: self.data_write("kappita_diff", description="permeability multiplier for different size species. Only used when alpha_seg>0. kappita is used for species1, kappita*kappita_diff used for species2")
+        # DIG: These currently unused: self.data_write("outaux", description="flag for writing aux to output F = not written, T = written")
+        # DIG: These currently unused: self.data_write("curvature", description="flag for curvature correction 0 = not used, 1 = used")
+        # DIG: These currently unused: self.data_write("momlevel", description="level to do momentum calculation IF mom_autostop==True")
 
         self.close_data_file()
 
