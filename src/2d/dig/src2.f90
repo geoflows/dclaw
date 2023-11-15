@@ -41,7 +41,7 @@
       ! DIG: FIX.
 
       tol = dry_tolerance !# to prevent divide by zero in gamma
-      curvature = 0 !add friction due to curvature acceleration
+      curvature = 0 !add friction due to curvature acceleration KRB: why is this hardcoded to 0?
       !write(*,*) 'src:init,value',p_initialized,init_pmin_ratio
       if (entrainment>0) then
          ent = .true.
@@ -134,6 +134,7 @@
          		seg = 0.d0
                rho_fp = rho_f
                pmtanh01=0.d0
+
       		else
          		seg = 1.d0
                call calc_pmtanh(pm,seg,pmtanh01)
@@ -244,14 +245,14 @@
 
 
       ! Manning friction------------------------------------------------
-      if (ifriction==0) return
-      if (coeffmanning>0.d0.and.frictiondepth>0.d0) then
+      if (friction_forcing) return
+      if (coeff>0.d0.and.friction_depth>0.d0) then
          do i=1,mx
             do j=1,my
 
                if (bed_normal==1) gmod = grav*cos(aux(i_theta,i,j))
                h=q(i,j,1)
-               if (h<=frictiondepth) then
+               if (h<=friction_depth) then
                  !# apply friction source term only in shallower water
                   hu=q(2,i,j)
                   hv=q(3,i,j)
