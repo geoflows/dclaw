@@ -85,7 +85,7 @@ contains
          close(iunit)
          alpha_seg = 1.0 - alpha_seg
 
-         open(unit=DIG_PARM_UNIT,file='fort.dig',status="unknown",action="write")
+         open(unit=DIG_PARM_UNIT,file='fort.dclaw',status="unknown",action="write")
 
          write(DIG_PARM_UNIT,*) ' '
          write(DIG_PARM_UNIT,*) '--------------------------------------------'
