@@ -209,7 +209,7 @@ contains
       m = hm/h
 
       !mlo = 1.d-3
-      mlo = 0.0
+      mlo = 0.0d0
       mhi = 1.d0 - mlo
 
       if (m.lt.mlo) then
@@ -229,6 +229,7 @@ contains
       if (p.lt.plo) then
          if ((u**2+v**2)>0.d0) then
             p = dmax1(0.d0,p)
+            ! WHY not when static? 
          endif
          !p = dmax1(-5.0*pmax,p)
          !p = (p**2 + plo**2)/(2.d0*plo)
@@ -264,27 +265,27 @@ contains
 
       hbounded = h!max(h,0.1)
       gmod=grav
-      pm = max(0.0,pm)
-      pm = min(1.0,pm)
-      if (dabs(alpha_seg-1.0)<1.d-6) then
-         seg = 0.0
+      pm = max(0.0d0,pm)
+      pm = min(1.0d0,pm)
+      if (dabs(alpha_seg-1.0d0)<1.d-6) then
+         seg = 0.0d0
          rho_fp = rho_f
-         pmtanh01=0.0
+         pmtanh01=0.0d0
       else
-         seg = 1.0
+         seg = 1.0d0
          call calc_pmtanh(pm,seg,pmtanh01)
-         rho_fp = (1.0-pmtanh01)*rho_f
+         rho_fp = (1.0d0-pmtanh01)*rho_f
       endif
       !pmtanh01 = seg*(0.5*(tanh(20.0*(pm-0.80))+1.0))
       !pmtanh01 = seg*(0.5*(tanh(40.0*(pm-0.90))+1.0))
 
       if (bed_normal.eq.1) gmod=grav*dcos(theta)
-      vnorm = dsqrt(u**2.0 + v**2.0)
+      vnorm = dsqrt(u**2 + v**2)
       rho = rho_s*m + rho_fp*(1.d0-m)
-      shear = 2.0*vnorm/hbounded
+      shear = 2.0d0*vnorm/hbounded
       sigbed = dmax1(0.d0,rho*gmod*h - p)
-      sigbedc = rho_s*(shear*delta)**2.0 + sigbed
-      if (sigbedc.gt.0.0) then
+      sigbedc = rho_s*(shear*delta)**2 + sigbed
+      if (sigbedc.gt.0.0d0) then
          S = (mu*shear/(sigbedc))
       else
          S = 0.d0
@@ -302,12 +303,14 @@ contains
       !pmtanh01 = seg*0.5*(tanh(20.0*(pm-0.80))+1.0)
       !pmtanh01s = seg*4.0*(tanh(8.0*(pm-0.95))+1.0)
 
-      kperm = kappita*exp(-(m-m0)/(0.04))!*(10**(pmtanh01))
+   
+      kperm = kappita*exp(-(m-m0)/(0.04d0))!*(10**(pmtanh01))
       !m_crit_pm - max(pm-0.5,0.0)*(0.15/0.5) - max(0.5-pm,0.0)*(0.15/0.5)
       !m_crit_pm =  max(pm-0.7,0.0)*((m_crit- 0.55)/0.5) + max(0.3-pm,0.0)*((m_crit-0.55)/0.5)
-      m_crit_pm =  0.! max(pm-0.6,0.0)*((m_crit- 0.55)/0.4) + max(0.3-pm,0.0)*((m_crit-0.55)/0.3)
+      m_crit_pm =  0.d0! max(pm-0.6,0.0)*((m_crit- 0.55)/0.4) + max(0.3-pm,0.0)*((m_crit-0.55)/0.3)
       !m_crit_pm = max(pm-0.9,0.0)*((m_crit- 0.55)/0.1) + max(0.1-pm,0.0)*((m_crit-0.55)/0.1);
-      m_crit_pm = pmtanh01*0.09
+
+      m_crit_pm = pmtanh01*0.09d0
       m_crit_m = m_crit - m_crit_pm
       m_eqn = m_crit_m/(1.d0 + sqrt(S))
       tanpsi = c1*(m-m_eqn)*tanh(shear/0.1)
@@ -323,9 +326,9 @@ contains
 
       if (m.le.1.d-16) then
          compress = 1.d16
-         kperm = 0.0
-         tanpsi = 0.0
-         sigbed=0.0
+         kperm = 0.0d0
+         tanpsi = 0.0d0
+         sigbed=0.0d0
       else
          compress = alpha/(m*(sigbed +  sigma_0))
       endif
@@ -341,7 +344,7 @@ contains
          tanpsi = 0.d0
          D = 0.d0
       elseif (h*mu.gt.0.d0) then
-         D = 2.0*(kperm/(mu*h))*(rho_fp*gmod*h - p)
+         D = 2.0d0*(kperm/(mu*h))*(rho_fp*gmod*h - p)
       else
          D = 0.d0
       endif
