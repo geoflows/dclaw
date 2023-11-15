@@ -77,7 +77,6 @@ def setrun(claw_pkg='dclaw'):
     clawdata.lower[1] = 0
     clawdata.upper[1] = 50
 
-    # choose mx and my so coarsest grid has 2 minute resolution:
     clawdata.num_cells[0] = 200
     clawdata.num_cells[1] = 25
 
@@ -124,8 +123,8 @@ def setrun(claw_pkg='dclaw'):
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 15
-        clawdata.tfinal = 10
+        clawdata.num_output_times = 20
+        clawdata.tfinal = 20
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -168,15 +167,16 @@ def setrun(claw_pkg='dclaw'):
 
     # Initial time step for variable dt.
     # If dt_variable==0 then dt=dt_initial for all steps:
-    clawdata.dt_initial = 0.2
+    clawdata.dt_initial = 0.1
 
     # Max time step to be allowed if variable dt used:
     clawdata.dt_max = 1e+99
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    clawdata.cfl_desired = 0.8 
-    clawdata.cfl_max = 1.0
+    # D-Claw requires CFL<0.5
+    clawdata.cfl_desired = 0.45 
+    clawdata.cfl_max = 0.5
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -281,13 +281,13 @@ def setrun(claw_pkg='dclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 1
+    amrdata.amr_levels_max = 3
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
-    amrdata.refinement_ratios_x = [2]
-    amrdata.refinement_ratios_y = [2]
-    amrdata.refinement_ratios_t = [2]
+    amrdata.refinement_ratios_x = [2,2]
+    amrdata.refinement_ratios_y = [2,2]
+    amrdata.refinement_ratios_t = [2,2]
 
 
 
@@ -431,19 +431,19 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.m0 = 0.0
     dclaw_data.m_crit = 0.64
     dclaw_data.kappita = 1e8
-    dclaw_data.kappita_diff = 1
-    dclaw_data.chi_init_val=0.5 # not currently used.
+    #dclaw_data.kappita_diff = 1
+    #dclaw_data.chi_init_val=0.5 # not currently used.
     dclaw_data.alpha_c = 0.05
     dclaw_data.alpha_seg = 0.5
-    dclaw_data.phi_seg_coeff = 0.0
+    #dclaw_data.phi_seg_coeff = 0.0
     dclaw_data.delta = 0.001
     dclaw_data.bed_normal = 0
     dclaw_data.entrainment = 1
     dclaw_data.entrainment_rate = 0.2
     dclaw_data.sigma_0 = 1.0e3
-    dclaw_data.mom_autostop = True
-    dclaw_data.momlevel = 1
-    dclaw_data.mom_perc = 0.0
+    #dclaw_data.mom_autostop = True
+    #dclaw_data.momlevel = 1
+    #dclaw_data.mom_perc = 0.0
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
@@ -481,6 +481,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata.tprint = False      # time step reporting each level
     amrdata.uprint = False      # update/upbnd reporting
     
+    amrdata.max1d = 300
     # More AMR parameters can be set -- see the defaults in pyclaw/data.py
 
     return rundata
