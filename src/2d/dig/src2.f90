@@ -245,13 +245,13 @@
 
 
       ! Manning friction------------------------------------------------
-      if (friction_forcing) return
+      if (friction_forcing) then
       if (coeff>0.d0.and.friction_depth>0.d0) then
          do i=1,mx
             do j=1,my
 
                if (bed_normal==1) gmod = grav*cos(aux(i_theta,i,j))
-               h=q(i,j,1)
+                  h=q(1, i,j)
                if (h<=friction_depth) then
                  !# apply friction source term only in shallower water
                   hu=q(2,i,j)
@@ -280,6 +280,7 @@
                endif
             enddo
          enddo
+         endif
       endif
      ! ----------------------------------------------------------------
 
