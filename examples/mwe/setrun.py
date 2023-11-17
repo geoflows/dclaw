@@ -153,7 +153,7 @@ def setrun(claw_pkg='dclaw'):
     # The current t, dt, and cfl will be printed every time step
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
-    clawdata.verbosity = 1
+    clawdata.verbosity = 3
 
 
 
@@ -393,7 +393,7 @@ def setrun(claw_pkg='dclaw'):
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
     qinitdclaw_data.qinitfiles = []
-    qinitdclaw_data.qinitfiles.append([3, 1, 1, 1, 'input_files/q1.tt3'])
+    qinitdclaw_data.qinitfiles.append([3, 1, 1, 3, 'input_files/q1.tt3'])
     
     # for qinit perturbations append lines of the form
     #   [qinitftype,iqinit, minlev, maxlev, fname]
@@ -407,7 +407,7 @@ def setrun(claw_pkg='dclaw'):
     auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
 
     auxinitdclaw_data.auxinitfiles = []
-    auxinitdclaw_data.auxinitfiles.append([3, 5, 1, 1, 'input_files/aux5.tt3'])
+    auxinitdclaw_data.auxinitfiles.append([3, 5, 1, 3, 'input_files/aux5.tt3'])
     # for auxinit perturbations append lines of the form
     #   [auxinitftype,iauxinit, minlev, maxlev, fname]
 
@@ -428,13 +428,13 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.phi_bed = 36.0
     dclaw_data.theta_input = 0.0
     dclaw_data.mu = 0.005
-    dclaw_data.m0 = 0.0
+    dclaw_data.m0 = 0.64
     dclaw_data.m_crit = 0.64
     dclaw_data.kappita = 1e8
     #dclaw_data.kappita_diff = 1
     #dclaw_data.chi_init_val=0.5 # not currently used.
     dclaw_data.alpha_c = 0.05
-    dclaw_data.alpha_seg = 0.5
+    dclaw_data.alpha_seg =0.5
     #dclaw_data.phi_seg_coeff = 0.0
     dclaw_data.delta = 0.001
     dclaw_data.bed_normal = 0
@@ -465,8 +465,7 @@ def setrun(claw_pkg='dclaw'):
     # flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
     # flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
     flowgrades_data.keep_fine = True
-    flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 1])
-    flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 1])
+    flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 3])
 
     #  ----- For developers ----- 
     # Toggle debugging print statements:
