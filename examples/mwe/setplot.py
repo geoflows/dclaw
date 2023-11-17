@@ -9,6 +9,7 @@ function setplot is called to set the plot parameters.
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 import os,sys
 
@@ -51,52 +52,167 @@ def setplot(plotdata=None):
         from pylab import title
         t = current_data.t
         timestr = timeformat(t)
-        title('%s after earthquake' % timestr)
+        title('Eta %s after initiation' % timestr)
 
 
-    #-----------------------------------------
-    # Figure for surface
-    #-----------------------------------------
-    plotfigure = plotdata.new_plotfigure(name='Computational domain', figno=0)
-    plotfigure.kwargs = {'figsize':(8,7)}
-    plotfigure.show = True
-
-    # Set up for axes in this figure:
-    plotaxes = plotfigure.new_plotaxes('pcolor')
-    plotaxes.title = 'Surface'
-    plotaxes.scaled = True
-
-
-    def aa(current_data):
+    def aa_eta(current_data):
         from pylab import ticklabel_format, xticks, gca, cos, pi, savefig
         gca().set_aspect(1.)
         title_hours(current_data)
         ticklabel_format(useOffset=False)
         xticks(rotation=20)
 
+    def aa(current_data):
+        from pylab import ticklabel_format, xticks, gca, cos, pi, savefig
+        gca().set_aspect(1.)
+        ticklabel_format(useOffset=False)
+        xticks(rotation=20)
+    #-----------------------------------------
+    # Figure for Q
+    #-----------------------------------------
+    plotfigure = plotdata.new_plotfigure(name='Q', figno=0)
+    plotfigure.kwargs = {'figsize':(7,15), 'layout':'constrained','dpi':300}
+    plotfigure.show = True
+
+
+    #-----------------------------------------
+    # Subplot for eta
+    #-----------------------------------------
+    plotaxes = plotfigure.new_plotaxes('eta')
+    plotaxes.axescmd = "subplot(711)"
+    plotaxes.title = 'Eta'
+    plotaxes.scaled = True
+
+    plotaxes.afteraxes = aa_eta
+
+    plotitem = plotaxes.new_plotitem(plot_type='2d_imshow')
+    plotitem.plot_var = dplot.eta
+    plotitem.imshow_cmin = 0.0
+    plotitem.imshow_cmax = 100
+    plotitem.imshow_cmap = mpl.colormaps['cividis']
+    plotitem.add_colorbar = True
+    plotitem.amr_patchedges_show = [True, True, True]
+    plotitem.amr_patchedges_color = ['blue', 'magenta', 'green'] 
+
+    #-----------------------------------------
+    # Subplot for depth
+    #-----------------------------------------
+    # Set up for axes in this figure:
+    plotaxes = plotfigure.new_plotaxes('depth')
+    plotaxes.axescmd = "subplot(712)"
+    plotaxes.title = 'Depth'
+    plotaxes.scaled = True
 
     plotaxes.afteraxes = aa
 
-
-    # Surface
-    plotitem = plotaxes.new_plotitem(plot_type='2d_contour')
-    plotitem.plot_var = dplot.surface
-    plotitem.contour_levels = linspace(0,100,10)
-    plotitem.amr_contour_colors = ['y']  # color on each level
-    plotitem.kwargs = {'linestyles':'solid','linewidths':2}
-    plotitem.amr_contour_show = [1,0,0]
-    plotitem.celledges_show = 0
-    plotitem.patchedges_show = 0
-
     # Depth
-    plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
+    plotitem = plotaxes.new_plotitem(plot_type='2d_imshow')
     plotitem.plot_var = dplot.depth
-    plotitem.pcolor_cmin = 0.0
-    plotitem.pcolor_cmax = 5
+    plotitem.imshow_cmin = 0.0
+    plotitem.imshow_cmax = 5
+    plotitem.imshow_cmap = mpl.colormaps['inferno']
     plotitem.add_colorbar = True
-    plotitem.amr_celledges_show = [0]
-    plotitem.amr_patchedges_show = [0,0,0,0]
-    plotitem.amr_data_show = [1,1,1,1,1,0,0]
+
+
+    #-----------------------------------------
+    # Subplot for m
+    #-----------------------------------------
+    # Set up for axes in this figure:
+    plotaxes = plotfigure.new_plotaxes('m')
+    plotaxes.axescmd = "subplot(713)"
+    plotaxes.title = 'Solid Fraction'
+    plotaxes.scaled = True
+
+    plotaxes.afteraxes = aa
+
+    # m
+    plotitem = plotaxes.new_plotitem(plot_type='2d_imshow')
+    plotitem.plot_var = dplot.solid_frac
+    plotitem.imshow_cmin = 0.0
+    plotitem.imshow_cmax = 1
+    plotitem.imshow_cmap = mpl.colormaps['Oranges']
+    plotitem.add_colorbar = True
+    plotitem.amr_patchedges_show = [False, False, False]
+
+    #-----------------------------------------
+    # Subplot for velocity
+    #-----------------------------------------
+    # Set up for axes in this figure:
+    plotaxes = plotfigure.new_plotaxes('vel')
+    plotaxes.axescmd = "subplot(714)"
+    plotaxes.title = 'Velocity'
+    plotaxes.scaled = True
+
+    plotaxes.afteraxes = aa
+
+    # m
+    plotitem = plotaxes.new_plotitem(plot_type='2d_imshow')
+    plotitem.plot_var = dplot.velocity_magnitude
+    plotitem.imshow_cmin = 0.0
+    plotitem.imshow_cmax = 5
+    plotitem.imshow_cmap = mpl.colormaps['Greens']
+    plotitem.add_colorbar = True
+    plotitem.amr_patchedges_show = [False, False, False]
+
+    #-----------------------------------------
+    # Subplot for normalized pressure
+    #-----------------------------------------
+    # Set up for axes in this figure:
+    plotaxes = plotfigure.new_plotaxes('pressure')
+    plotaxes.axescmd = "subplot(715)"
+    plotaxes.title = 'Pb/Phydro'
+    plotaxes.scaled = True
+
+    plotaxes.afteraxes = aa
+
+    # m
+    plotitem = plotaxes.new_plotitem(plot_type='2d_imshow')
+    plotitem.plot_var = dplot.basal_pressure_over_hydrostatic
+    plotitem.imshow_cmin = 0.0
+    plotitem.imshow_cmax = 2
+    plotitem.imshow_cmap = mpl.colormaps['PuOr']
+    plotitem.add_colorbar = True
+    plotitem.amr_patchedges_show = [False, False, False]
+
+    #-----------------------------------------
+    # Subplot for Entrainable material
+    #-----------------------------------------
+    # Set up for axes in this figure:
+    plotaxes = plotfigure.new_plotaxes('entrainable')
+    plotaxes.axescmd = "subplot(716)"
+    plotaxes.title = 'Entrained material'
+    plotaxes.scaled = True
+
+    plotaxes.afteraxes = aa
+
+    # m
+    plotitem = plotaxes.new_plotitem(plot_type='2d_imshow')
+    plotitem.plot_var = dplot.b_eroded
+    plotitem.imshow_cmin = 0.0
+    plotitem.imshow_cmax = 5
+    plotitem.imshow_cmap = mpl.colormaps['viridis']
+    plotitem.add_colorbar = True
+    plotitem.amr_patchedges_show = [False, False, False]
+
+    #-----------------------------------------
+    # Fraction species 1
+    #-----------------------------------------
+    # Set up for axes in this figure:
+    plotaxes = plotfigure.new_plotaxes('species')
+    plotaxes.axescmd = "subplot(717)"
+    plotaxes.title = 'Species 1'
+    plotaxes.scaled = True
+
+    plotaxes.afteraxes = aa
+
+    # m
+    plotitem = plotaxes.new_plotitem(plot_type='2d_imshow')
+    plotitem.plot_var = dplot.species1_fraction
+    plotitem.imshow_cmin = 0.0
+    plotitem.imshow_cmax = 1
+    plotitem.imshow_cmap = mpl.colormaps['PiYG']
+    plotitem.add_colorbar = True
+    plotitem.amr_patchedges_show = [False, False, False]
 
     # Plots of timing (CPU and wall time):
 
