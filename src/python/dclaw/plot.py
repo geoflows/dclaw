@@ -243,7 +243,7 @@ def species1_fraction(current_data):
     # drytol = 1.0
     q = current_data.q
     h = q[i_h,:, :]
-    hchi = q[i_h,:, :chi]
+    hchi = q[i_hchi,:, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         chi1 = ma.masked_where(h <= drytol, hchi / h)
     return chi1
@@ -257,7 +257,7 @@ def species2_fraction(current_data):
     # drytol = 1.0
     q = current_data.q
     h = q[i_h,:, :]
-    hchi = q[i_h,:, :chi]
+    hchi = q[i_hchi,:, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         chi2 = ma.masked_where(h <= drytol, 1.0 - (hchi / h))
     return chi2
