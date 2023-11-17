@@ -25,7 +25,7 @@
       real(kind=8) :: t1bot,t2top,beta2,dh,rho2,prat,b_x,b_y,dbdv
       real(kind=8) :: vlow,m2,vreg,slopebound
       real(kind=8) :: b_eroded,b_remaining,dtcoeff
-      real(kind=8) :: gamma,zeta,krate,p_eq,p_litho,p_hydro,dry_tol,dgamma
+      real(kind=8) :: gamma,zeta,krate,p_eq,p_litho,p_hydro,dgamma
 
       integer :: i,j,ii,jj,jjend,icount,curvature
       logical :: ent
@@ -261,7 +261,7 @@
                   phi = aux(i_phi,i,j)
                   theta = aux(i_theta,i,j)
                   call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                  if (h<dry_tol) cycle
+                  if (h<dry_tolerance) cycle
                   pm = q(6,i,j)/h
                   pm = max(0.0,pm)
                   pm = min(1.0,pm)
