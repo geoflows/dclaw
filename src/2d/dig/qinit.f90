@@ -1,7 +1,7 @@
 
 subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     
-    use geoclaw_module, only: sea_level
+    use geoclaw_module, only: sea_level,grav
     use amr_module, only: t0
     !use qinit_module, only: qinit_type,add_perturbation
     !use qinit_module, only: variable_eta_init
@@ -16,7 +16,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     
     !implicit none  !!DIG need to declare variables properly
     implicit double precision (a-h,o-z)  !!DIG temporary
-    
+
     ! Subroutine arguments
     integer, intent(in) :: meqn,mbc,mx,my,maux
     real(kind=8), intent(in) :: xlower,ylower,dx,dy
@@ -29,7 +29,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     real(kind=8) :: veta(1-mbc:mx+mbc,1-mbc:my+mbc)
     real(kind=8) :: ddxy
     
-    
+
     if (variable_eta_init) then
         ! Set initial surface eta based on eta_init
         call set_eta_init(mbc,mx,my,xlower,ylower,dx,dy,t0,veta)
@@ -174,7 +174,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   q(4,i,j) = q(1,i,j)*q(4,i,j)
                endif
                if (initchi.eq.0) then
-                  q(6,i,j) = 0.5*q(1,i,j)
+                  q(6,i,j) = 0.5*q(1,i,j) ! DIG: consider initial chi value as a user specified value.
                else
                   q(6,i,j) = q(1,i,j)*q(6,i,j)
                endif
@@ -197,7 +197,8 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       ! ========= Pressure initialization for Mobilization Modeling======
       call calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
-
+      ! DIG - consider making pressures here reflect rho_fp and any other
+      ! changes associated with hchi.
       select case (init_ptype)
          case (-1)
             !p should already be 0 or set by qinit file
@@ -206,7 +207,11 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             !set to hydrostatic
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
-                 if (bed_normal.eq.1) gmod = grav*cos(aux(i_theta,i,j))
+                 if (bed_normal.eq.1) then 
+                     gmod = grav*cos(aux(i_theta,i,j))
+                 else
+                     gmod=grav
+                 endif 
                  q(5,i,j) = rho_f*gmod*q(1,i,j)
                enddo
             enddo
