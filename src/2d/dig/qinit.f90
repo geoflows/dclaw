@@ -216,7 +216,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                enddo
             enddo
             p_initialized = 1
-         case(1:2)
+         case(1:2) ! DIG: Not yet tested
             !set to failure
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
@@ -238,7 +238,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                enddo
             enddo
             p_initialized = 1
-         case(3:4)
+         case(3:4) ! DIG: Not yet tested
             !p will be updated in b4step2
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
