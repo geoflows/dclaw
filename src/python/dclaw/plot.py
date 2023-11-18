@@ -275,8 +275,8 @@ def b_eroded(current_data):
 def density(current_data):
     # new segregation might modify.
     m = solid_frac(current_data)
-    rho_f = 2700# DIG fix hard code current_data.plotdata.rho_f
-    rho_s = 1000# DIG fix hard code current_data.plotdata.rho_s
+    rho_f = 1000# DIG fix hard code current_data.plotdata.rho_f
+    rho_s = 2700# DIG fix hard code current_data.plotdata.rho_s
     rho = (1.0 - m) * rho_f + m * rho_s
     return rho
 
@@ -407,7 +407,7 @@ def hydrostaticP(current_data):
     drytol = 0.01 # DIG current_data.plotdata.drytolerance
     q = current_data.q
     h = depth(current_data)
-    rho_f = 2700# DIG fix hard code current_data.plotdata.rho_f    
+    rho_f = 1000# DIG fix hard code current_data.plotdata.rho_f    
     return gmod(current_data) * rho_f * h
 
 
@@ -617,7 +617,7 @@ def Fdrag(current_data):  # units of force per unit area
     # conservative form (ie. derivatives on hu not u). I think it might be
     # similar to a drag term that appears on fully two-phase equations for solid
     # and fluid velocity fields.
-    rho_f = 2700# DIG fix hard code current_data.plotdata.rho_f    
+    rho_f = 1000# DIG fix hard code current_data.plotdata.rho_f    
     h = depth(current_data)
     vnorm = velocity_magnitude(current_data)
     D = dilatency(current_data)
