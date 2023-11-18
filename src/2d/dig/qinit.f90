@@ -37,7 +37,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
         veta = sea_level  ! same value everywhere
       endif
 
-    q(2:meqn,:,:) = 0.d0   ! set all but h to zero (set further below)
+    q(:,:,:) = 0.d0   ! set all to zero (set further below)
 
     forall(i=1:mx, j=1:my)
         q(1,i,j) = max(0.d0, veta(i,j) - aux(1,i,j))
