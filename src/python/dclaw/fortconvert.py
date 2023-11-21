@@ -48,8 +48,8 @@ import string
 
 import numpy as np
 
-import dclaw.topotools as gt
-import dclaw.netcdf_tools as gn
+import clawpack.dclaw.topotools as gt
+import clawpack.dclaw.netcdf_tools as gn
 
 
 # ================================================================================
@@ -1002,7 +1002,7 @@ def fort2griddata_framenumbers(framenumber, fortdir, m=1, bilinear=True):
     """
 
     try:
-        import dclaw.topotools as gt
+        import clawpack.dclaw.topotools as gt
     except:
         import geoclaw.topotools as gt
 

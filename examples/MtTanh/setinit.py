@@ -5,7 +5,7 @@ create synthetic topo DEMs
 """
 
 import numpy as np
-import dclaw.topotools as gt
+import clawpack.dclaw.topotools as gt
 import os
 
 from function_defs import *

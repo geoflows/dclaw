@@ -37,8 +37,8 @@ import string
 
 import numpy as np
 
-import dclaw.fixdata as fixdata
-import dclaw.iotools as iotools
+import clawpack.dclaw.fixdata as fixdata
+import clawpack.dclaw.iotools as iotools
 
 Rearth = 6367.5e3  # average of polar and equatorial radii
 
@@ -69,18 +69,18 @@ def get_topo(topo_fname, remote_directory, force=None):
     if force is None:
         CTD = os.environ.get("CLAW_TOPO_DOWNLOAD", None)
         force = CTD in [True, "True"]
-    print(("force = ", force))
+    print("force = ", force)
 
     if os.path.exists(topo_fname):
-        print(("*** Not downloading topo file (already exists): %s " % topo_fname))
+        print("*** Not downloading topo file (already exists): %s " % topo_fname)
     else:
         remote_fname = topo_fname
         local_fname = topo_fname
         remote_fname_txt = remote_fname + ".txt"
         local_fname_txt = local_fname + ".txt"
 
-        print(("Require remote file ", remote_fname))
-        print(("      from ", remote_directory))
+        print("Require remote file ", remote_fname)
+        print("      from ", remote_directory)
         if not force:
             ans = eval(
                 input(
@@ -89,12 +89,12 @@ def get_topo(topo_fname, remote_directory, force=None):
                 )
             )
             if ans.lower() not in ["y", "yes", "?"]:
-                print(("*** Aborting!   Missing: ", local_fname))
+                print("*** Aborting!   Missing: ", local_fname)
                 return
             if ans == "?":
                 try:
-                    print(("Retrieving remote file ", remote_fname_txt))
-                    print(("      from ", remote_directory))
+                    print("Retrieving remote file ", remote_fname_txt)
+                    print("      from ", remote_directory)
                     url = os.path.join(remote_directory, remote_fname_txt)
                     urllib.request.urlretrieve(url, local_fname_txt)
                     os.system("cat %s" % local_fname_txt)
@@ -102,32 +102,32 @@ def get_topo(topo_fname, remote_directory, force=None):
                     print("*** Error retrieving metadata file!")
                 ans = eval(input("  Ok to download topo file?  "))
                 if ans.lower() not in ["y", "yes", "?"]:
-                    print(("*** Aborting!   Missing: ", local_fname))
+                    print("*** Aborting!   Missing: ", local_fname)
                     return
 
         if not os.path.exists(local_fname_txt):
             try:
-                print(("Retrieving metadata file ", remote_fname_txt))
-                print(("      from ", remote_directory))
+                print("Retrieving metadata file ", remote_fname_txt)
+                print("      from ", remote_directory)
                 url = os.path.join(remote_directory, remote_fname_txt)
                 urllib.request.urlretrieve(url, local_fname_txt)
             except:
                 print("*** Error retrieving metadata file!")
 
         try:
-            print(("Retrieving topo file ", remote_fname))
-            print(("      from ", remote_directory))
+            print("Retrieving topo file ", remote_fname)
+            print("      from ", remote_directory)
             url = os.path.join(remote_directory, remote_fname)
             urllib.request.urlretrieve(url, local_fname)
         except:
-            print(("*** Error retrieving file!  Missing: ", local_fname))
+            print("*** Error retrieving file!  Missing: ", local_fname)
             raise Exception("Error from urllib.urlretrieve")
         try:
             firstline = open(local_fname, "r").readline()
             if firstline.find("DOC") > -1:
-                print(("*** Possible error -- check the file ", local_fname))
+                print("*** Possible error -- check the file ", local_fname)
             else:
-                print(("Saved to ", local_fname))
+                print("Saved to ", local_fname)
         except:
             raise Exception("Error opening file %s" % local_fname)
 
@@ -163,7 +163,7 @@ def topo1writer(outfile, topo, xlower, xupper, ylower, yupper, nxpoints, nypoint
             fout.write("%22.15e  %22.15e  %22.15e\n" % (x, y, z))
 
     fout.close
-    print(("Created file ", outfile))
+    print("Created file ", outfile)
 
 
 # ==========================================================================
@@ -203,7 +203,7 @@ def topo2writer(
     dy = (yupper - ylower) / (nypoints - 1)
     if abs(dx - dy) > 1.0e-8:
         print("*** Error in topo2writer, need dx=dy")
-        print(("    dx = %s, dy = %s" % (dx, dy)))
+        print("    dx = %s, dy = %s" % (dx, dy))
         return
     cellsize = dx
 
@@ -231,7 +231,7 @@ def topo2writer(
             fout.write("%22.15e\n" % Z[i, j])
 
     fout.close
-    print(("Created file ", outfile))
+    print("Created file ", outfile)
 
 
 # ==========================================================
@@ -500,7 +500,7 @@ def topoheaderread(inputfile, closefile=True):
     # check if passes convert strings values to numeric
     for key in keylist:
         if not key in topoheader:
-            print(("ERROR: topoheader not fully specified in %s" % (inputfile)))
+            print("ERROR: topoheader not fully specified in %s" % (inputfile))
             exit
         else:
             if (
@@ -621,8 +621,8 @@ def griddata2topofile(
     if (abs(cellsizeX - cellsizeY) < -1.0e-9) & (topotype > 1):
         print("geotools.topotools.griddata2topofile:")
         print("WARNING: cellsize is not uniform in x and y")
-        print(("cellsize in the x-direction %s" % cellsizeX))
-        print(("cellsize in the y-direction %s" % cellsizeY))
+        print("cellsize in the x-direction %s" % cellsizeX)
+        print("cellsize in the y-direction %s" % cellsizeY)
         print("Consider changing to topotype=1")
 
     if topotype == 2:
@@ -705,8 +705,8 @@ def griddata2gtif(
     if abs(cellsizeX - cellsizeY) < -1.0e-9:
         print("geotools.topotools.griddata2topofile:")
         print("WARNING: cellsize is not uniform in x and y")
-        print(("cellsize in the x-direction %s" % cellsizeX))
-        print(("cellsize in the y-direction %s" % cellsizeY))
+        print("cellsize in the x-direction %s" % cellsizeX)
+        print("cellsize in the y-direction %s" % cellsizeY)
         print("Consider changing to topotype=1")
 
     with rasterio.open(outputfile, "w", **out_profile) as dst:
@@ -1247,7 +1247,7 @@ def removenodata_value(
     if method == "fill":
         ind = fixdata.findbadindices(Z, nodata_value)
         if size(ind) > 0:
-            print(("Changing %s nodata_value points" % size(ind)))
+            print("Changing %s nodata_value points" % size(ind))
         Z = fixdata.fillbaddata(Z, ind)
         griddata2topofile(X, Y, Z, outputfile, topotypeout, nodata_value, nodata_value)
         return
@@ -1269,7 +1269,7 @@ def removenodata_value(
 
     ptsremove = npts - len(Z)
     if ptsremove > 0:
-        print(("Removing %s nodata_value points" % ptsremove))
+        print("Removing %s nodata_value points" % ptsremove)
 
     Z = pylab.griddata(X, Y, Z, xi, yi)
     (X, Y) = np.meshgrid(xi, yi)
@@ -1313,7 +1313,7 @@ def changenodata_value(
     Z[ind] = nodata_valueout
 
     if size(ind) > 0:
-        print(("Changing %s nodata_value points" % size(ind)))
+        print("Changing %s nodata_value points" % size(ind)))
 
     griddata2topofile(X, Y, Z, outputfile, topotypeout, nodata_valuein, nodata_valueout)
 
@@ -1567,7 +1567,7 @@ def topoboundary(infile):
     xur = xll + (mx - 1) * dx
     yur = yll + (my - 1) * dx
 
-    print(("xll = %s, xur = %s, yll = %s, yur = %s" % (xll, xur, yll, yur)))
+    print("xll = %s, xur = %s, yll = %s, yur = %s" % (xll, xur, yll, yur))
 
     return [xll, xur, yll, yur]
 
