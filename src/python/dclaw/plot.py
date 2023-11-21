@@ -31,12 +31,25 @@ i_cohesion = i_dig + 3
 i_taudir_x = i_dig + 4
 i_taudir_y = i_dig + 5
 
+_grav = 9.81
+_rho_f = 1000
+_rho_s = 2700
+_kappita = 1e-8
+_mu = 0.001
+_m_crit = 0.52
+_delta = 0.01
+_m0 = 0.6
+_c1 = 1.0
+_bed_normal = 0
+_drytol = 0.001
+_phi_bed = 40
 
 
 # Gravity, adjusted for bed normal.
 def gmod(current_data):
-    grav = 9.81# DIG: fix hardcode current_data.plotdata.gravity
-    bed_normal = 0# dIg fix hardcode current_data.plotdata.bed_normal
+
+    grav = current_data.plotdata.geoclaw_data.gravity
+    bed_normal = current_data.plotdata.dclaw_data.bed_normal
 
     gmod = grav
 
@@ -73,7 +86,7 @@ def land(current_data):
     """
     Return a masked array containing the surface elevation only in dry cells.
     """
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     eta = q[i_eta,:, :]
@@ -86,7 +99,7 @@ def surface(current_data):
     Surface is eta = h+topo, assumed to be output as 4th column of fort.q
     files.
     """
-    drytol = 1e-3  #current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h, :, :]
     eta = q[i_eta, :, :]
@@ -100,7 +113,7 @@ def surface_solid_frac_lt03(current_data):
     Surface is eta = h+topo, assumed to be output as 4th column of fort.q
     files.
     """
-    drytol = 1e-3  #current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     eta = q[i_eta,:, :]
@@ -119,8 +132,7 @@ def depth(current_data):
     """
     Return a masked array containing the depth of fluid only in wet cells.
     """
-    drytol = 1e-3  #current_data.plotdata.drytolerance
-    # drytol = 5.e-2
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h, :, :]
     depth = ma.masked_where(h <= drytol, h)
@@ -135,7 +147,7 @@ def surface_or_depth(current_data):
     Surface is eta = h+topo, assumed to be output as 4th column of fort.q
     files.
     """
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     eta = q[i_eta,:, :]
@@ -151,7 +163,7 @@ def velocity_u(current_data):
     """
     Return a masked array containing velocity u in wet cells.
     """
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     hu = q[i_hu,:, :]
@@ -164,7 +176,7 @@ def velocity_v(current_data):
     """
     Return a masked array containing velocity v in wet cells.
     """
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     drytol = 1.0
     q = current_data.q
     h = q[i_h,:, :]
@@ -180,7 +192,7 @@ def velocity(current_data):
 
     velocity defined as sqrt(u**2 + v**2)
     """
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     hu = q[i_hu,:, :]
@@ -197,7 +209,7 @@ def velocity_magnitude(current_data):
 
     velocity defined as sqrt(u**2 + v**2)
     """
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     hu = q[i_hu,:, :]
@@ -213,7 +225,7 @@ def velocity_magnitude(current_data):
 
 
 def solid_frac(current_data):
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     hm = q[i_hm,:, :]
@@ -229,7 +241,7 @@ def solid_frac_gt03(current_data):
 
 def basalP(current_data):
     # basal pressure.
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     basalP = ma.masked_where(q[i_h,:, :] < drytol, q[i_pb,:, :])
     return basalP
@@ -239,8 +251,7 @@ def species1_fraction(current_data):
     """
     Return a masked array containing the fraction of species 1 in wet cells.
     """
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
-    # drytol = 1.0
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     hchi = q[i_hchi,:, :]
@@ -253,8 +264,7 @@ def species2_fraction(current_data):
     """
     Return a masked array containing the fraction of species 2 in wet cells.
     """
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
-    # drytol = 1.0
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     hchi = q[i_hchi,:, :]
@@ -275,22 +285,17 @@ def b_eroded(current_data):
 def density(current_data):
     # new segregation might modify.
     m = solid_frac(current_data)
-    rho_f = 1000# DIG fix hard code current_data.plotdata.rho_f
-    rho_s = 2700# DIG fix hard code current_data.plotdata.rho_s
+    rho_f = current_data.plotdata.dclaw_data.rho_f
+    rho_s = current_data.plotdata.dclaw_data.rho_s
     rho = (1.0 - m) * rho_f + m * rho_s
     return rho
 
 def kperm(current_data):
     # permeability (m^2)
-    kappita = 1e-8# DIG fix hard codecurrent_data.plotdata.kappita
-    m0 = current_data.plotdata.m0
-    #print(current_data.attributes)
-    kappita_diff = current_data.plotdata.kappita_diff
+    kappita = current_data.plotdata.dclaw_data.kappita
+    m0 = current_data.plotdata.dclaw_data.m0
     m = solid_frac(current_data)
-    pm = species1_fraction(current_data)
-    kappita2 = kappita * kappita_diff
-    kequiv = kappita * pm + kappita2 * (1.0 - pm)
-    return kequiv * np.exp(-(m - m0) / (0.04))
+    return kappita * np.exp(-(m - m0) / (0.04))
 
 
 def shear(current_data):
@@ -302,7 +307,7 @@ def shear(current_data):
 
 def dilatency(current_data):
     # depth averaged dilatency rate (m/s)
-    mu = 0.05 #DIG current_data.plotdata.mu
+    mu = current_data.plotdata.dclaw_data.mu
     h = depth(current_data)
     # Royal Society, Part 2, Eq 2.6
     D = (
@@ -326,7 +331,7 @@ def dilatency(current_data):
 
 def tanpsi(current_data):
     # tangent of dilation angle (#)
-    c1 = current_data.plotdata.c1
+    c1 = current_data.plotdata.dclaw_data.c1
     gamma = shear(current_data)
     # in code, m-meqn is regularized based on shear
     vnorm = velocity_magnitude(current_data)
@@ -343,33 +348,12 @@ def psi(current_data):
 # Related to m_eqn
 def m_crit(current_data):
     # eventually this may need modification based on segregation (just like kperm)
-    return current_data.plotdata.m_crit
-
+    return current_data.plotdata.dclaw_data.m_crit
+    
 
 def m_eqn(current_data):
     # equilibrium value for m (not currently correct if segregation is used (but segregation may change))
     m_c = m_crit(current_data)
-    # alpha_seg = current_data.plotdata.alpha_seg", alpha_seg_default)
-
-    # alpha_seg = 1.0 - alpha_seg  # digclaw.mod.f90 line 121
-    m = solid_frac(current_data)
-    # pm = species1_fraction(current_data)
-
-    # # if segregation occurs, then need to reduce
-    # # mcrit by m_crit_pm
-    # # TODO. this part of code may change as segregation use is changed.
-    #
-    # if alpha_seg - 1.0 < 1.0e-6:
-    #     seg = 0.0
-    #     rho_fp = rho_f
-    #     pmtanh01 = 0.0
-    # else:
-    #     seg = 1.0
-    #     pmtanh01 = seg * (0.5 * (np.tanh(40.0 * (pm - 0.90)) + 1.0))
-    #     rho_fp = (1.0 - pmtanh01) * rho_f
-    #
-    # m_crit_pm = pmtanh01 * 0.09
-    # m_crit_m = m_crit - m_crit_pm
     m_eqn = m_c / (1.0 + np.sqrt(N(current_data)))
     return m_eqn
 
@@ -386,7 +370,6 @@ def m_minus_mcrit(current_data):
     return solid_frac(current_data) - m_crit(current_data)
 
 
-
 # Calculated based on pressure
 def basal_pressure_over_hydrostatic(current_data):
     return basalP(current_data) / hydrostaticP(current_data)
@@ -394,7 +377,7 @@ def basal_pressure_over_hydrostatic(current_data):
 
 def lithostaticP(current_data):
     # lithostatic pressure
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = depth(current_data)
     rho = density(current_data)
@@ -404,10 +387,10 @@ def lithostaticP(current_data):
 
 def hydrostaticP(current_data):
     # hydrostatic pressure
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = depth(current_data)
-    rho_f = 1000# DIG fix hard code current_data.plotdata.rho_f    
+    rho_f = current_data.plotdata.dclaw_data.rho_f
     return gmod(current_data) * rho_f * h
 
 
@@ -435,7 +418,7 @@ def sigma_e_over_lithostatic(current_data):
     return sigma_e(current_data) / lithostaticP(current_data)
 
 def liquefaction_ratio(current_data):
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     p = ma.masked_where(q[i_h,:, :] < drytol, q[i_pb,:, :])
     litho = lithostaticP(current_data)
@@ -447,15 +430,15 @@ def liquefaction_ratio(current_data):
 
 def nondimentional_c(current_data):
 
-    rho_f = 1000# DIG fix hard codecurrent_data.plotdata.kappita
-    kappita = 1e-8# DIG fix hard codecurrent_data.plotdata.kappita
+    rho_f = current_data.plotdata.dclaw_data.rho_f
+    kappita = current_data.plotdata.dclaw_data.kappita
     U = velocity_magnitude(current_data)
-    mu = 0.05 #DIG current_data.plotdata.mu
+    mu = current_data.plotdata.dclaw_data.mu
     g = gmod(current_data)
 
     c = np.array((rho_f*g*kappita)/(mu*U), dtype=float)
 
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
 
@@ -467,23 +450,23 @@ def nondimentional_c(current_data):
 
 def Iv(current_data):
     # inertial number
-    mu = 0.05 #DIG current_data.plotdata.mu
+    mu = current_data.plotdata.dclaw_data.mu
     gamma = shear(current_data)
     return (mu * gamma) / sigma_e(current_data)
 
 
 def Stokes(current_data):
     # stokes number
-    mu = 0.05 #DIG current_data.plotdata.mu
-    rho_s = current_data.plotdata.rho_s
-    delta = current_data.plotdata.delta
+    mu = current_data.plotdata.dclaw_data.mu
+    rho_s = current_data.plotdata.dclaw_data.rho_s
+    delta = current_data.plotdata.dclaw_data.delta
     gamma = shear(current_data)
     return rho_s * gamma * delta ** 2 / mu
 
 def N(current_data):  # dimensionless state parameter N
-    mu = 0.05 #DIG current_data.plotdata.mu
-    rho_s = current_data.plotdata.rho_s
-    delta = current_data.plotdata.delta
+    mu = current_data.plotdata.dclaw_data.mu
+    rho_s = current_data.plotdata.dclaw_data.rho_s
+    delta = current_data.plotdata.dclaw_data.delta
     gamma = shear(current_data)
     sigbedc = (rho_s * ((gamma * delta) ** 2.0)) + sigma_e(current_data)
     N = (mu * gamma) / (sigbedc)
@@ -498,10 +481,10 @@ def local_slope(current_data):
     h = depth(current_data)
 
     # gravitational driving force per unit area.
-    bed_normal = current_data.plotdata.bed_normal
+    bed_normal = current_data.plotdata.dclaw_data.bed_normal
     eta = surface(current_data)
 
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     
 
     if bed_normal == 1:
@@ -538,7 +521,7 @@ def local_slope(current_data):
 
 def Fgravitational(current_data):
     # gravitational driving force per unit area.
-    bed_normal = current_data.plotdata.bed_normal
+    bed_normal = current_data.plotdata.dclaw_data.bed_normal
     g = gmod(current_data)
     h = depth(current_data)
     eta = surface(current_data)
@@ -617,7 +600,7 @@ def Fdrag(current_data):  # units of force per unit area
     # conservative form (ie. derivatives on hu not u). I think it might be
     # similar to a drag term that appears on fully two-phase equations for solid
     # and fluid velocity fields.
-    rho_f = 1000# DIG fix hard code current_data.plotdata.rho_f    
+    rho_f = current_data.plotdata.dclaw_data.rho_f    
     h = depth(current_data)
     vnorm = velocity_magnitude(current_data)
     D = dilatency(current_data)
@@ -632,7 +615,7 @@ def Fdrag(current_data):  # units of force per unit area
 
 def Ffluid(current_data):  # units of force per unit area
     # Resisting force due to fluid.
-    mu = 0.05 #DIG current_data.plotdata.mu
+    mu = current_data.plotdata.dclaw_data.mu
     h = depth(current_data)
     m = solid_frac(current_data)
     vnorm = velocity_magnitude(current_data)
@@ -646,65 +629,9 @@ def Ffluid(current_data):  # units of force per unit area
 
 def phi(current_data):
     # angle of internal friction (radians)
-    # consideres potential hysteretic friction, if specified.
-    phi_bed = current_data.plotdata.phi_bed
-    fric_offset_val = current_data.plotdata.fric_offset_val
-    fric_star_val = current_data.plotdata.fric_star_val
-    if fric_offset_val > 0.0:
-
-        bed_normal = current_data.plotdata.bed_normal
-
-        if bed_normal == 1:
-            aux = current_data.aux
-            theta = aux[i_theta,:, :]
-        else:
-            theta = 0.0
-
-        h = depth(current_data)
-        vnorm = velocity_magnitude(current_data)
-        g = gmod(current_data)
-
-        phi2f = np.deg2rad(phi_bed)
-
-        phi1f = phi2f - np.deg2rad(fric_offset_val)
-        phi3f = phi1f + np.deg2rad(fric_star_val)
-
-        mu1f = np.tan(phi1f)
-        mu2f = np.tan(phi2f)
-        mu3f = np.tan(phi3f)
-
-        Lambdaf = 1.34
-        diamf = 0.25
-        Lf = 2.0 * diamf
-        betaf = 0.65 / np.sqrt(np.cos(theta))
-        Gamf = 0.77 / np.sqrt(np.cos(theta))
-
-        Fr_starf = Lambdaf * betaf - Gamf
-
-        # Calculate local Froude number
-        Frf = vnorm / np.sqrt(g * h)
-
-        # calculate different static and dynamic mu values.
-        mu_df = mu1f + (mu2f - mu1f) / (
-            1 + h * betaf / (Lf * (Frf + Gamf))
-        )  # Rocha, Johnson and Gray, Eq 2.10
-        mu_sf = mu3f + (mu2f - mu1f) / (1 + h / Lf)
-
-        # as default, use intermediat Fr value for mu
-        mu_bf = (Frf / Fr_starf) * (mu_df - mu_sf) + mu_sf
-
-        # fill in mu dynamic and static as need.
-        mu_dynamic = Frf >= Fr_starf
-        mu_bf[mu_dynamic] = mu_df[mu_dynamic]
-
-        mu_static = Frf < 1.0e-16
-        mu_bf[mu_static] = mu_sf[mu_static]
-
-    else:
-        mu_bf = np.tan(np.deg2rad(phi_bed))
-
+    phi_bed = current_data.plotdata.dclaw_data.phi_bed
     # results are returned in radians. 
-    return np.arctan(mu_bf)
+    return np.deg2rad(phi_bed)
 
 
 def Fsolid(current_data):  # units of force per unit area
@@ -760,7 +687,7 @@ def fs(current_data):
     Return a masked array containing factor of safety.
     """
 
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     aux = current_data.aux
@@ -774,7 +701,7 @@ def cohesion(current_data):
     Return a masked array containing cohesion.
     """
 
-    drytol = 0.01 # DIG current_data.plotdata.drytolerance
+    drytol = current_data.plotdata.geoclaw_data.dry_tolerance
     q = current_data.q
     h = q[i_h,:, :]
     aux = current_data.aux
