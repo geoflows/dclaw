@@ -1313,7 +1313,7 @@ def changenodata_value(
     Z[ind] = nodata_valueout
 
     if size(ind) > 0:
-        print("Changing %s nodata_value points" % size(ind)))
+        print("Changing %s nodata_value points" % size(ind))
 
     griddata2topofile(X, Y, Z, outputfile, topotypeout, nodata_valuein, nodata_valueout)
 

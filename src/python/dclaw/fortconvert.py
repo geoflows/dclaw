@@ -170,7 +170,7 @@ def convertfortdir(
         fin.close()
     elif isinstance(nplots, int):
         nplots = np.arange(nplots + 1)
-        print(("converting frames 0 - %s" % (nplots)))
+        print("converting frames 0 - %s" % (nplots))
         print("to convert individual frames, call with nplots = a list of frames")
     else:
         nplots = np.array(nplots, dtype=int)
@@ -184,10 +184,10 @@ def convertfortdir(
         framenostr = numstring[1:]
         forttname = "fort.t" + framenostr
         fortqname = "fort.q" + framenostr
-        # print(('converting '+os.path.join(fortdir,fortqname)))
+        # print('converting '+os.path.join(fortdir,fortqname))
         outfname = os.path.join(outdir, outputname + framenostr)
 
-        # print(('writing to ' +outfname))
+        # print('writing to ' +outfname)
 
         if outputtype == "scattered":
             _func = fort2xyqscattered
@@ -267,7 +267,7 @@ def convertfortdir(
     else:
         # loop through prepared args.
         for args in arg_list:
-            print(("Converting {}".format(args[1])))
+            print("Converting {}".format(args[1]))
             _func(*args)
 
     # return to curdir if changed.
@@ -1302,7 +1302,7 @@ def pointfromfort(point, solutionlist, bilinear=True):
 
     if not dintersection:
         print("ERROR: point outside of domain:")
-        print(("point x= %d y=%d" % (point)))
+        print("point x= %d y=%d" % (point))
         print(
             (
                 "domain x bounds: %d -- %d"
@@ -1343,8 +1343,8 @@ def pointfromfort(point, solutionlist, bilinear=True):
         level = grid["AMR_level"]
     except KeyError:
 
-        print(("point is possibly on amr grid edge: x= %s y=%s" % (point)))
-        print(("intersection? %s" % (intersection)))
+        print("point is possibly on amr grid edge: x= %s y=%s" % (point))
+        print("intersection? %s" % (intersection))
         print("taking data from adjacent grid")
         eps = 1e-5
 
@@ -1372,15 +1372,15 @@ def pointfromfort(point, solutionlist, bilinear=True):
             level = grid["AMR_level"]
         except KeyError:
 
-            print(("point is possibly on amr grid edge: x= %s y=%s" % (point)))
+            print("point is possibly on amr grid edge: x= %s y=%s" % (point))
             domain = (
                 griddict["xlowdomain"],
                 griddict["xhidomain"],
                 griddict["ylowdomain"],
                 griddict["yhidomain"],
             )
-            print(("Domain xlow,xhi,ylow,yhi: [%s , %s] , [%s , %s]" % (domain)))
-            print(("intersection? %s" % (intersection)))
+            print("Domain xlow,xhi,ylow,yhi: [%s , %s] , [%s , %s]" % (domain))
+            print("intersection? %s" % (intersection))
             print("quitting in protest.")
 
             raise SystemExit(0)
