@@ -11,7 +11,7 @@ CLAWMAKE = $(CLAW)/clawutil/src/Makefile.common
 # Adjust these variables if desired:
 # ----------------------------------
 
-CLAW_PKG = geoclaw                  # Clawpack package to use
+CLAW_PKG = dclaw                  # Clawpack package to use
 
 
 EXE = $(PWD)/xgeoclaw
@@ -44,7 +44,7 @@ include $(DIGLIB)/Makefile.dclaw
 
 # ---------------------------------------
 # package sources specifically to exclude
-# (i.e. if a custom replacement source 
+# (i.e. if a custom replacement source
 #  under a different name is provided)
 # ---------------------------------------
 
@@ -66,4 +66,3 @@ SOURCES = \
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:
 include $(CLAWMAKE)
-

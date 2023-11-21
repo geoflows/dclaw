@@ -398,8 +398,11 @@ def setrun(claw_pkg='dclaw'):
     #    [topotype, fname]
 
     INDATAPATH = 'init_data'
-    topofile1=os.path.join(INDATAPATH,'topo','src_quadratic_Mt_Tanh_b.tt2')
+    topofile1=os.path.join(INDATAPATH,'topo','src_quadratic_Mt_Tanh_b_10m.tt2')
     topofiles.append([2, topofile1])
+
+    topofile2=os.path.join(INDATAPATH,'topo','src_quadratic_Mt_Tanh_b_1m.tt2')
+    topofiles.append([2, topofile2])
 
     # == setdtopo.data values ==
     dtopo_data = rundata.dtopo_data
@@ -407,8 +410,8 @@ def setrun(claw_pkg='dclaw'):
     # == setqinit.data values ==
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
-    etafile = os.path.join(INDATAPATH,'qinit','Mt_Tanh_log_eta.tt2')
-    qinitdclaw_data.qinitfiles.append([2, iq_eta, 1, 2, etafile])
+    etafile = os.path.join(INDATAPATH,'qinit','Mt_Tanh_log_eta_1m.tt2')
+    qinitdclaw_data.qinitfiles.append([2, 8, 1, 2, etafile])
 
     # == setauxinit.data values ==
     auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
