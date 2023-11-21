@@ -132,7 +132,6 @@ COMMON_SOURCES += \
   $(GEOLIB)/qad.f \
   $(GEOLIB)/bc2amr.f90 \
   $(GEOLIB)/upbnd.f  \
-  $(GEOLIB)/tick.f \
   $(GEOLIB)/setgrd.f \
   $(GEOLIB)/gfixup.f \
   $(GEOLIB)/ginit.f \
@@ -156,6 +155,7 @@ COMMON_SOURCES += \
 
 # list of source files from DIGCLAW library. 
 COMMON_SOURCES += \
+  $(DIGLIB)/tick.f \
   $(DIGLIB)/amr2.f90 \
   $(DIGLIB)/qinit.f90 \
   $(DIGLIB)/filval.f90 \

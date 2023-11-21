@@ -17,6 +17,9 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
     use storm_module, only: storm_specification_type, output_storm_location
     use storm_module, only: output_storm_location
     use storm_module, only: landfall, display_landfall_time
+    use geoclaw_module, only: dry_tolerance
+    use digclaw_module, only: mom_autostop, momlevel, amidoneyet
+
 
 #ifdef HDF5
     use hdf5
@@ -42,6 +45,9 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
     real(kind=8), allocatable :: qeta(:)
     real(kind=4), allocatable :: qeta4(:), aux4(:)
     integer :: lenaux4, ivar
+
+    ! momentum calculation
+    real(kind=8) :: locmom 
 
 #ifdef HDF5
     ! HDF writing
@@ -76,6 +82,8 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                                            "i6,'                 nghost'/," // &
                                            "a10,'             format'/,/)"
     
+    if (mom_autostop .eqv. .TRUE.) locmom = 0. 
+    ! initialize local momentum as zero. if using mom_autostop
 
     ! Output timing
     call system_clock(clock_start,clock_rate)
@@ -192,6 +200,20 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                             !write(out_unit, "(50e26.16)") h, hu, hv, eta
                             write(out_unit, "(50e26.16)") &
                                  (alloc(iadd(ivar,i,j)), ivar=1,num_eqn), eta
+
+                            ! approximate local momentum as sqrt((hu**2)+(hv**2))
+                            ! stopping criteria is whether this value is equivalent to zero,  
+                            ! summed across all grids at level==momlevel
+                            if (mom_autostop .eqv. .TRUE.) then
+                            if (level .eq. momlevel ) then
+                                ! calculate and add to momentum to get a momlevel momentum sum.
+                                if (h .gt. dry_tolerance) then ! if substantial thickness.
+                                    locmom = locmom + ((hu/h)**2+ (hv/h)**2)**0.5
+                                endif
+                            endif
+                            endif
+
+
                         end do
                         write(out_unit, *) ' '
                     end do
@@ -277,6 +299,16 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
         call h5gclose_f(q_group, hdf_error)
 #endif
     end if
+
+    if (time .gt. 1.0d0) then
+        write(*,*) '+++++ momautostop', mom_autostop, locmom, amidoneyet
+        if (mom_autostop) then
+            ! if absolute value of local momentum is very close to zero, then stop.
+            if (locmom .le. 0.001d0) then ! add a full stop criterion.
+            amidoneyet = .TRUE.
+            endif
+        endif
+    endif
 
     ! ==========================================================================
     ! Write out fort.a file

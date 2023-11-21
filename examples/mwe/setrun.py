@@ -123,8 +123,8 @@ def setrun(claw_pkg='dclaw'):
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 20
-        clawdata.tfinal = 20
+        clawdata.num_output_times = 50
+        clawdata.tfinal = 50
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -153,7 +153,7 @@ def setrun(claw_pkg='dclaw'):
     # The current t, dt, and cfl will be printed every time step
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
-    clawdata.verbosity = 3
+    clawdata.verbosity = 1
 
 
 
@@ -432,16 +432,16 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.m_crit = 0.64
     dclaw_data.kappita = 1e-8
     #dclaw_data.kappita_diff = 1
-    #dclaw_data.chi_init_val=0.5 # not currently used.
+    dclaw_data.chi_init_val=0.7 # not currently used.
     dclaw_data.alpha_c = 0.05
-    dclaw_data.alpha_seg =0.5
+    dclaw_data.alpha_seg =0.0
     #dclaw_data.phi_seg_coeff = 0.0
     dclaw_data.delta = 0.001
     dclaw_data.bed_normal = 0
     dclaw_data.entrainment = 1
     dclaw_data.entrainment_rate = 0.2
     dclaw_data.sigma_0 = 1.0e3
-    #dclaw_data.mom_autostop = True
+    dclaw_data.mom_autostop = True
     #dclaw_data.momlevel = 1
     #dclaw_data.mom_perc = 0.0
 
