@@ -18,7 +18,7 @@ import string
 import numpy
 from numpy import *
 
-import dclaw.iotools as iotools
+import clawpack.dclaw.iotools as iotools
 
 
 # ==============================================================================
