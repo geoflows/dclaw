@@ -16,6 +16,7 @@ c
       use fgmax_module, only: FG_num_fgrids, FG_fgrids, fgrid
       use fgout_module, only: FGOUT_num_grids, FGOUT_fgrids,
      &                         fgout_write,fgout_grid, FGOUT_ttol
+      use digclaw_module, only: amidoneyet
 
       implicit double precision (a-h,o-z)
 
@@ -506,6 +507,15 @@ c             ! use same alg. as when setting refinement when first make new fin
           write(outunit,*)"REMEMBER to remove file before restarting"
           call check(ncycle,time,nvar,naux)
           stop
+       endif
+
+       ! check whether simulation should be halted based on momentum
+       if (amidoneyet) then ! if end time based on momentum.
+         time = tfinal ! set time as time final.
+         write(*,*)"Momentum reached zero. Halting."
+         write(outunit,*)"Momentum reached zero. Halting."
+         ncycle = nstop  ! set number of cycles as max
+         goto 999 ! go to end of time look.
        endif
 
       go to 20
