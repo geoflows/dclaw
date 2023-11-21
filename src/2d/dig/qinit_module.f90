@@ -596,34 +596,41 @@ contains
     subroutine read_qinit_dig_header(fname,qinit_type,mx,my,xll,yll,xhi,yhi,dx,dy)
 
         use geoclaw_module
+        use utility_module, only: parse_values, to_lower
 
         implicit none
 
         ! Input and Output
-        character*150, intent(in) :: fname
+        character(len=150), intent(in) :: fname
         integer, intent(in) :: qinit_type
         integer, intent(out) :: mx,my
-        double precision, intent(out) :: xll,yll,xhi,yhi,dx,dy
+        real(kind=8), intent(out) :: xll,yll,xhi,yhi,dx,dy
 
         ! Local
         integer, parameter :: iunit = 19
-        integer :: qinit_size, status
-        double precision :: x,y,z,nodata_value
+        integer :: qinit_size, status, n
+        real(kind=8) :: x,y,z,nodata_value
         logical :: found_file
+        real(kind=8) :: values(10)
+        character(len=80) :: str
+        logical :: verbose
+        logical :: xll_registered, yll_registered
+
+        verbose = .false.
 
         inquire(file=fname,exist=found_file)
         if (.not. found_file) then
-            print *, 'Missing qinitgraphy file:'
+            print *, 'Missing qinit file:'
             print *, '   ', fname
             stop
         endif
-
-        open(unit=iunit, file=fname, status='unknown',form='formatted')
 
         select case(abs(qinit_type))
             ! ASCII file with 3 columns
             ! determine data size
             case(1)
+                open(unit=iunit, file=fname, status='unknown',form='formatted')
+
                 ! Initial size variables
                 qinit_size = 0
                 mx = 0
@@ -648,7 +655,7 @@ contains
                     qinit_size = qinit_size + 1
                 enddo
                 if (status > 0) then
-                    print *, "IO error occured in ",fname,", aborting!"
+                    print *, "ERROR:  Error reading header of qinit file ",fname
                     stop
                 endif
 
@@ -661,12 +668,52 @@ contains
 
             ! ASCII file with header followed by z data
             case(2:3)
-                read(iunit,*) mx
-                read(iunit,*) my
-                read(iunit,*) xll
-                read(iunit,*) yll
-                read(iunit,*) dx, dy
-                read(iunit,*) nodata_value
+                open(unit=iunit, file=fname, status='unknown',form='formatted')
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                mx = nint(values(1))
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                my = nint(values(1))
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                xll = values(1)
+                str = to_lower(str)  ! convert to lower case
+                xll_registered = (index(str, 'xllcorner') > 0)
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                yll = values(1)
+                str = to_lower(str)  ! convert to lower case
+                yll_registered = (index(str, 'yllcorner') > 0)
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                dx = values(1)
+                if (n == 2) then
+                    dy = values(2)
+                  else
+                    dy = dx
+                  endif
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                nodata_value = values(1)
+
+                if (xll_registered) then
+                    xll = xll + 0.5d0*dx
+                    write(6,*) '*** in file: ',trim(fname)
+                    write(6,*) '    Shifting xllcorner by 0.5*dx to cell center'
+                    endif 
+
+                if (yll_registered) then
+                    yll = yll + 0.5d0*dy
+                    write(6,*) '*** in file: ',trim(fname)
+                    write(6,*) '    Shifting yllcorner by 0.5*dy to cell center'
+                    endif 
+
                 xhi = xll + (mx-1)*dx
                 yhi = yll + (my-1)*dy
 
