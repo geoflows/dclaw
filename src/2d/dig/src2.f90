@@ -18,8 +18,9 @@
 
       !local
       real(kind=8) :: gmod,h,hu,hv,hm,u,v,m,p,phi,kappa,S,rho,tanpsi
+      real(kind=8) :: rhoh
       real(kind=8) :: D,tau,sigbed,kperm,compress,chi,coeff,tol
-      real(kind=8) :: vnorm,hvnorm,theta,dtheta,w,tau_enhanced,hvnorm0
+      real(kind=8) :: vnorm,hvnorm,theta,dtheta,w,hvnorm0
       real(kind=8) :: shear,sigebar,chitanh01,rho_fp,seg
       real(kind=8) :: b_xx,b_yy,b_xy,gacc,beta
       real(kind=8) :: t1bot,t2top,beta2,dh,rho2,prat,b_x,b_y,dbdv
@@ -39,21 +40,16 @@
       ! DIG: FIX.
 
       tol = dry_tolerance !# to prevent divide by zero in gamma
-      curvature = 0 !add friction due to curvature acceleration KRB: why is this hardcoded to 0? DLG: could default to zero from setrun.
+      curvature = 0 !add friction due to curvature acceleration KRB: why is this hardcoded to 0? DLG: could be in setrun (default to zero).
 
-      gmod=grav !for bed-normal direction gravity
+      gmod=grav  !needed later for bed-normal direction gravity
+      theta=0.d0 
       do i=1-mbc+1,mx+mbc-1
          do j=1-mbc+1,my+mbc-1
-            theta = 0.d0
-            dtheta = 0.d0
-            if (bed_normal==1) then
-               theta = aux(ia_theta,i,j)
-               gmod = grav*cos(theta)
-               dtheta = -(aux(ia_theta,i+1,j) - theta)/dx
-            endif
-
+            
+            if (q(1,i,j)<=dry_tolerance) cycle
+            
             h = q(1,i,j)
-            if (h<=dry_tolerance) cycle
             hu = q(2,i,j)
             hv = q(3,i,j)
             hm = q(4,i,j)
@@ -63,32 +59,35 @@
             chi = max(0.0,chi)
             chi = min(1.0,chi)
 
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
-
-            vnorm = sqrt(u**2 + v**2)
-            hvnorm = sqrt(hu**2 + hv**2)
-            hvnorm0 = hvnorm
-
-            !integrate dynamic friction !DIG: TO DO - move dynamic friction to Riemann solver
-            hvnorm = dmax1(0.d0,hvnorm - dt*tau/rho)
-            hvnorm = hvnorm*exp(-(1.d0-m)*2.0d0*mu*dt/(rho*h**2))
-            !hvnorm = hvnorm*exp(-(1.d0-m)*2.0d0*0.1*dt/(rho*h**2.0))
-            if (hvnorm<1.d-16) hvnorm = 0.d0
-
-            if (hvnorm>0.d0.and.curvature==1) then
+            !modified gravity: bed-normal weight and acceleration
+            if (bed_normal==1) then
+               theta = aux(ia_theta,i,j)
+               gmod = grav*cos(theta)
+            endif
+            if (curvature==1) then
                b_xx=(aux(1,i+1,j)-2.d0*aux(1,i,j)+aux(1,i-1,j))/(dx**2)
                b_yy=(aux(1,i,j+1)-2.d0*aux(1,i,j)+aux(1,i,j-1))/(dy**2)
                b_xy=(aux(1,i+1,j+1)-aux(1,i-1,j+1) -aux(1,i+1,j-1)+aux(1,i-1,j-1))/(4.0*dx*dy)
-               gacc = max((u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)/gmod !currently only consider enhancement of g, not reduction (i.e. over a hump)
-               tau_enhanced = gacc*tau
-               hvnorm = dmax1(0.d0,hvnorm - dt*tau_enhanced/rho)
+               dtheta = -(aux(ia_theta,i+1,j) - theta)/dx
+               gacc = max((u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!currently only consider enhancement of g, not reduction (i.e. over a hump)
+               gmod = gmod + gacc
             endif
 
-            if (hvnorm0>0.d0) then ! only sets direction of (hu,hv) to be the same as before friction
+            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
+            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi,gmod)
+
+            rhoh = h*rho !this is invariant in src
+            hvnorm0 = sqrt(hu**2 + hv**2)
+            vnorm = hvnorm0/h
+
+            if (hvnorm0>0.d0) then
+               !integrate dynamic friction !DIG: TO DO - move dynamic friction to Riemann solver
+               vnorm = dmax1(0.d0,vnorm - dt*tau/rhoh) !exact solution for Coulomb friction
+               vnorm = vnorm*exp(-(1.d0-m)*2.0d0*mu*dt/(h*rhoh)) !exact solution (prior to h change) for effective viscous friction
+               hvnorm = h*vnorm
+               !set direction of (hu,hv)
                hu = hvnorm*hu/hvnorm0
                hv = hvnorm*hv/hvnorm0
-               !else hv,hv already = 0.0
             endif
 
             if (p_initialized==0) cycle

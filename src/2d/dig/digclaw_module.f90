@@ -247,13 +247,13 @@ contains
    !                     of the solution vector q
    !====================================================================
 
-   subroutine auxeval(h,u,v,m,p,phi_bed,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
+   subroutine auxeval(h,u,v,m,p,phi_bed,gmod,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
 
       implicit none
 
       !i/o
       double precision, intent(inout) :: pm
-      double precision, intent(in)  :: h,u,v,m,p,phi_bed,theta
+      double precision, intent(in)  :: h,u,v,m,p,phi_bed,gmod
       double precision, intent(out) :: S,rho,tanpsi,D,tau,kappa
       double precision, intent(out) :: sigbed,kperm,compress
 
@@ -264,7 +264,7 @@ contains
       if (h.lt.dry_tolerance) return
 
       hbounded = h!max(h,0.1)
-      gmod=grav
+      
       pm = max(0.0d0,pm)
       pm = min(1.0d0,pm)
       if (dabs(alpha_seg-1.0d0)<1.d-6) then
