@@ -17,9 +17,9 @@
       double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
       !local
-      real(kind=8) :: gmod,h,hu,hv,hm,u,v,m,p,phi,kappa,S,rho,tanpsi
-      real(kind=8) :: rhoh
-      real(kind=8) :: D,tau,sigbed,kperm,compress,chi,coeff,tol
+      real(kind=8) :: gz,gx,h,hu,hv,hm,u,v,m,p,phi,kappa,S,rho,tanpsi
+      real(kind=8) :: rhoh,manning_n
+      real(kind=8) :: D,tau,sigbed,kperm,compress,chi,tol
       real(kind=8) :: vnorm,hvnorm,theta,dtheta,w,hvnorm0
       real(kind=8) :: shear,sigebar,chitanh01,rho_fp,seg
       real(kind=8) :: b_xx,b_yy,b_xy,gacc,beta
@@ -34,7 +34,7 @@
       ! check for NANs in solution:
       call check4nans(meqn,mbc,mx,my,q,t,2)
 
-      coeff = manning_coefficient(1) ! Current implementation of friction has manning as an array 
+      manning_n = manning_coefficient(1) ! Current implementation of friction has manning as an array 
       ! take the first element for now. If only one value is provided to geo_data.manning_coefficient 
       ! it will be manning_coefficient(1)
       ! DIG: FIX.
@@ -42,8 +42,10 @@
       tol = dry_tolerance !# to prevent divide by zero in gamma
       curvature = 0 !add friction due to curvature acceleration KRB: why is this hardcoded to 0? DLG: could be in setrun (default to zero).
 
-      gmod=grav  !needed later for bed-normal direction gravity
+      gz = grav  !needed later for bed-normal direction gravity
+      gx = 0.d0
       theta=0.d0 
+
       do i=1-mbc+1,mx+mbc-1
          do j=1-mbc+1,my+mbc-1
             
@@ -58,23 +60,24 @@
             chi = q(iq_seg,i,j)/h
             chi = max(0.0,chi)
             chi = min(1.0,chi)
+            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
 
             !modified gravity: bed-normal weight and acceleration
             if (bed_normal==1) then
                theta = aux(ia_theta,i,j)
-               gmod = grav*cos(theta)
+               gz = grav*cos(theta)
+               gx = grav*sin(theta)
             endif
             if (curvature==1) then
                b_xx=(aux(1,i+1,j)-2.d0*aux(1,i,j)+aux(1,i-1,j))/(dx**2)
                b_yy=(aux(1,i,j+1)-2.d0*aux(1,i,j)+aux(1,i,j-1))/(dy**2)
                b_xy=(aux(1,i+1,j+1)-aux(1,i-1,j+1) -aux(1,i+1,j-1)+aux(1,i-1,j-1))/(4.0*dx*dy)
                dtheta = -(aux(ia_theta,i+1,j) - theta)/dx
-               gacc = max((u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!currently only consider enhancement of g, not reduction (i.e. over a hump)
-               gmod = gmod + gacc
+               gacc = max((u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!max:currently only consider enhancement of gz, not reduction (i.e. over a hump)
+               gz = gz + gacc
             endif
 
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi,gmod)
+            call vareval(h,u,v,m,p,rho,sigma,sigma_e,tanphi,tanpsi,D,tau,kperm,compress,chi,gz,M_saturation)
 
             rhoh = h*rho !this is invariant in src
             hvnorm0 = sqrt(hu**2 + hv**2)
@@ -84,19 +87,19 @@
                !integrate dynamic friction !DIG: TO DO - move dynamic friction to Riemann solver
                vnorm = dmax1(0.d0,vnorm - dt*tau/rhoh) !exact solution for Coulomb friction
                vnorm = vnorm*exp(-(1.d0-m)*2.0d0*mu*dt/(h*rhoh)) !exact solution (prior to h change) for effective viscous friction
+               ! velocity determined, calculate directions etc. from vnorm
                hvnorm = h*vnorm
-               !set direction of (hu,hv)
-               hu = hvnorm*hu/hvnorm0
+               hu = hvnorm*hu/hvnorm0 + gx*h*dt !gx=0 unless bed-normal
                hv = hvnorm*hv/hvnorm0
+               u = hu/h
+               v = hv/h
+               ! velocity now constant for remainder of src2
             endif
 
-            if (p_initialized==0) cycle
+            if (p_initialized==0) cycle !DIG: deprecate?
 
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
-
+            !determine m and p evolution from Runge Kutta inegration
             
-            vnorm = sqrt(u**2 + v**2)
 
             !integrate shear-induced dilatancy
             sigebar = rho*gmod*h - p + sigma_0
@@ -183,7 +186,7 @@
                   !write(*,*) '------------'
                   !write(*,*) 'vu',t1bot
                   beta = 1.d0-m!tanh(10.d0*m) !tan(1.5*p/(rho*gmod*h))/14.0
-                  gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d-2)**(1.0/3.0))
+                  gamma= rho*beta2*(vnorm**2)*(beta*gmod*manning_n**2)/(tanh(h+1.d-2)**(1.0/3.0))
                   !write(*,*) 'gamma', gamma
                   t1bot = t1bot + gamma
                   t1bot = t1bot + tau!+p*tan(phi)
@@ -226,7 +229,7 @@
 
       ! Manning friction------------------------------------------------
       if (friction_forcing) then
-      if (coeff>0.d0.and.friction_depth>0.d0) then
+      if (manning_n>0.d0.and.friction_depth>0.d0) then
          do i=1,mx
             do j=1,my
                   h=q(1, i,j)
@@ -250,7 +253,7 @@
                      q(3,i,j)=0.d0
                   else
                      beta = 1.d0-m !tan(1.5*p/(rho*gmod*h))/14.0
-                     gamma= beta*dsqrt(hu**2 + hv**2)*(gmod*coeff**2)/(h**(7.0/3.0))
+                     gamma= beta*dsqrt(hu**2 + hv**2)*(gmod*manning_n**2)/(h**(7.0/3.0))
                      dgamma=1.d0 + dt*gamma
                      q(2,i,j)= q(2,i,j)/dgamma
                      q(3,i,j)= q(3,i,j)/dgamma
