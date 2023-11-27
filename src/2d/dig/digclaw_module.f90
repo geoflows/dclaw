@@ -11,7 +11,7 @@ module digclaw_module
     double precision :: rho_s,rho_f,phi_bed,theta_input,delta,kappita
     double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,phi_seg_coeff,entrainment_rate
 
-    integer :: init_ptype,p_initialized,bed_normal,entrainment
+    integer :: init_ptype,p_initialized,bed_normal,entrainment,curvature
     double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
 
@@ -47,6 +47,7 @@ contains
 
 
          deg2rad = pi/180.d0
+         curvature = 0 !DIG: optionally set in setrun?
 
          ! Read user parameters from setgeo.data
          if (present(fname)) then
@@ -83,7 +84,7 @@ contains
          read(iunit,*) entrainment_rate
 
          close(iunit)
-         alpha_seg = 1.0 - alpha_seg
+         alpha_seg = 1.0 - alpha_seg !DIG: to change - to confusing in code
 
          open(unit=DIG_PARM_UNIT,file='fort.dclaw',status="unknown",action="write")
 
@@ -246,8 +247,138 @@ contains
    ! subroutine auxeval: evaluates the auxiliary variables as functions
    !                     of the solution vector q
    !====================================================================
+   ! DIG 5.X: DEPRECATED see vareval.
 
    subroutine auxeval(h,u,v,m,p,phi_bed,gmod,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
+
+      implicit none
+
+      !i/o
+      double precision, intent(inout) :: pm
+      double precision, intent(in)  :: h,u,v,m,p,phi_bed,gmod
+      double precision, intent(out) :: S,rho,tanpsi,D,tau,kappa
+      double precision, intent(out) :: sigbed,kperm,compress
+
+      !local
+      double precision :: m_eqn,vnorm,gmod,sigbedc,hbounded,shear,tanphi,rho_fp
+      double precision :: seg,pmtanh01,m_crit_m,m_crit_pm
+
+      if (h.lt.dry_tolerance) return
+
+      hbounded = h!max(h,0.1)
+      
+      pm = max(0.0d0,pm)
+      pm = min(1.0d0,pm)
+      if (dabs(alpha_seg-1.0d0)<1.d-6) then
+         seg = 0.0d0
+         rho_fp = rho_f
+         pmtanh01=0.0d0
+      else
+         seg = 1.0d0
+         call calc_pmtanh(pm,seg,pmtanh01)
+         rho_fp = (1.0d0-pmtanh01)*rho_f
+      endif
+      !pmtanh01 = seg*(0.5*(tanh(20.0*(pm-0.80))+1.0))
+      !pmtanh01 = seg*(0.5*(tanh(40.0*(pm-0.90))+1.0))
+
+      if (bed_normal.eq.1) gmod=grav*dcos(theta)
+      vnorm = dsqrt(u**2 + v**2)
+      rho = rho_s*m + rho_fp*(1.d0-m)
+      shear = 2.0d0*vnorm/hbounded
+      sigbed = dmax1(0.d0,rho*gmod*h - p)
+      sigbedc = rho_s*(shear*delta)**2 + sigbed
+      if (sigbedc.gt.0.0d0) then
+         S = (mu*shear/(sigbedc))
+      else
+         S = 0.d0
+      endif
+      !Note: m_eqn = m_crit/(1+sqrt(S))
+      !From Boyer et. al
+      !S = 0.0
+      !m_eqn = m_crit/(1.d0 + sqrt(S))
+      !if (m.gt.m_eqn) write(*,*) 'm,m_eqn,S:',m,m_eqn,S,sigbed,shear
+      !tanpsi = c1*(m-m_eqn)*tanh(shear/0.1)
+      !pmlin = seg*2.0*(pm-0.5)
+      !pmtan = seg*0.06*(tan(3.*(pm-0.5)))
+      !pmtanh = seg*tanh(3.*pmlin)
+      !pmtanh01 = seg*0.5*(tanh(8.0*(pm-0.75))+1.0)
+      !pmtanh01 = seg*0.5*(tanh(20.0*(pm-0.80))+1.0)
+      !pmtanh01s = seg*4.0*(tanh(8.0*(pm-0.95))+1.0)
+
+   
+      kperm = kappita*exp(-(m-m0)/(0.04d0))!*(10**(pmtanh01))
+      !m_crit_pm - max(pm-0.5,0.0)*(0.15/0.5) - max(0.5-pm,0.0)*(0.15/0.5)
+      !m_crit_pm =  max(pm-0.7,0.0)*((m_crit- 0.55)/0.5) + max(0.3-pm,0.0)*((m_crit-0.55)/0.5)
+      m_crit_pm =  0.d0! max(pm-0.6,0.0)*((m_crit- 0.55)/0.4) + max(0.3-pm,0.0)*((m_crit-0.55)/0.3)
+      !m_crit_pm = max(pm-0.9,0.0)*((m_crit- 0.55)/0.1) + max(0.1-pm,0.0)*((m_crit-0.55)/0.1);
+
+      m_crit_pm = pmtanh01*0.09d0
+      m_crit_m = m_crit - m_crit_pm
+      m_eqn = m_crit_m/(1.d0 + sqrt(S))
+      tanpsi = c1*(m-m_eqn)*tanh(shear/0.1)
+
+      !kperm = kperm + 1.0*pm*kappita
+      !compress = alpha/(sigbed + 1.d5)
+
+      !if (m.le.0.04) then
+          !eliminate coulomb friction for hyperconcentrated/fluid problems
+          !klugey, but won't effect debris-flow problems
+         !sigbed = sigbed*0.5d0*(tanh(400.d0*(m-0.02d0)) + 1.0d0)
+      !endif
+
+      if (m.le.1.d-16) then
+         compress = 1.d16
+         kperm = 0.0d0
+         tanpsi = 0.0d0
+         sigbed=0.0d0
+      else
+         compress = alpha/(m*(sigbed +  sigma_0))
+      endif
+
+      !if (m.le.0.4) then
+      !   kperm = tanh(10.d0*m)*kperm
+      !   tanpsi = tanh(10.d0*m)*tanpsi
+      !   sigbed= tanh(10.d0*m)*sigbed
+      !endif
+
+      if (p_initialized.eq.0.and.vnorm.le.0.d0) then
+      !if (vnorm.le.0.d0) then
+         tanpsi = 0.d0
+         D = 0.d0
+      elseif (h*mu.gt.0.d0) then
+         D = 2.0d0*(kperm/(mu*h))*(rho_fp*gmod*h - p)
+      else
+         D = 0.d0
+      endif
+
+      tanphi = dtan(phi_bed + datan(tanpsi))! + phi_seg_coeff*pmtanh01*dtan(phi_bed)
+      !if (S.gt.0.0) then
+      !   tanphi = tanphi + 0.38*mu*shear/(shear + 0.005*sigbedc)
+      !endif
+
+      tau = dmax1(0.d0,sigbed*tanphi)
+
+      !tau = (grav/gmod)*dmax1(0.d0,sigbed*tanphi)
+      !kappa: earth pressure coefficient
+      !if (phi_int.eq.phi_bed) then
+      !   sqrtarg = 0.d0
+      !else
+      !   sqrtarg = 1.d0-(dcos(phi_int)**2)*(1.d0 + dtan(phi_bed)**2)
+      !endif
+
+      !kappa = (2.d0 - pm*2.d0*dsqrt(sqrtarg))/(dcos(phi_int)**2)
+      !kappa = kappa - 1.d0
+      kappa = 1.d0
+      !kappa = 0.4d0
+
+   end subroutine auxeval
+
+      !====================================================================
+   ! subroutine vareval: evaluates the diagnostic variables as functions
+   !                     of the solution vector q
+   !====================================================================
+
+   subroutine vareval(h,u,v,m,p,phi_bed,gmod,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
 
       implicit none
 

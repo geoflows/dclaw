@@ -10,11 +10,11 @@
 
       ! Input parameters
       integer, intent(in) :: meqn,mbc,mx,my,maux
-      double precision, intent(in) :: xlower,ylower,dx,dy,t,dt
+      real(kind=8), intent(in) :: xlower,ylower,dx,dy,t,dt
       
       ! Output
-      double precision, intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
-      double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+      real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
+      real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
       !local
       real(kind=8) :: gz,gx,h,hu,hv,hm,u,v,m,p,phi,kappa,S,rho,tanpsi
@@ -28,7 +28,7 @@
       real(kind=8) :: b_eroded,b_remaining,dtcoeff
       real(kind=8) :: gamma,zeta,krate,p_eq,p_litho,p_hydro,dgamma
 
-      integer :: i,j,ii,jj,jjend,icount,curvature
+      integer :: i,j,ii,jj,jjend,icount
 
 
       ! check for NANs in solution:
@@ -40,8 +40,7 @@
       ! DIG: FIX.
 
       tol = dry_tolerance !# to prevent divide by zero in gamma
-      curvature = 0 !add friction due to curvature acceleration KRB: why is this hardcoded to 0? DLG: could be in setrun (default to zero).
-
+      
       gz = grav  !needed later for bed-normal direction gravity
       gx = 0.d0
       theta=0.d0 
@@ -73,13 +72,13 @@
                b_yy=(aux(1,i,j+1)-2.d0*aux(1,i,j)+aux(1,i,j-1))/(dy**2)
                b_xy=(aux(1,i+1,j+1)-aux(1,i-1,j+1) -aux(1,i+1,j-1)+aux(1,i-1,j-1))/(4.0*dx*dy)
                dtheta = -(aux(ia_theta,i+1,j) - theta)/dx
-               gacc = max((u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!max:currently only consider enhancement of gz, not reduction (i.e. over a hump)
+               gacc = max((u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!max:currently only consider enhancement not reduction of gz (ie. basin not a hump)
                gz = gz + gacc
             endif
 
             call vareval(h,u,v,m,p,rho,sigma,sigma_e,tanphi,tanpsi,D,tau,kperm,compress,chi,gz,M_saturation)
 
-            rhoh = h*rho !this is invariant in src
+            rhoh = h*rho !this is invariant in src and always >0 below
             hvnorm0 = sqrt(hu**2 + hv**2)
             vnorm = hvnorm0/h
 
@@ -89,7 +88,7 @@
                vnorm = vnorm*exp(-(1.d0-m)*2.0d0*mu*dt/(h*rhoh)) !exact solution (prior to h change) for effective viscous friction
                ! velocity determined, calculate directions etc. from vnorm
                hvnorm = h*vnorm
-               hu = hvnorm*hu/hvnorm0 + gx*h*dt !gx=0 unless bed-normal
+               hu = hvnorm*hu/hvnorm0 + gx*h*dt !gx=0 unless bed-normal !DIG: last term should ultimately be in Riemann solver
                hv = hvnorm*hv/hvnorm0
                u = hu/h
                v = hv/h
@@ -98,8 +97,22 @@
 
             if (p_initialized==0) cycle !DIG: deprecate?
 
-            !determine m and p evolution from Runge Kutta inegration
-            
+            !determine m and p evolution from multiple integration steps maintaining physically admissable m,p. h = rhoh/rho
+            ! Note: if m = 0, it cannot increase as dm/dt - m D. In that case, rho=rho_f ==> D = 0 for all t, and dp/dt =0.
+            if (m>0.d0) then
+               dt_remaining = dt
+               if (D==0.d0 & (sigma_e==0.d0|vnorm==0.d0)) then !at a critical point already, rhs = 0
+                     dt_remaining = 0.d0
+               endif
+               do while (dt_remaining>0.d0)
+                  call integrate_mp(h,u,v,m,p,rho,sigma,sigma_e,tanphi,tanpsi,D,tau,kperm,compress,chi,gz,M_saturation,dt_remaining,dt_taken)
+                  dt_remaining = max(0.d0,dt_remaining-dt_taken)
+               enddo
+            endif
+
+
+
+
 
             !integrate shear-induced dilatancy
             sigebar = rho*gmod*h - p + sigma_0
@@ -266,4 +279,161 @@
      ! ----------------------------------------------------------------
 
       return
-      end
+      end subroutine src2
+
+   !====================================================================
+   ! subroutine integrate_mp: integrate portion of rhs for m and p
+   !     dm/dt ~ -Dm
+   !     dp/dt ~ D + (m-m_eqn)
+   !
+   !     integrated for p_tilde = p - p_eq
+   !     dm/dt ~ -p_tilde m
+   !     dp_tilde/dt ~ p_tilde + (m-m_eqn)
+   !     note: p_eq is h dependent. dp_tilde/dt = dp/dt - rho_f gz *dh/dt ~ dp/dt + p_tilde
+   !====================================================================
+
+   subroutine integrate_mp(h,u,v,m,p,rhoh,sigma,sigma_e,tanphi,tanpsi,D,tau,kperm,compress,chi,gz,M_saturation,dt_remaining,dt)
+
+      use geoclaw_module, only: grav, dry_tolerance
+      use digclaw_module, only: rho_f, rho_s, m_crit
+      implicit none
+
+      use geoclaw_module, only: grav, dry_tolerance
+
+      !i/o
+      real(kind=8), intent(in) :: vnorm,rhoh,phi_bed,gz
+      real(kind=8), intent(inout)  :: h,m,p,kperm,dt_remaining,dt_taken
+      real(kind=8), intent(out) ::
+
+      !local
+      real(kind=8) :: p_eq, p_tilde
+      real(kind=8) :: 
+
+      call vareval(h,u,v,m,p,rhoh,sigma,sigma_e,tanphi,tanpsi,D,tau,kperm,compress,chi,gz,M_saturation)
+      shear = vnorm/h !
+
+      p_eq = rho_f*gz*h*M_saturation !Note: M_saturation =1, unless experimenting with segregation models
+      p_tilde = p - p_eq
+      m_eq = !DIG: WIP - maybe this and above calculated in vareval
+
+      if (D==0.d0 & (sigma_e==0.d0|vnorm==0.d0|tanpsi==0.d0)) then
+         dt = dt_remaining
+         dt_remaining = 0.d0
+         return
+      endif
+
+      if (D==0.d0) then !integrate only shear induced dilatancy (non-zero from above)
+         rhs_p = -3.d0*m*sigma_e*shear*tanpsi
+         if (rhs_p<0.d0) then
+
+         elseif (rhs_p>0.d0) then
+         else
+            dt = dt_remaining
+            dt_remaining = 0.d0
+            return
+         endif 
+
+
+      if (dabs(alpha_seg-1.0d0)<1.d-6) then
+         seg = 0.0d0
+         rho_fp = rho_f
+         pmtanh01=0.0d0
+      else
+         seg = 1.0d0
+         call calc_pmtanh(pm,seg,pmtanh01)
+         rho_fp = (1.0d0-pmtanh01)*rho_f
+      endif
+      !pmtanh01 = seg*(0.5*(tanh(20.0*(pm-0.80))+1.0))
+      !pmtanh01 = seg*(0.5*(tanh(40.0*(pm-0.90))+1.0))
+
+      if (bed_normal.eq.1) gmod=grav*dcos(theta)
+      vnorm = dsqrt(u**2 + v**2)
+      rho = rho_s*m + rho_fp*(1.d0-m)
+      shear = 2.0d0*vnorm/hbounded
+      sigbed = dmax1(0.d0,rho*gmod*h - p)
+      sigbedc = rho_s*(shear*delta)**2 + sigbed
+      if (sigbedc.gt.0.0d0) then
+         S = (mu*shear/(sigbedc))
+      else
+         S = 0.d0
+      endif
+      !Note: m_eqn = m_crit/(1+sqrt(S))
+      !From Boyer et. al
+      !S = 0.0
+      !m_eqn = m_crit/(1.d0 + sqrt(S))
+      !if (m.gt.m_eqn) write(*,*) 'm,m_eqn,S:',m,m_eqn,S,sigbed,shear
+      !tanpsi = c1*(m-m_eqn)*tanh(shear/0.1)
+      !pmlin = seg*2.0*(pm-0.5)
+      !pmtan = seg*0.06*(tan(3.*(pm-0.5)))
+      !pmtanh = seg*tanh(3.*pmlin)
+      !pmtanh01 = seg*0.5*(tanh(8.0*(pm-0.75))+1.0)
+      !pmtanh01 = seg*0.5*(tanh(20.0*(pm-0.80))+1.0)
+      !pmtanh01s = seg*4.0*(tanh(8.0*(pm-0.95))+1.0)
+
+   
+      kperm = kappita*exp(-(m-m0)/(0.04d0))!*(10**(pmtanh01))
+      !m_crit_pm - max(pm-0.5,0.0)*(0.15/0.5) - max(0.5-pm,0.0)*(0.15/0.5)
+      !m_crit_pm =  max(pm-0.7,0.0)*((m_crit- 0.55)/0.5) + max(0.3-pm,0.0)*((m_crit-0.55)/0.5)
+      m_crit_pm =  0.d0! max(pm-0.6,0.0)*((m_crit- 0.55)/0.4) + max(0.3-pm,0.0)*((m_crit-0.55)/0.3)
+      !m_crit_pm = max(pm-0.9,0.0)*((m_crit- 0.55)/0.1) + max(0.1-pm,0.0)*((m_crit-0.55)/0.1);
+
+      m_crit_pm = pmtanh01*0.09d0
+      m_crit_m = m_crit - m_crit_pm
+      m_eqn = m_crit_m/(1.d0 + sqrt(S))
+      tanpsi = c1*(m-m_eqn)*tanh(shear/0.1)
+
+      !kperm = kperm + 1.0*pm*kappita
+      !compress = alpha/(sigbed + 1.d5)
+
+      !if (m.le.0.04) then
+          !eliminate coulomb friction for hyperconcentrated/fluid problems
+          !klugey, but won't effect debris-flow problems
+         !sigbed = sigbed*0.5d0*(tanh(400.d0*(m-0.02d0)) + 1.0d0)
+      !endif
+
+      if (m.le.1.d-16) then
+         compress = 1.d16
+         kperm = 0.0d0
+         tanpsi = 0.0d0
+         sigbed=0.0d0
+      else
+         compress = alpha/(m*(sigbed +  sigma_0))
+      endif
+
+      !if (m.le.0.4) then
+      !   kperm = tanh(10.d0*m)*kperm
+      !   tanpsi = tanh(10.d0*m)*tanpsi
+      !   sigbed= tanh(10.d0*m)*sigbed
+      !endif
+
+      if (p_initialized.eq.0.and.vnorm.le.0.d0) then
+      !if (vnorm.le.0.d0) then
+         tanpsi = 0.d0
+         D = 0.d0
+      elseif (h*mu.gt.0.d0) then
+         D = 2.0d0*(kperm/(mu*h))*(rho_fp*gmod*h - p)
+      else
+         D = 0.d0
+      endif
+
+      tanphi = dtan(phi_bed + datan(tanpsi))! + phi_seg_coeff*pmtanh01*dtan(phi_bed)
+      !if (S.gt.0.0) then
+      !   tanphi = tanphi + 0.38*mu*shear/(shear + 0.005*sigbedc)
+      !endif
+
+      tau = dmax1(0.d0,sigbed*tanphi)
+
+      !tau = (grav/gmod)*dmax1(0.d0,sigbed*tanphi)
+      !kappa: earth pressure coefficient
+      !if (phi_int.eq.phi_bed) then
+      !   sqrtarg = 0.d0
+      !else
+      !   sqrtarg = 1.d0-(dcos(phi_int)**2)*(1.d0 + dtan(phi_bed)**2)
+      !endif
+
+      !kappa = (2.d0 - pm*2.d0*dsqrt(sqrtarg))/(dcos(phi_int)**2)
+      !kappa = kappa - 1.d0
+      kappa = 1.d0
+      !kappa = 0.4d0
+
+   end subroutine integrate_mp
