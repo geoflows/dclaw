@@ -289,7 +289,7 @@
    !     integrated for p_tilde = p - p_eq
    !     dm/dt ~ -p_tilde m
    !     dp_tilde/dt ~ p_tilde + (m-m_eqn)
-   !     note: p_eq is h dependent. dp_tilde/dt = dp/dt - rho_f gz *dh/dt ~ dp/dt + p_tilde
+   !     note: p_eq is h(t) dependent. dp_tilde/dt = dp/dt - rho_f gz *dh/dt ~ dp/dt + p_tilde
    !====================================================================
 
    subroutine integrate_mp(h,u,v,m,p,rhoh,sigma,sigma_e,tanphi,tanpsi,D,tau,kperm,compress,chi,gz,M_saturation,dt_remaining,dt)
@@ -316,23 +316,37 @@
       p_tilde = p - p_eq
       m_eq = !DIG: WIP - maybe this and above calculated in vareval
 
-      if (D==0.d0 & (sigma_e==0.d0|vnorm==0.d0|tanpsi==0.d0)) then
+      if (D==0.d0 & (sigma_e==0.d0|shear==0.d0|tanpsi==0.d0)) then
          dt = dt_remaining
-         dt_remaining = 0.d0
          return
       endif
 
-      if (D==0.d0) then !integrate only shear induced dilatancy (non-zero from above)
-         rhs_p = -3.d0*m*sigma_e*shear*tanpsi
-         if (rhs_p<0.d0) then
-
-         elseif (rhs_p>0.d0) then
+      if (D==0.d0) then !integrate only shear induced dilatancy. no change in h or m.
+         rhs_p = -(3.d0/alpha_c)*m*sigma_e*shear*tanpsi
+         if (rhs_p>0.d0) then !m>m_eq => decreasing p
+            dt = min(abs((rhoh*gz-p)/rhs_p),dt_remaining) !enforce dt st p1<= rho g h
+            !forward euler. rhs_p is nonlinear function of p through tanpsi(m_eq)
+            !DIG: - update to RK. 
+            p = p + rhs_p*dt 
+            return
+         elseif (rhs_p<0.d0) then
+            dt = min(abs(p/rhs_p),dt_remaining) !enforce dt st p1>=0
+            !forward euler. rhs_p is nonlinear function of p through tanpsi(m_eq)
+            !DIG: - update to RK. 
+            p = p + rhs_p*dt 
+            return
          else
             dt = dt_remaining
-            dt_remaining = 0.d0
             return
          endif 
+      elseif (D>0.d0) then
+         
+         rhs_ptilde =  -(3.d0/alpha_c)*m*sigma_e*shear*tanpsi
 
+         
+      else
+
+      endif
 
       if (dabs(alpha_seg-1.0d0)<1.d-6) then
          seg = 0.0d0
