@@ -101,7 +101,7 @@
             ! Note: if m = 0, it cannot increase as dm/dt - m D. In that case, rho=rho_f ==> D = 0 for all t, and dp/dt =0.
             if (m>0.d0) then
                dt_remaining = dt
-               if (D==0.d0 & (sigma_e==0.d0|vnorm==0.d0)) then !at a critical point already, rhs = 0
+               if (D==0.d0 & (vnorm==0.d0)) then !at a critical point already, rhs = 0
                      dt_remaining = 0.d0
                endif
                do while (dt_remaining>0.d0)
@@ -323,7 +323,7 @@
 
       if (D==0.d0) then !integrate only shear induced dilatancy. no change in h or m.
          rhs_p = -(3.d0/alpha_c)*m*sigma_e*shear*tanpsi
-         if (rhs_p>0.d0) then !m>m_eq => decreasing p
+         if (rhs_p>0.d0) then !m<m_eq => increasing p
             dt = min(abs((rhoh*gz-p)/rhs_p),dt_remaining) !enforce dt st p1<= rho g h
             !forward euler. rhs_p is nonlinear function of p through tanpsi(m_eq)
             !DIG: - update to RK. 
@@ -340,8 +340,9 @@
             return
          endif 
       elseif (D>0.d0) then
-         
-         rhs_ptilde =  -(3.d0/alpha_c)*m*sigma_e*shear*tanpsi
+         !note: by integrating m (=> rho and hence h), dh/dt terms on rhs of p are avoided by using new p_eq(h).
+
+         rhs_ptilde =  -(3.d0*alphainv/h)*(vnorm*tanpsi +0.5d0*
 
          
       else
