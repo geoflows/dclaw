@@ -14,6 +14,13 @@ module digclaw_module
     integer :: init_ptype,p_initialized,bed_normal,entrainment
     double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
+    double precision :: chi_init_val
+    
+    ! momentum autostop 
+    logical :: mom_autostop
+    integer :: momlevel
+    logical :: amidoneyet = .FALSE.
+
 
     integer, parameter ::  i_dig    = 4 !Start of digclaw aux variables
     integer, parameter ::  i_phi    = i_dig
@@ -81,8 +88,11 @@ contains
          read(iunit,*) phi_seg_coeff
          read(iunit,*) entrainment
          read(iunit,*) entrainment_rate
-
+         read(iunit,*) chi_init_val
+         read(iunit,*) mom_autostop
+         read(iunit,*) momlevel
          close(iunit)
+
          alpha_seg = 1.0 - alpha_seg
 
          open(unit=DIG_PARM_UNIT,file='fort.dclaw',status="unknown",action="write")
@@ -108,7 +118,9 @@ contains
          write(DIG_PARM_UNIT,*) '    phi_seg_coeff:', phi_seg_coeff
          write(DIG_PARM_UNIT,*) '    entrainment:', entrainment
          write(DIG_PARM_UNIT,*) '    entrainment_rate:', entrainment_rate
-
+         write(DIG_PARM_UNIT,*) '    chi_init_val:', chi_init_val
+         write(DIG_PARM_UNIT,*) '    mom_autostop:', mom_autostop
+         write(DIG_PARM_UNIT,*) '    momlevel:', momlevel
 
    end subroutine set_dig
 
