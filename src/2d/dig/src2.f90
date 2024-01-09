@@ -35,7 +35,14 @@
       call check4nans(meqn,mbc,mx,my,q,t,2)
 
       gmod=grav
-      coeff = manning_coefficient(1) ! Current implementation of friction has manning as an array 
+
+      if (friction_forcing) then
+         coeff = manning_coefficient(1) 
+      else
+         coeff = 0.d0
+      endif
+      
+      ! Current implementation of friction has manning as an array 
       ! take the first element for now. If only one value is provided to geo_data.manning_coefficient 
       ! it will be manning_coefficient(1)
       ! DIG: FIX.
@@ -176,6 +183,7 @@
             hu = hu*exp(dti*krate/h)
             hv = hv*exp(dti*krate/h)
             hm = hm*exp(-dti*D*rho_fp/(h*rho))
+
             h = h + krate*dti
 
             !enddo
@@ -189,6 +197,7 @@
             vlow = 0.1d0
 
             if (ent.and.vnorm.gt.vlow.and.(aux(i_theta,i,j)>0.d0)) then
+
                b_x = (aux(1,i+1,j)+q(7,i+1,j)-aux(1,i-1,j)-q(7,i-1,j))/(2.d0*dx)
                b_y = (aux(1,i,j+1)+q(7,i,j+1)-aux(1,i,j-1)-q(7,i,j-1))/(2.d0*dy)
                dbdv = (u*b_x+v*b_y)/vnorm
@@ -247,6 +256,7 @@
       ! Manning friction------------------------------------------------
       if (friction_forcing) then
       if (coeff>0.d0.and.friction_depth>0.d0) then
+
          do i=1,mx
             do j=1,my
 
