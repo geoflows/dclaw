@@ -28,6 +28,7 @@ module digclaw_module
     integer, parameter ::  i_fsphi  = i_dig + 2
     integer, parameter ::  i_taudir_x = i_dig + 3
     integer, parameter ::  i_taudir_y = i_dig + 4
+    integer, parameter ::  i_ent = i_dig + 5
     integer, parameter ::  DIG_PARM_UNIT = 78
 
 

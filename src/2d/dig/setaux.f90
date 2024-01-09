@@ -91,7 +91,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
             stop
         end if
         
-        aux(2,:,:) = 1.d0
+        aux(2,:,:) = 1.d0 ! ++++ auxcleanup
         aux(3,:,:) = 1.d0
     else if (coordinate_system == 2) then
         do jj = 1 - mbc, my + mbc
