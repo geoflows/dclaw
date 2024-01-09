@@ -119,7 +119,7 @@ def setrun(claw_pkg='dclaw'):
     # Note that the time integration stops after the final output time.
     # The solution at initial time t0 is always written in addition.
 
-    clawdata.output_style = 1
+    clawdata.output_style = 3
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
@@ -134,7 +134,7 @@ def setrun(claw_pkg='dclaw'):
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
         clawdata.output_step_interval = 1
-        clawdata.total_steps = 20
+        clawdata.total_steps = 10
         clawdata.output_t0 = True
         
 
@@ -371,7 +371,7 @@ def setrun(claw_pkg='dclaw'):
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
     geo_data.dry_tolerance = 1.e-3
-    geo_data.friction_forcing = True # TODO change?
+    geo_data.friction_forcing = True
     geo_data.manning_coefficient =.025
     geo_data.friction_depth = 1e6
 
@@ -428,22 +428,19 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.phi_bed = 36.0
     dclaw_data.theta_input = 0.0
     dclaw_data.mu = 0.005
-    dclaw_data.m0 = 0.64
+    dclaw_data.m0 = 0.62
     dclaw_data.m_crit = 0.64
-    dclaw_data.kappita = 1e-8
-    #dclaw_data.kappita_diff = 1
-    dclaw_data.chi_init_val=0.7 # not currently used.
+    dclaw_data.kappita = 1e-9
+    dclaw_data.chi_init_val=0.7
     dclaw_data.alpha_c = 0.05
-    dclaw_data.alpha_seg =0.0
-    #dclaw_data.phi_seg_coeff = 0.0
+    dclaw_data.alpha_seg =1.0
     dclaw_data.delta = 0.001
     dclaw_data.bed_normal = 0
     dclaw_data.entrainment = 1
-    dclaw_data.entrainment_rate = 0.2
+    dclaw_data.entrainment_rate = 0.05
     dclaw_data.sigma_0 = 1.0e3
     dclaw_data.mom_autostop = True
-    #dclaw_data.momlevel = 1
-    #dclaw_data.mom_perc = 0.0
+    dclaw_data.momlevel = 1
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
