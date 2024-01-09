@@ -10,7 +10,8 @@ function setplot is called to set the plot parameters.
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
-
+from clawpack.visclaw.data import ClawPlotData
+from clawpack.clawutil.data import ClawData
 import os,sys
 
 
@@ -30,12 +31,19 @@ def setplot(plotdata=None):
     from numpy import linspace
 
     if plotdata is None:
-        from clawpack.visclaw.data import ClawPlotData
         plotdata = ClawPlotData()
 
 
     plotdata.clearfigures()  # clear any old figures,axes,items data
     plotdata.format = 'binary'
+
+    # Get D-Claw and Geoclaw attributes for dplot
+    # These four lines are necessary for using much of the 
+    # current dplot
+    plotdata.add_attribute('geoclaw_data', ClawData())
+    plotdata.geoclaw_data.read('geoclaw.data',force=True)
+    plotdata.add_attribute('dclaw_data', ClawData())
+    plotdata.dclaw_data.read('setdclaw.data',force=True)
 
 
 

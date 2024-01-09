@@ -174,7 +174,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   q(4,i,j) = q(1,i,j)*q(4,i,j)
                endif
                if (initchi.eq.0) then
-                  q(6,i,j) = 0.5*q(1,i,j) ! DIG: consider initial chi value as a user specified value.
+                  q(6,i,j) = chi_init_val*q(1,i,j)
                else
                   q(6,i,j) = q(1,i,j)*q(6,i,j)
                endif
