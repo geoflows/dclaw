@@ -301,7 +301,6 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
     end if
 
     if (time .gt. 1.0d0) then
-        write(*,*) '+++++ momautostop', mom_autostop, locmom, amidoneyet
         if (mom_autostop) then
             ! if absolute value of local momentum is very close to zero, then stop.
             if (locmom .le. 0.001d0) then ! add a full stop criterion.
