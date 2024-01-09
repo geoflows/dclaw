@@ -167,7 +167,7 @@ def setrun(claw_pkg='dclaw'):
 
     # Initial time step for variable dt.
     # If dt_variable==0 then dt=dt_initial for all steps:
-    clawdata.dt_initial = 0.1
+    clawdata.dt_initial = 0.03
 
     # Max time step to be allowed if variable dt used:
     clawdata.dt_max = 1e+99
@@ -175,7 +175,7 @@ def setrun(claw_pkg='dclaw'):
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
     # D-Claw requires CFL<0.5
-    clawdata.cfl_desired = 0.45 
+    clawdata.cfl_desired = 0.4 
     clawdata.cfl_max = 0.5
 
     # Maximum number of time steps to allow between output times:
