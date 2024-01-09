@@ -25,10 +25,9 @@ module digclaw_module
     integer, parameter ::  i_dig    = 4 !Start of digclaw aux variables
     integer, parameter ::  i_phi    = i_dig
     integer, parameter ::  i_theta  = i_dig + 1
-    integer, parameter ::  i_fs     = i_dig + 2
-    integer, parameter ::  i_fsphi  = i_dig + 3
-    integer, parameter ::  i_taudir_x = i_dig + 4
-    integer, parameter ::  i_taudir_y = i_dig + 5
+    integer, parameter ::  i_fsphi  = i_dig + 2
+    integer, parameter ::  i_taudir_x = i_dig + 3
+    integer, parameter ::  i_taudir_y = i_dig + 4
     integer, parameter ::  DIG_PARM_UNIT = 78
 
 
@@ -798,7 +797,6 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hL = q(1,i-1,j)
             hR = q(1,i+1,j)
             if (h<dry_tol) then
-               aux(i_fs,i,j) = 10.d0
                cycle
             endif
 
@@ -806,7 +804,6 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hv = q(3,i,j)
 
             if ((hu**2+hv**2)>0.d0) then
-               aux(i_fs,i,j) = 0.d0
                cycle
             endif
 
@@ -816,7 +813,6 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             phi = aux(i_phi,i,j)
 
             if ((phi)==0.0) then
-               aux(i_fs,i,j) = 0.d0
                init_pmin_ratio = 0.d0
                cycle
             endif
@@ -881,11 +877,6 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             init_pmin_ratio = min(init_pmin_ratio, 1.d0-grad_eta/tan(phi))
 
-            if (grad_eta>0.d0) then
-               aux(i_fs,i,j) = tan(phi)/grad_eta
-            else
-               aux(i_fs,i,j) = 10.d0
-            endif
          enddo
       enddo
 
