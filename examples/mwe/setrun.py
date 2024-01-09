@@ -89,7 +89,7 @@ def setrun(claw_pkg='dclaw'):
     clawdata.num_eqn = 7
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
-    clawdata.num_aux = 10
+    clawdata.num_aux = 9
 
     # Index of aux array corresponding to capacity function, if there is one:
     clawdata.capa_index = 0
@@ -305,7 +305,6 @@ def setrun(claw_pkg='dclaw'):
         "center",
         "center",
         "center",
-        "center",
     ]
 
 
@@ -407,7 +406,7 @@ def setrun(claw_pkg='dclaw'):
     auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
 
     auxinitdclaw_data.auxinitfiles = []
-    auxinitdclaw_data.auxinitfiles.append([3, 5, 1, 3, 'input_files/aux5.tt3'])
+    auxinitdclaw_data.auxinitfiles.append([3, 9, 1, 3, 'input_files/aux5.tt3'])
     # for auxinit perturbations append lines of the form
     #   [auxinitftype,iauxinit, minlev, maxlev, fname]
 
