@@ -198,10 +198,6 @@
             
 
             if (ent.and.vnorm.gt.vlow.and.(aux(i_ent,i,j)>0.d0)) then
-               
-               write(*,*) '+++++++ entrainment: vnorm.gt.vlow', vnorm.gt.vlow
-               write(*,*) '+++++++ entrainment: aux(i_ent,i,j)>0.d0', aux(i_ent,i,j)>0.d0
-               
                b_x = (aux(1,i+1,j)+q(7,i+1,j)-aux(1,i-1,j)-q(7,i-1,j))/(2.d0*dx)
                b_y = (aux(1,i,j+1)+q(7,i,j+1)-aux(1,i,j-1)-q(7,i,j-1))/(2.d0*dy)
                dbdv = (u*b_x+v*b_y)/vnorm
@@ -230,7 +226,6 @@
                   !dh = dtcoeff*t1bot/(1.d0 + dtcoeff*tan(phi))
                   dh = dtcoeff*(t1bot-t2top)
                   dh = entrainment_rate*dti*(t1bot-t2top)/(rho2*beta2*vnorm)
-                  write(*,*) '+++++++++ entrainment: dh',dh
                   !write(*,*) 'dh/dti', dh/dti
                   dh = min(dh,b_remaining)
                   h = h + dh

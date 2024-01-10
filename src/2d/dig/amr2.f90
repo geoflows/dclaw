@@ -500,11 +500,12 @@ program amr2
         !call set_storm()                  ! Set storm parameters
         call set_regions()                ! Set refinement regions
         !call read_adjoint_data()          ! Read adjoint solution
-        call set_dig()
+        call set_dig(naux)
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()
 
+        ! DIG: Ensure pinit flag is set correctly.
     else
 
         ! Create new timing file
@@ -542,7 +543,7 @@ program amr2
         call set_gauges(rest, nvar, naux) ! Set gauge output
         call set_fgmax()
         !call read_adjoint_data()          ! Read adjoint solution
-        call set_dig()
+        call set_dig(naux)
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()

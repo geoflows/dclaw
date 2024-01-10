@@ -12,6 +12,37 @@ import os, sys
 import numpy as np
 
 
+coordinate_system = 1
+entrainment = 1
+
+aux_type = [  "center"]
+
+
+if coordinate_system == 1:
+    i_dig = 2
+    num_geo = 1
+    i_capa = 0
+else:
+    i_dig = 4
+    num_geo = 3
+    i_capa = 2
+    aux_type.extend(["center","yleft"])
+
+aux_type.extend(["center",
+        "center",
+        "center",
+        "center",
+        "center",
+    ])
+if entrainment == 1:
+    num_ent = 1
+    i_ent = i_dig + 5
+    aux_type.extend(["center",])
+else:
+    num_ent = 0
+num_aux = num_geo + 5 + num_ent
+
+
 try:
     CLAW = os.environ['CLAW']
 except:
@@ -89,10 +120,10 @@ def setrun(claw_pkg='dclaw'):
     clawdata.num_eqn = 7
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
-    clawdata.num_aux = 9
+    clawdata.num_aux = 4#num_aux
 
     # Index of aux array corresponding to capacity function, if there is one:
-    clawdata.capa_index = 0
+    clawdata.capa_index = i_capa
 
     
     
@@ -295,17 +326,7 @@ def setrun(claw_pkg='dclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = [
-        "center",
-        "center",
-        "yleft",
-        "center",
-        "center",
-        "center",
-        "center",
-        "center",
-        "center",
-    ]
+    amrdata.aux_type = aux_type
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -361,7 +382,7 @@ def setrun(claw_pkg='dclaw'):
        
     # == Physics ==
     geo_data.gravity = 9.81
-    geo_data.coordinate_system = 1
+    geo_data.coordinate_system = coordinate_system
     geo_data.earth_radius = 6367.5e3
 
     # == Forcing Options
@@ -406,7 +427,7 @@ def setrun(claw_pkg='dclaw'):
     auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
 
     auxinitdclaw_data.auxinitfiles = []
-    auxinitdclaw_data.auxinitfiles.append([3, 9, 1, 3, 'input_files/aux5.tt3'])
+    auxinitdclaw_data.auxinitfiles.append([3, i_ent, 1, 3, 'input_files/entrainable.tt3'])
     # for auxinit perturbations append lines of the form
     #   [auxinitftype,iauxinit, minlev, maxlev, fname]
 
@@ -435,7 +456,7 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.alpha_seg =1.0
     dclaw_data.delta = 0.001
     dclaw_data.bed_normal = 0
-    dclaw_data.entrainment = 1
+    dclaw_data.entrainment = entrainment
     dclaw_data.entrainment_rate = 0.05
     dclaw_data.sigma_0 = 1.0e3
     dclaw_data.mom_autostop = True

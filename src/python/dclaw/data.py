@@ -215,14 +215,47 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
 
     The elements of aux that are accessible in this way are:
 
-    - aux1, topographic elevation, b
-    - aux2 and aux3, capacity arrays for handling latitude and longitude.
-    - aux4, phi, friction angle (TODO remove)
-    - aux5, depth of erodible material OR theta, slope angle in X direction (TODO change so these do not share)
-    - aux6, fs, factor of safety (TODO remove?)
-    - aux7,fsphi, (TODO what is this?)
-    - aux8, taudir_x, friction direction
-    - aux9, taudir_y, friction direction
+    if coordinate system = 2 (lat/lon)
+        - aux1, basal elevation, b
+        - aux2, capacity array (set internally)
+        - aux3, latitude (modified in some way, 
+            set internally)
+        - aux(i_phi=4,:,:), phi, basal friction angle (if not set, 
+            phi_bed is used everywhere)
+        - aux(i_theta=5), theta, slope angle in X direction (if 
+            not set theta from setrun.digdata is used everywhere)
+            Only used if setrun digdata.bed_normal = 1 
+        - aux(i_fsphi=6), fsphi, used to determine whether friction 
+            is static (in rpn) or dynamic (src2) (set 
+            internally)
+        - aux(i_taudir_x=7), taudir_x, friction direction (set internally)
+        - aux(i_taudir_y=8), taudir_y, friction direction (set internally)
+        - aux(i_ent=9), ent_depth, depth of entrainable material
+
+    if coordinate system = 1 (meters)
+        - the two capacity arrays are not generated such that
+
+        i_phi = 2
+        i_theta = 3
+        i_fsphi = 4
+        i_taudir_x = 5
+        i_taudir_y = 6
+        i_ent = 7
+
+    notes: if setrun digdata.entrainment = 0 (no entrainment) then
+    num_aux should either be 6 or 8 depending on whether coordinate
+    system 1 or 2 is used.
+
+    the user will always specify 
+    aux(1) using topo
+    
+    the other values a user is most likely to specify are
+    - aux(i_theta), if using bed-normal coordinates
+    - aux(i_ent), if using entrainment
+    - aux(i_phi), if using spatially variable basal friction
+
+    the user should not specify any other aux values at initialization 
+    as all other elements of the aux arrays are calculated internally.
 
     """
     def __init__(self):
@@ -231,6 +264,10 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
         self.add_attribute('nauxinits',None)
 
     def write(self,data_source='setrun.py', out_file='setauxinit_dclaw.data'):
+
+        # test that the number of aux variables
+        
+
 
         self.open_data_file(out_file, data_source)
         self.nauxinits = len(self.auxinitfiles)

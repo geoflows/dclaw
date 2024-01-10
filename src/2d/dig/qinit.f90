@@ -138,8 +138,12 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                         mxqinit(mf),myqinit(mf), &
                         qinitwork(i1:i2), 1)
                          ! qinitwork(i0qinit(mf):i0qinit(mf)+mqinit(mf)-1) ,1)
-
-                     dq=dq/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     
+                     if (coordinate_system == 2) then
+                        dq=dq/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     else
+                        dq=dq/((xipc-ximc)*(yjpc-yjmc))
+                     endif
 
                      if (iqinit(mf).le.meqn) then
                         q(iqinit(mf),i,j) = q(iqinit(mf),i,j) + dq
@@ -250,7 +254,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                  call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j), &
                              q(4,i,j),q(5,i,j),u,v,sv,aux(i_theta,i,j))
                  if (bed_normal.eq.1) then
-                     gmod = grav*cos(aux(i,j,i_theta))
+                     gmod = grav*cos(aux(i_theta,i,j))
                      p_ratioij = init_pmin_ratio &
                          + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(1,i,j)
                  endif

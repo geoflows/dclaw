@@ -84,16 +84,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     jlo = floor((ylow - ylower + .05d0*dy)/dy)
 
     ! Set geometry values
-    if (coordinate_system == 1) then
-        if (maux == 0 .and. mcapa > 0) then
-            print *, "ERROR:  Capacity array requested but number of aux"
-            print *, "variables is set to 0."
-            stop
-        end if
-        
-        aux(2,:,:) = 1.d0 ! ++++ auxcleanup
-        aux(3,:,:) = 1.d0
-    else if (coordinate_system == 2) then
+    if (coordinate_system == 2) then
         do jj = 1 - mbc, my + mbc
             do ii = 1 - mbc, mx + mbc
                 ym = ylower + (jlo+jj-1.d0) * dy
@@ -257,7 +248,12 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
                              auxinitwork(i0auxinit(mf):i0auxinit(mf) &
                              +mauxinit(mf)-1), 1)
 
-                     daux=daux/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     ! Correct for geometry
+                     if (coordinate_system == 2) then
+                        daux=daux/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     else
+                        daux=daux/((xipc-ximc)*(yjpc-yjmc))
+                     endif
 
                      aux(iauxinit(mf),i,j) = aux(iauxinit(mf),i,j)+daux
                   endif

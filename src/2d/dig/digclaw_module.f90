@@ -1,7 +1,7 @@
 
 module digclaw_module
 
-   use geoclaw_module, only: dry_tolerance, grav, pi
+   use geoclaw_module, only: dry_tolerance, grav, pi, coordinate_system
 
    implicit none
 
@@ -21,14 +21,13 @@ module digclaw_module
     integer :: momlevel
     logical :: amidoneyet = .FALSE.
 
-
-    integer, parameter ::  i_dig    = 4 !Start of digclaw aux variables
-    integer, parameter ::  i_phi    = i_dig
-    integer, parameter ::  i_theta  = i_dig + 1
-    integer, parameter ::  i_fsphi  = i_dig + 2
-    integer, parameter ::  i_taudir_x = i_dig + 3
-    integer, parameter ::  i_taudir_y = i_dig + 4
-    integer, parameter ::  i_ent = i_dig + 5
+    integer ::  i_dig
+    integer ::  i_phi
+    integer ::  i_theta
+    integer ::  i_fsphi 
+    integer ::  i_taudir_x 
+    integer ::  i_taudir_y
+    integer ::  i_ent 
     integer, parameter ::  DIG_PARM_UNIT = 78
 
 
@@ -39,11 +38,12 @@ contains
     ! ========================================================================
     !  Reads in user parameters from the given file name if provided
     ! ========================================================================
-    subroutine set_dig(fname)
+    subroutine set_dig(naux, fname)
 
          implicit none
 
          ! Input
+         integer, intent(in) :: naux
          character*25, intent(in), optional :: fname
 
          ! Locals
@@ -54,6 +54,21 @@ contains
 
 
          deg2rad = pi/180.d0
+
+         !Set i_dig based on coordinate system
+         if (coordinate_system == 2) then
+            i_dig = 4 
+         else
+            i_dig = 2
+         endif
+
+         ! set aux index values based on coordinate system
+         i_phi    = i_dig
+         i_theta  = i_dig + 1
+         i_fsphi  = i_dig + 2
+         i_taudir_x = i_dig + 3
+         i_taudir_y = i_dig + 4
+         i_ent = i_dig + 5
 
          ! Read user parameters from setgeo.data
          if (present(fname)) then
@@ -92,6 +107,25 @@ contains
          read(iunit,*) mom_autostop
          read(iunit,*) momlevel
          close(iunit)
+
+         ! test that naux is large enough
+         if (i_dig + 5 + entrainment > naux) then
+            write(*,*) 
+            write(*,*) "*******************************************************"
+            write(*,*) "**************** AUX ERROR"
+            write(*,*) "**************** Number of aux variables set for D-Claw"
+            write(*,*) "**************** inconsistent with coordinate_system"
+            write(*,*) "**************** and entrainment."
+            write(*,*) "**************** Setrun num_aux    = ", naux
+            write(*,*) "**************** Aux required      = ",i_dig + 5 + entrainment
+            write(*,*) "**************** coordinate_system = ", coordinate_system
+            write(*,*) "**************** entrainment       = ", entrainment
+            write(*,*) "*******************************************************"
+
+            write(*,*)
+            stop
+         endif
+
 
          alpha_seg = 1.0 - alpha_seg
 

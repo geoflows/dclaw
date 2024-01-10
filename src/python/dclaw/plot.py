@@ -22,11 +22,12 @@ i_topo = 0
 i_capax = 1
 i_capay = 2
 
-i_dig = 3
+# if coordinate_system == 1 i_dig = 1
+# else i_dig = 3
+
+i_dig = 1
 i_phi = i_dig
 i_theta = i_dig + 1
-i_fs = i_dig + 2
-i_cohesion = i_dig + 3
 i_taudir_x = i_dig + 4
 i_taudir_y = i_dig + 5
 
@@ -834,38 +835,5 @@ def static_angle(current_data):
     return theta_deg
 
 
-def fs(current_data):
-    """
-    Return a masked array containing factor of safety.
-    """
-
-    if hasattr(current_data.plotdata, "geoclaw_data"):
-        drytol = current_data.plotdata.geoclaw_data.dry_tolerance
-    else:
-        drytol = _drytol
-
-    q = current_data.q
-    h = q[i_h, :, :]
-    aux = current_data.aux
-    fs = aux[i_fs, :, :]
-    fs = ma.masked_where(h <= drytol, fs)
-    return fs
 
 
-def cohesion(current_data):
-    """
-    Return a masked array containing cohesion.
-    """
-
-    if hasattr(current_data.plotdata, "geoclaw_data"):
-        drytol = current_data.plotdata.geoclaw_data.dry_tolerance
-    else:
-        drytol = _drytol
-
-    q = current_data.q
-    h = q[i_h, :, :]
-    aux = current_data.aux
-    c = aux[i_cohesion, :, :]
-    c = ma.masked_where(h <= drytol, c)
-
-    return c
