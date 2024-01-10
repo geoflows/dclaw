@@ -19,7 +19,7 @@ from clawpack.visclaw import gridtools
 
 import os,sys
 
-sea_level = 100.
+sea_level = 50.
 
 #--------------------------
 def setplot(plotdata=None):
@@ -216,7 +216,7 @@ def setplot(plotdata=None):
 
     def plot_xsec(current_data):
         from pylab import plot,linspace,zeros,ones,legend,xlabel,\
-                            sqrt,grid,xlim,fill_between
+                            sqrt,grid,xlim,fill_between,logical_and
         from pylab import nan,where,ylim,loadtxt,arange
         from clawpack.pyclaw import Solution
         pd = current_data.plotdata
@@ -239,12 +239,15 @@ def setplot(plotdata=None):
         with np.errstate(divide="ignore", invalid="ignore"):
             mout = hmout / hout
         water = where(mout<0.1, etaout, nan)
-        landslide = where(mout>0.1, etaout, nan)
+        landslide = where(mout>0.5, etaout, nan)
+        mixed = where(logical_and(0.1<mout,mout<0.5), etaout, nan)
         #plot(xout, etaout, 'm')
         fill_between(rout,Bout,water,color=[.4,.4,1])
         fill_between(rout,Bout,landslide,color='brown')
+        fill_between(rout,Bout,mixed,color='orange')
         #plot(xout, Bout, 'g')
-        fill_between(rout,Bout,0,color='g')
+        fill_between(rout,Bout,0,color='lightgreen')
+        plot(-rout, etaout, 'k')
 
     plotaxes.afteraxes = plot_xsec
 

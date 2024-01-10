@@ -77,8 +77,8 @@ def setrun(claw_pkg='dclaw'):
 
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 241
-    clawdata.num_cells[1] = 241
+    clawdata.num_cells[0] = 240
+    clawdata.num_cells[1] = 240
 
 
 
@@ -124,8 +124,8 @@ def setrun(claw_pkg='dclaw'):
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 100 #240
-        clawdata.tfinal = 100. #240.
+        clawdata.num_output_times = 120 #240
+        clawdata.tfinal = 120. #240.
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -176,8 +176,8 @@ def setrun(claw_pkg='dclaw'):
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
     # D-Claw requires CFL<0.5
-    clawdata.cfl_desired = 0.2 #0.45 
-    clawdata.cfl_max = 0.25 #0.5
+    clawdata.cfl_desired = 0.45 
+    clawdata.cfl_max = 0.5
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -370,7 +370,7 @@ def setrun(claw_pkg='dclaw'):
     geo_data.coriolis_forcing = False
 
     # == Algorithm and Initial Conditions ==
-    geo_data.sea_level = 0.0
+    geo_data.sea_level = 50.0
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True # TODO change?
     geo_data.manning_coefficient =.025
