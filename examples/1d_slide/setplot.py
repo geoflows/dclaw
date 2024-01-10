@@ -435,6 +435,7 @@ def setplot(plotdata=None):
         q = current_data.q
         h = q[0,:,:]
         hdiff = h - flipud(h)
+        #import pdb; pdb.set_trace()
         return x,hdiff
 
     plotitem = plotaxes.new_plotitem(plot_type='1d_from_2d_data')

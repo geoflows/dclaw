@@ -36,7 +36,8 @@ eta2 = B1
 rr = array([r0,r1,r2,r3,r4,r5])
 Br = array([B0,B1,B2,B3,B4,B5])
 etar = Br.copy()
-etar[2] = eta2
+#etar[2] = eta2
+etar[:3] = 420.
 
 def make_plots():
     figure(figsize=(10,3))

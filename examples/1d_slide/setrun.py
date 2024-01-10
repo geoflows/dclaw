@@ -77,7 +77,7 @@ def setrun(claw_pkg='dclaw'):
 
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 240
+    clawdata.num_cells[0] = 10
     clawdata.num_cells[1] = 4
 
 
@@ -120,7 +120,7 @@ def setrun(claw_pkg='dclaw'):
     # Note that the time integration stops after the final output time.
     # The solution at initial time t0 is always written in addition.
 
-    clawdata.output_style = 1
+    clawdata.output_style = 3
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
@@ -135,7 +135,7 @@ def setrun(claw_pkg='dclaw'):
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
         clawdata.output_step_interval = 1
-        clawdata.total_steps = 1
+        clawdata.total_steps = 1000
         clawdata.output_t0 = True
         
 
