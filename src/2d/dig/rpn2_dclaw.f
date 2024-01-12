@@ -55,6 +55,7 @@ c
       !logical entropy(5)
       logical rare1,rare2,wallprob,drystate
       !logical entropycorr1,entropycorr2
+      integer xxx, mmw
 
       double precision drytol,gmod,veltol
       double precision hR,hL,huR,huL,uR,uL,hvR,hvL,vR,vL
@@ -86,7 +87,7 @@ c
 
          do mw=1,mwaves
             s(mw,i)=0.d0
-            !entropy(mw)=.false.
+            !entropy(mw)=.false. ! DIG: this is a difference from old-new rpn2, but it does not seem to be used.
             do m=1,meqn
                fwave(m,mw,i)=0.d0
             enddo
@@ -175,6 +176,7 @@ c        !set normal direction
          if (hR.le.drytol) then
             hR = 0.d0
             pR = 0.d0
+            mR=mL ! DIG: KRB added this back 1/11/2024
             chiR = chiL
             drystate=.true.
             call riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,
@@ -204,6 +206,7 @@ c                bR=hstartest+bL
          elseif (hL.le.drytol) then ! right surface is lower than left topo
             hL = 0.d0
             pL = 0.d0
+            mL = mR ! DIG: KRB added this back 1/11/2024
             chiL= chiR
             drystate=.true.
             call riemanntype(hR,hR,-uR,uR,hstar,s1m,s2m,
@@ -236,6 +239,12 @@ c               bL=hstartest+bR
 
          maxiter = 1
 
+         if (ixy.eq.2.and.i.ge.290.and.i.le.294) then 
+            write(58,799) i,hL,hR,huL,huR,hvL,hvR,hmL,hmR,
+     &                    pL,pR,bL,bR,uL,uR,vL,vR,mL,mR
+ 799        format(1i5, 18e10.3)
+         endif 
+
           ! current dclaw Riemann solver
           dx = 0.0 !DIG do we need dx in riemann solver? 
           call riemann_dig2_aug_sswave_ez(ixy,6,3,hL,hR,huL,huR,
@@ -252,11 +261,21 @@ c        !eliminate ghost fluxes for wall
          enddo
 
          ! DIG : Check all indexing. 
+
+c============segregation================================================
+
          s(1,i) = sw(1)
          s(2,i) = sw(2)
          s(3,i) = sw(2)
          s(4,i) = sw(2)
          s(5,i) = sw(3)
+
+         if (ixy.eq.2.and.i.ge.290.and.i.le.294) then 
+            do mmw = 1,3
+               write(58,699) i, mmw, (fw(xxx,mmw), xxx = 1,6)
+ 699           format(2i5, 6e15.7)
+            enddo 
+         endif 
 
          fwave(1,1,i) =   fw(1,1)
          fwave(mhu,1,i) = fw(2,1)
@@ -334,13 +353,30 @@ c============= compute fluctuations=============================================
                   apdq(1:meqn,i)  = apdq(1:meqn,i)
      &                          + fwave(1:meqn,mw,i)
                else
-                 amdq(1:meqn,i) = amdq(1:meqn,i)
-     &                              + 0.5d0 * fwave(1:meqn,mw,i)
-                 apdq(1:meqn,i) = apdq(1:meqn,i)
-     &                              + 0.5d0 * fwave(1:meqn,mw,i)
+! DIG: 1/11/2024: KRB & MJB close comparing dclaw4 and dclaw5. These next four
+! lines were commented out in dclaw4. We probably want them because in 
+! geoclaw5 they are used. Keeping commented for now to do a debug ensuring 
+! identical behavior of dclaw4 and dclaw5.
+!                 amdq(1:meqn,i) = amdq(1:meqn,i)
+!     &                              + 0.5d0 * fwave(1:meqn,mw,i)
+!                 apdq(1:meqn,i) = apdq(1:meqn,i)
+!     &                              + 0.5d0 * fwave(1:meqn,mw,i)
                endif
             enddo
+
+            if (ixy.eq.2.and.i.ge.290.and.i.le.297) then 
+               do m=1,meqn  
+                  do  mw=1,mwaves
+                     write(57, 599) i, m, mw, fwave(m,mw,i)
+ 599              format(3i5, 1e15.7)
+                  enddo
+               enddo 
+            endif 
+
+
          enddo
+
+
 !--       do i=2-mbc,mx+mbc
 !--            do m=1,meqn
 !--                write(51,151) m,i,amdq(m,i),apdq(m,i)

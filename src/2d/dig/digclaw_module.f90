@@ -109,7 +109,7 @@ contains
          close(iunit)
 
          ! test that naux is large enough
-         if (i_dig + 5 + entrainment > naux) then
+         if (i_dig + 4 + entrainment > naux) then
             write(*,*) 
             write(*,*) "*******************************************************"
             write(*,*) "**************** AUX ERROR"
@@ -117,7 +117,7 @@ contains
             write(*,*) "**************** inconsistent with coordinate_system"
             write(*,*) "**************** and entrainment."
             write(*,*) "**************** Setrun num_aux    = ", naux
-            write(*,*) "**************** Aux required      = ",i_dig + 5 + entrainment
+            write(*,*) "**************** Aux required      = ",i_dig + 4 + entrainment
             write(*,*) "**************** coordinate_system = ", coordinate_system
             write(*,*) "**************** entrainment       = ", entrainment
             write(*,*) "*******************************************************"

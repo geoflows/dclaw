@@ -64,17 +64,17 @@ c-----------------------------------------------------------------------
       pmL = chiL
       pmR = chiR
       pm = 0.5*(chiL + chiR)
-      pm = min(1.0,pm)
-      pm = max(0.0,pm)
-      if (alpha_seg==1.0) then
-         seg = 0.0
+      pm = min(1.0d0,pm)
+      pm = max(0.0d0,pm)
+      if (alpha_seg==1.0d0) then
+         seg = 0.0d0
       else
-         seg = 1.0
+         seg = 1.0d0
       endif
-      !pmtanh01 = seg*(0.5*(tanh(20.0*(pm-0.80))+1.0))
-      !pmtanh01 = seg*(0.5*(tanh(40.0*(pm-0.90))+1.0))
+      !pmtanh01 = seg*(0.5d0*(tanh(20.0d0*(pm-0.80d0))+1.0d0))
+      !pmtanh01 = seg*(0.5d0*(tanh(40.0d0*(pm-0.90d0))+1.0d0))
       call calc_pmtanh(pm,seg,pmtanh01)
-      rho_fp = (1.0-pmtanh01)*rho_f
+      rho_fp = (1.0d0-pmtanh01)*rho_f
 
 
       if (hL.ge.drytol.and.hR.ge.drytol) then
@@ -90,8 +90,8 @@ c-----------------------------------------------------------------------
      &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmL)
          call auxeval(hL,uL,vL,mL,pL,phiL,thetaL,
      &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmL)
-         tauR=0.5*tauL
-         h = 0.5*hL
+         tauR=0.5d0*tauL
+         h = 0.5d0*hL
          v = vL
          mbar = mL
       else
@@ -99,8 +99,8 @@ c-----------------------------------------------------------------------
      &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmR)
          call auxeval(hR,uR,vR,mR,pR,phiR,thetaR,
      &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmR)
-         tauL=0.5*tauR
-         h = 0.5*hR
+         tauL=0.5d0*tauR
+         h = 0.5d0*hR
          v = vR
          mbar = mR
       endif
@@ -110,9 +110,9 @@ c-----------------------------------------------------------------------
       rho = 0.5d0*(rhoL + rhoR)
       tau = 0.5d0*(tauL + tauR)
       theta = 0.5d0*(thetaL + thetaR)
-      gamma = 0.25*(rho_fp + 3.0*rho)/rho
-      gammaL = 0.25*(rho_fp + 3.0*rhoL)/rhoL
-      gammaR = 0.25*(rho_fp + 3.0*rhoR)/rhoR
+      gamma = 0.25d0*(rho_fp + 3.0d0*rho)/rho
+      gammaL = 0.25d0*(rho_fp + 3.0d0*rhoL)/rhoL
+      gammaR = 0.25d0*(rho_fp + 3.0d0*rhoR)/rhoR
 
       eps = kappa + (1.d0-kappa)*gamma
 
@@ -259,7 +259,7 @@ c     !find bounds in case of critical state resonance, or negative states
 
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
       !vnorm = sqrt(u**2 + v**2)
-      if (vnorm>0.0) then
+      if (vnorm>0.0d0) then
          !tausource = - dx*0.5*(tauL/rhoL + tauR/rhoR)*u/vnorm
          !tausource = - dx*max(tauL/rhoL , tauR/rhoR)*u/vnorm
          !tausource =  0.0!dx*tauR*taudir/rhoR
@@ -270,7 +270,7 @@ c     !find bounds in case of critical state resonance, or negative states
          !   write(*,*) 'ixy', ixy
          !endif
          !DIG: check -- why are taudirL and taudirR treated differently?
-         if ((uL**2 + vL**2)==0.0) then
+         if ((uL**2 + vL**2)==0.0d0) then
             taudirL = taudirR
          else
             taudirL = -uL/sqrt(uL**2 + vL**2)
@@ -284,25 +284,25 @@ c     !find bounds in case of critical state resonance, or negative states
          tausource =  0.0!*dx*0.5*(taudirL*tauL/rhoL + tauR*taudirR/rhoR)
       !elseif (dx*max(abs(tauL*taudirL/rhoL),abs(tauR*taudirR/rhoR))
       !DIG: check dx
-      elseif (0.5*abs(taudirR*tauR/rhoR + tauL*taudirR/rhoL)!*dx
+      elseif (0.5d0*abs(taudirR*tauR/rhoR + tauL*taudirR/rhoL)!*dx
      &      .gt.abs(del(2) - source2dx)) then 
       
          !no failure
          tausource = del(2) - source2dx
-         del(1) = 0.0
-         del(0) = 0.0
-         del(4) = 0.0
+         del(1) = 0.0d0
+         del(0) = 0.0d0
+         del(4) = 0.0d0
       else
          !failure
          !tausource =   sign(abs(dx*0.5*taudir*(tauL/rhoL + tauR/rhoR))
          !tausource =   sign(abs(dx*0.5*tau/rho)
          !tausource =   dx*taudir*tauR/rhoR
          
-         tausource = 0.5*((taudirR*tauR/rhoR)+(tauL*taudirR/rhoL))!*dx
+         tausource = 0.5d0*((taudirR*tauR/rhoR)+(tauL*taudirR/rhoL))!*dx
          tausource = dsign(tausource,del(2)-source2dx)
       endif
       if (wallprob) then
-         tausource = 0.0
+         tausource = 0.0d0
       endif
       del(2) = del(2) - source2dx  - tausource
       !del(4) = del(4) + dx*3.0*vnorm*tanpsi/(h*compress)
@@ -348,6 +348,11 @@ c      del(4) = del(4) - 0.5d0*dx*psi(4)
          enddo
       enddo
 
+      if (ixy.eq.2) then 
+         write(58, 699) beta(1:3), del(0:2)
+699      format("beta(1:3), del(0:2)", 6e15.7)
+      endif 
+
       !waves and fwaves for delta hum
       fw(4,1) = fw(1,1)*mL
       fw(4,3) = fw(1,3)*mR
@@ -367,10 +372,10 @@ c      del(4) = del(4) - 0.5d0*dx*psi(4)
 
 
       !fwaves for segregation
-      seg_L = chiL*hL*uL*(1.0+(1.0-alpha_seg)*(1.0-chiL))
-      seg_R = chiR*hR*uR*(1.0+(1.0-alpha_seg)*(1.0-chiR))
-      fw(6,1) = fw(1,1)*chiL*(1.0+(1.0-alpha_seg)*(1.0-chiL))
-      fw(6,3) = fw(1,3)*chiR*(1.0+(1.0-alpha_seg)*(1.0-chiR))
+      seg_L = chiL*hL*uL*(1.0d0+(1.0d0-alpha_seg)*(1.0d0-chiL))
+      seg_R = chiR*hR*uR*(1.0d0+(1.0d0-alpha_seg)*(1.0d0-chiR))
+      fw(6,1) = fw(1,1)*chiL*(1.0+(1.0d0-alpha_seg)*(1.0d0-chiL))
+      fw(6,3) = fw(1,3)*chiR*(1.0+(1.0d0-alpha_seg)*(1.0d0-chiR))
       fw(6,2) = seg_R - seg_L - fw(6,1) - fw(6,3)
       return
       end !subroutine riemann_dig2_aug_sswave_ez
@@ -465,7 +470,7 @@ c           !root finding using a Newton iteration on dsqrt(h)===
 
             do iter=1,maxiter
                F0=delu + 2.d0*(dsqrt(g*h0)-dsqrt(g*h_max))
-     &                  + (h0-h_min)*dsqrt(.5d0*g*(1/h0+1/h_min))
+     &                  + (h0-h_min)*dsqrt(.5d0*g*(1.d0/h0+1.d0/h_min))
                slope=(F_max-F0)/(h_max-h_min)
                h0=h0-F0/slope
             enddo
@@ -541,7 +546,7 @@ c  On output a is replaced by it's inverse, and b replaced by x.
         endif
         indxr(i)=irow
         indxc(i)=icol
-        if (a(icol,icol).eq.0.) write(*,*) 'singular matrix in gaussj'
+        if (a(icol,icol).eq.0.d0) write(*,*) 'singular matrix in gaussj'
 
         pivinv=1./a(icol,icol)
         a(icol,icol)=1.
@@ -554,7 +559,7 @@ c  On output a is replaced by it's inverse, and b replaced by x.
         do 21 ll=1,n
           if(ll.ne.icol)then
             dum=a(ll,icol)
-            a(ll,icol)=0.
+            a(ll,icol)=0.d0
             do 18 l=1,n
               a(ll,l)=a(ll,l)-a(icol,l)*dum
 18          continue

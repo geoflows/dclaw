@@ -197,9 +197,11 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                                 eta = 0.d0
                             end if
 
+                            write(out_unit, "(2i5, 50e26.16)") i, j, h, eta
+
                             !write(out_unit, "(50e26.16)") h, hu, hv, eta
-                            write(out_unit, "(50e26.16)") &
-                                 (alloc(iadd(ivar,i,j)), ivar=1,num_eqn), eta
+                            !write(out_unit, "(50e26.16)") &
+                            !     (alloc(iadd(ivar,i,j)), ivar=1,1), eta
 
                             ! approximate local momentum as sqrt((hu**2)+(hv**2))
                             ! stopping criteria is whether this value is equivalent to zero,  
@@ -301,6 +303,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
     end if
 
     if (time .gt. 1.0d0) then
+        write(*,*) '+++++ momautostop', mom_autostop, locmom, amidoneyet
         if (mom_autostop) then
             ! if absolute value of local momentum is very close to zero, then stop.
             if (locmom .le. 0.001d0) then ! add a full stop criterion.

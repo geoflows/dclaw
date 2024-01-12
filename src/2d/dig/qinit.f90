@@ -101,13 +101,13 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             xintlow = dmax1(xlower,xlowqinit(mf))
             xinthi  = dmin1(xhigher,xhiqinit(mf))
-            istart  = max(1-mbc,int(0.5 + (xintlow-xlower)/dx)-mbc)
-            iend    = min(mx+mbc,int(1.0 + (xinthi-xlower)/dx)+mbc)
+            istart  = max(1-mbc,int(0.5d0 + (xintlow-xlower)/dx)-mbc)
+            iend    = min(mx+mbc,int(1.0d0 + (xinthi-xlower)/dx)+mbc)
 
             yintlow = dmax1(ylower,ylowqinit(mf))
             yinthi  = dmin1(yhigher,yhiqinit(mf))
-            jstart  = max(1-mbc,int(0.5 + (yintlow-ylower)/dy)-mbc)
-            jend    = min(my+mbc,int(1.0 + (yinthi-ylower)/dy)+mbc)
+            jstart  = max(1-mbc,int(0.5d0 + (yintlow-ylower)/dy)-mbc)
+            jend    = min(my+mbc,int(1.0d0 + (yinthi-ylower)/dy)+mbc)
 
             do i=istart,iend
                x = xlower + (i-0.5d0)*dx
@@ -145,9 +145,11 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                         dq=dq/((xipc-ximc)*(yjpc-yjmc))
                      endif
 
+                     
                      if (iqinit(mf).le.meqn) then
                         q(iqinit(mf),i,j) = q(iqinit(mf),i,j) + dq
                      else
+                        ! set h based on eta
                         if (dq-aux(1,i,j).gt.0.d0) then
                           q(1,i,j) = dmax1(q(1,i,j),dq-aux(1,i,j))
                         endif
@@ -191,6 +193,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                if (initpv.eq.1) then
                   q(5,i,j) = q(1,i,j)*q(5,i,j)
                endif
+               
                if (q(1,i,j).le.dry_tolerance) then
                   do m = 1,meqn
                      q(m,i,j) = 0.d0
@@ -265,7 +268,6 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             enddo
             p_initialized = 0
       end select
-      !write(*,*) 'qinit:init,dx,dy:',init_pmin_ratio,dx,dy
 
       !===============set factor of safety=============================
       call calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)

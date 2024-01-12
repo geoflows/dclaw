@@ -18,7 +18,7 @@
 
       !local
       real(kind=8) :: gmod,h,hu,hv,hm,u,v,m,p,phi,kappa,S,rho,tanpsi,dti
-      real(kind=8) :: D,tau,sigbed,kperm,compress,pm,coeff,tol
+      real(kind=8) :: D,tau,sigbed,kperm,compress,pm,coeff
       real(kind=8) :: vnorm,hvnorm,theta,dtheta,w,taucf,fsphi,hvnorm0
       real(kind=8) :: shear,sigebar,pmtanh01,rho_fp,seg
       real(kind=8) :: b_xx,b_yy,b_xy,chi,beta
@@ -47,8 +47,7 @@
       ! it will be manning_coefficient(1)
       ! DIG: FIX.
 
-      tol = dry_tolerance !# to prevent divide by zero in gamma
-      curvature = 0 !add friction due to curvature acceleration KRB: why is this hardcoded to 0?
+      curvature = 1 !add friction due to curvature acceleration KRB: why is this hardcoded to 0?
       !write(*,*) 'src:init,value',p_initialized,init_pmin_ratio
       if (entrainment>0) then
          ent = .true.
@@ -75,8 +74,8 @@
             p =  q(5,i,j)
             phi = aux(i_phi,i,j)
             pm = q(6,i,j)/h
-            pm = max(0.0,pm)
-            pm = min(1.0,pm)
+            pm = max(0.0d0,pm)
+            pm = min(1.0d0,pm)
             fsphi = aux(i_fsphi,i,j)
 
             jjend = 1
@@ -96,7 +95,7 @@
             !integrate friction
             hvnorm = dmax1(0.d0,hvnorm - dti*tau/rho)
             hvnorm = hvnorm*exp(-(1.d0-m)*2.0d0*mu*dti/(rho*h**2))
-            !hvnorm = hvnorm*exp(-(1.d0-m)*2.0d0*0.1*dti/(rho*h**2.0))
+            !hvnorm = hvnorm*exp(-(1.d0-m)*2.0d0*0.1*dti/(rho*h**2))
             if (hvnorm<1.d-16) hvnorm = 0.d0
 
 
@@ -104,7 +103,7 @@
                b_xx=(aux(1,i+1,j)-2.d0*aux(1,i,j)+aux(1,i-1,j))/(dx**2)
                b_yy=(aux(1,i,j+1)-2.d0*aux(1,i,j)+aux(1,i,j-1))/(dy**2)
                b_xy=(aux(1,i+1,j+1)-aux(1,i-1,j+1) -aux(1,i+1,j-1)+aux(1,i-1,j-1))/(4.0*dx*dy)
-               chi = (u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy)/gmod
+               chi = (u**2*b_xx + v**2*b_yy + 2.0d0*u*v*b_xy)/gmod
                chi = max(chi,-1.d0)
                taucf = chi*tau
                hvnorm = dmax1(0.d0,hvnorm - dti*taucf/rho)
@@ -152,7 +151,7 @@
             
             !integrate pressure relaxation
             !if (compress<1.d15) then !elasticity is = 0.0 but compress is given 1d16 in auxeval
-            !   zeta = 3.d0/(compress*h*2.0)  + (rho-rho_fp)*rho_fp*gmod/(4.d0*rho)
+            !   zeta = 3.d0/(compress*h*2.0d0)  + (rho-rho_fp)*rho_fp*gmod/(4.d0*rho)
             !else
             !   zeta = (rho-rho_fp)*rho_fp*gmod/(4.d0*rho)
             !endif
@@ -182,6 +181,7 @@
             krate = D*(rho-rho_fp)/rho
             hu = hu*exp(dti*krate/h)
             hv = hv*exp(dti*krate/h)
+
             hm = hm*exp(-dti*D*rho_fp/(h*rho))
 
             h = h + krate*dti
@@ -197,45 +197,47 @@
             vlow = 0.1d0
             
 
-            if (ent.and.vnorm.gt.vlow.and.(aux(i_ent,i,j)>0.d0)) then
-               b_x = (aux(1,i+1,j)+q(7,i+1,j)-aux(1,i-1,j)-q(7,i-1,j))/(2.d0*dx)
-               b_y = (aux(1,i,j+1)+q(7,i,j+1)-aux(1,i,j-1)-q(7,i,j-1))/(2.d0*dy)
-               dbdv = (u*b_x+v*b_y)/vnorm
-               slopebound = 1.d10
-               b_eroded = q(7,i,j)
-               if (dbdv<slopebound.and.b_eroded<aux(i_ent,i,j)) then
-                  b_remaining = aux(i_ent,i,j)-b_eroded
-                  m2 = 0.6d0
-                  rho2 = m2*2700.d0 + (1.d0-m2)*1000.d0
-                  beta2 = 0.66d0
-                  t1bot = beta2*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d-2))
-                  !write(*,*) '------------'
-                  !write(*,*) 'vu',t1bot
-                  beta = 1.d0-m!tanh(10.d0*m) !tan(1.5*p/(rho*gmod*h))/14.0
-                  gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d-2)**(1.0/3.0))
-                  !write(*,*) 'gamma', gamma
-                  t1bot = t1bot + gamma
-                  t1bot = t1bot + tau!+p*tan(phi)
-                  !write(*,*) 'tau',tau
-                  t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
-                  !write(*,*) 't2top',t2top
-                  prat = p/(rho*h)
-                  !dh = dti*(t1bot-t2top)/(beta2*tanh(vnorm+1.d-2)*rho2)
-                  vreg = ((vnorm-vlow)**2/((vnorm-vlow)**2+1.d0))
-                  dtcoeff = entrainment_rate*dti*vreg/(beta2*(vnorm+vlow)*rho2)
-                  !dh = dtcoeff*t1bot/(1.d0 + dtcoeff*tan(phi))
-                  dh = dtcoeff*(t1bot-t2top)
-                  dh = entrainment_rate*dti*(t1bot-t2top)/(rho2*beta2*vnorm)
-                  !write(*,*) 'dh/dti', dh/dti
-                  dh = min(dh,b_remaining)
-                  h = h + dh
-                  hm = hm + dh*m2
-                  q(7,i,j) = q(7,i,j) + dh
+            if (ent.and.vnorm.gt.vlow) then
+               if (aux(i_ent,i,j)>0.d0) then
+                  b_x = (aux(1,i+1,j)+q(7,i+1,j)-aux(1,i-1,j)-q(7,i-1,j))/(2.d0*dx)
+                  b_y = (aux(1,i,j+1)+q(7,i,j+1)-aux(1,i,j-1)-q(7,i,j-1))/(2.d0*dy)
+                  dbdv = (u*b_x+v*b_y)/vnorm
+                  slopebound = 1.d10
+                  b_eroded = q(7,i,j)
+                  if (dbdv<slopebound.and.b_eroded<aux(i_ent,i,j)) then
+                     b_remaining = aux(i_ent,i,j)-b_eroded
+                     m2 = 0.6d0
+                     rho2 = m2*2700.d0 + (1.d0-m2)*1000.d0
+                     beta2 = 0.66d0
+                     t1bot = beta2*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d0-2.d0))
+                     !write(*,*) '------------'
+                     !write(*,*) 'vu',t1bot
+                     beta = 1.d0-m!tanh(10.d0*m) !tan(1.5*p/(rho*gmod*h))/14.0
+                     gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d-2)**(1.0d0/3.0d0))
+                     !write(*,*) 'gamma', gamma
+                     t1bot = t1bot + gamma
+                     t1bot = t1bot + tau!+p*tan(phi)
+                     !write(*,*) 'tau',tau
+                     t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
+                     !write(*,*) 't2top',t2top
+                     prat = p/(rho*h)
+                     !dh = dti*(t1bot-t2top)/(beta2*tanh(vnorm+1.d-2)*rho2)
+                     vreg = ((vnorm-vlow)**2/((vnorm-vlow)**2+1.d0))
+                     dtcoeff = entrainment_rate*dti*vreg/(beta2*(vnorm+vlow)*rho2)
+                     !dh = dtcoeff*t1bot/(1.d0 + dtcoeff*tan(phi))
+                     dh = dtcoeff*(t1bot-t2top)
+                     dh = entrainment_rate*dti*(t1bot-t2top)/(rho2*beta2*vnorm)
+                     !write(*,*) 'dh/dti', dh/dti
+                     dh = min(dh,b_remaining)
+                     h = h + dh
+                     hm = hm + dh*m2
+                     q(7,i,j) = q(7,i,j) + dh
 
-                  call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                  call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-                  p = prat*rho*h
-                  call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
+                     call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
+                     call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
+                     p = prat*rho*h
+                     call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
+                  endif
                endif
             endif
             !===================================================================
@@ -272,16 +274,16 @@
                   call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                   if (h<dry_tolerance) cycle
                   pm = q(6,i,j)/h
-                  pm = max(0.0,pm)
-                  pm = min(1.0,pm)
+                  pm = max(0.0d0,pm)
+                  pm = min(1.0d0,pm)
                   call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
 
-                  if (h.lt.tol) then
+                  if (h.lt.dry_tolerance) then
                      q(2,i,j)=0.d0
                      q(3,i,j)=0.d0
                   else
-                     beta = 1.d0-m !tan(1.5*p/(rho*gmod*h))/14.0
-                     gamma= beta*dsqrt(hu**2 + hv**2)*(gmod*coeff**2)/(h**(7.0/3.0))
+                     beta = 1.d0-m
+                     gamma= beta*dsqrt(hu**2 + hv**2)*(gmod*coeff**2)/(h**(7.0d0/3.0d0))
                      dgamma=1.d0 + dt*gamma
                      q(2,i,j)= q(2,i,j)/dgamma
                      q(3,i,j)= q(3,i,j)/dgamma
