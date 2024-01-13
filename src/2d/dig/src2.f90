@@ -55,14 +55,15 @@
          ent = .false.
       endif
 
-      do i=1-mbc+1,mx+mbc-1
+      do i=1-mbc+1,mx+mbc-1 ! DIG: Here we are looping over ghost cells, that have not been updated. Are they used
+         ! meaningfully (e.g., theta is diffed below. )
          do j=1-mbc+1,my+mbc-1
             theta = 0.d0
             dtheta = 0.d0
             if (bed_normal==1) then
                theta = aux(i_theta,i,j)
                gmod = grav*cos(theta)
-               dtheta = -(aux(i_theta,i+1,j) - theta)/dx
+               dtheta = -(aux(i_theta,i+1,j) - theta)/dx 
             endif
 
             !call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j),q(4,i,j),q(5,i,j),u,v,m,theta)
@@ -102,7 +103,7 @@
             if (hvnorm>0.d0.and.curvature==1) then
                b_xx=(aux(1,i+1,j)-2.d0*aux(1,i,j)+aux(1,i-1,j))/(dx**2)
                b_yy=(aux(1,i,j+1)-2.d0*aux(1,i,j)+aux(1,i,j-1))/(dy**2)
-               b_xy=(aux(1,i+1,j+1)-aux(1,i-1,j+1) -aux(1,i+1,j-1)+aux(1,i-1,j-1))/(4.0*dx*dy)
+               b_xy=(aux(1,i+1,j+1)-aux(1,i-1,j+1) -aux(1,i+1,j-1)+aux(1,i-1,j-1))/(4.d0*dx*dy)
                chi = (u**2*b_xx + v**2*b_yy + 2.0d0*u*v*b_xy)/gmod
                chi = max(chi,-1.d0)
                taucf = chi*tau
@@ -125,7 +126,7 @@
             vnorm = sqrt(u**2 + v**2)
 
             !integrate shear-induced dilatancy
-            sigebar = rho*gmod*h - p + sigma_0
+            !sigebar = rho*gmod*h - p + sigma_0
             shear = 2.d0*vnorm/h
             krate = 1.5d0*shear*m*tanpsi/alpha
             !sigebar = sigebar*exp(krate*dti)
@@ -212,8 +213,8 @@
                      t1bot = beta2*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d0-2.d0))
                      !write(*,*) '------------'
                      !write(*,*) 'vu',t1bot
-                     beta = 1.d0-m!tanh(10.d0*m) !tan(1.5*p/(rho*gmod*h))/14.0
-                     gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d-2)**(1.0d0/3.0d0))
+                     beta = 1.d0-m!tanh(10.d0*m) !tan(1.5d0*p/(rho*gmod*h))/14.0d0
+                     gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d0-2.d0)**(1.0d0/3.0d0))
                      !write(*,*) 'gamma', gamma
                      t1bot = t1bot + gamma
                      t1bot = t1bot + tau!+p*tan(phi)
@@ -279,6 +280,7 @@
                   call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
 
                   if (h.lt.dry_tolerance) then
+                     q(1,i,j)=0.d0
                      q(2,i,j)=0.d0
                      q(3,i,j)=0.d0
                   else

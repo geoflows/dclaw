@@ -127,7 +127,7 @@ contains
          endif
 
 
-         alpha_seg = 1.0 - alpha_seg
+         alpha_seg = 1.d0 - alpha_seg
 
          open(unit=DIG_PARM_UNIT,file='fort.dclaw',status="unknown",action="write")
 
@@ -197,9 +197,9 @@ contains
 
          p_initialized = 0
          init_pmin_ratio = 1.d16
-         grad_eta_max = 0.0
-         cohesion_max = 0.0
-         grad_eta_ave = 0.0
+         grad_eta_max = 0.d0
+         cohesion_max = 0.d0
+         grad_eta_ave = 0.d0
          eta_cell_count = 1.e-6
 
 
@@ -242,8 +242,8 @@ contains
          h =  0.d0
          hu = 0.d0
          hv = 0.d0
-         hm = h*m0
-         p  = h*gmod*rho_f
+         hm = 0.d0
+         p  = 0.d0 !h*gmod*rho_f
          u = 0.d0
          v = 0.d0
          m = 0.d0
@@ -275,7 +275,7 @@ contains
       if (p.lt.plo) then
          if ((u**2+v**2)>0.d0) then
             p = dmax1(0.d0,p)
-            ! WHY not when static? 
+            ! DIG: WHY not when static? 
          endif
          !p = dmax1(-5.0*pmax,p)
          !p = (p**2 + plo**2)/(2.d0*plo)
@@ -309,6 +309,7 @@ contains
 
       if (h.lt.dry_tolerance) return
 
+      ! phi = phi_bed DIG: not used
       hbounded = h!max(h,0.1)
       gmod=grav
       pm = max(0.0d0,pm)
@@ -359,7 +360,7 @@ contains
       m_crit_pm = pmtanh01*0.09d0
       m_crit_m = m_crit - m_crit_pm
       m_eqn = m_crit_m/(1.d0 + sqrt(S))
-      tanpsi = c1*(m-m_eqn)*tanh(shear/0.1)
+      tanpsi = c1*(m-m_eqn)*tanh(shear/0.1d0)
 
       !kperm = kperm + 1.0*pm*kappita
       !compress = alpha/(sigbed + 1.d5)
@@ -396,6 +397,8 @@ contains
       endif
 
       tanphi = dtan(phi_bed + datan(tanpsi))! + phi_seg_coeff*pmtanh01*dtan(phi_bed)
+      ! DIG: if phi is a aux variable it should be used here too instead of phi_bed
+
       !if (S.gt.0.0) then
       !   tanphi = tanphi + 0.38*mu*shear/(shear + 0.005*sigbedc)
       !endif
@@ -501,11 +504,12 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             h = q(1,i,j)
             hu = q(2,i,j)
             hv = q(3,i,j)
+            hm = q(4,i,j)
             if (h<dry_tol) then
                hu=0.d0
                hv=0.d0
-            endif
-            hm = q(4,i,j)
+               hm=0.d0
+            endif      
             p  = q(5,i,j)
             b = aux(1,i,j)
             eta = h+b
@@ -578,7 +582,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                thetaB = 0.d0
             endif
 
-            pm = 0.50d0 !does not effect tau. only need tau in different cells
+            pm = 0.5d0 !does not effect tau. only need tau in different cells
             call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
             call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
             call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
@@ -621,7 +625,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                aux(i_taudir_y,i,j) = -dy*hv/sqrt(hv**2+hu**2)
 
                dot = min(max(0.d0,Fx*hu) , max(0.d0,Fy*hv))
-               if (dot>0.0) then
+               if (dot>0.d0) then
                   !friction should oppose direction of velocity
                   !if net force is in same direction, split friction source term
                   !splitting is useful for small velocities and nearly balanced forces
@@ -633,7 +637,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   !net force is in same direction as friction
                   !if nearly balanced steady state not due to friction
                   !no splitting, integrate friction in src
-                  aux(i_fsphi,i,j) = 0.0
+                  aux(i_fsphi,i,j) = 0.d0
                endif
 
 
@@ -647,14 +651,14 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   aux(i_taudir_x,i,j) = dx*1.d0
                endif
 
-               if ((Fx**2+FyL**2)>0.0) then
+               if ((Fx**2+FyL**2)>0.d0) then
                   aux(i_taudir_y,i,j) = -dy*FyL/sqrt(Fx**2+FyL**2)
                else
                   !there is no motion or net force. resolve in src after Riemann
                   aux(i_taudir_y,i,j) = dy*1.d0
                endif
 
-               if ((aux(i_taudir_y,i,j)**2 + aux(i_taudir_x,i,j)**2)>0.0) then
+               if ((aux(i_taudir_y,i,j)**2 + aux(i_taudir_x,i,j)**2)>0.d0) then
                   aux(i_fsphi,i,j) = 1.d0
                else
                   aux(i_fsphi,i,j) = 0.d0
@@ -715,7 +719,7 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             p  = q(5,i,j)
 
             if ((hu**2 + hv**2)==0.d0) then
-               aux(i_fsphi,i,j) = 1.0
+               aux(i_fsphi,i,j) = 1.d0
                !cycle
             endif
 
@@ -782,7 +786,7 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             pm = q(6,i,j)/q(1,i,j)
             call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
 
-            if (tau>0.0) then
+            if (tau>0.d0) then
                aux(i_fsphi,i,j) = min(1.d0,grad_eta*rho*gmod*h/tau)
             else
                aux(i_fsphi,i,j) = 1.d0
@@ -847,7 +851,7 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             bL = aux(1,i-1,j)
             phi = aux(i_phi,i,j)
 
-            if ((phi)==0.0) then
+            if ((phi)==0.d0) then
                init_pmin_ratio = 0.d0
                cycle
             endif
@@ -922,8 +926,8 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          write(*,*) '--------------------------------------------'
          write(*,*) 'hydrostatic liquefaction ratio:', rho_f/rho
          write(*,*) 'initiation liquefaction  ratio:',init_pmin_ratio, grad_eta_ave
-         write(*,*) 'maximum surface slope angle:',180.*atan(tan(phi)*grad_eta_max)/3.14, grad_eta_max
-         write(*,*) 'average failure liquefaction ratio:', 1.0-(grad_eta_ave/eta_cell_count) , eta_cell_count
+         write(*,*) 'maximum surface slope angle:',180.d0*atan(tan(phi)*grad_eta_max)/3.14d0, grad_eta_max
+         write(*,*) 'average failure liquefaction ratio:', 1.d0-(grad_eta_ave/eta_cell_count) , eta_cell_count
          write(*,*) '--------------------------------------------'
       endif
    end subroutine calc_pmin

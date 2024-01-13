@@ -854,8 +854,8 @@ program amr2
         ratmet = 0.0d0
     endif
     write(outunit,"(' percentage of cells advanced in time  = ', f10.2)") ratmet
-    write(outunit,"(' maximum Courant number seen = ', f10.2)") cflmax
-    write(*,"(' maximum Courant number seen = ', f10.2)") cflmax
+    write(outunit,"(' maximum Courant number seen = ', f10.5)") cflmax
+    write(*,"(' maximum Courant number seen = ', f10.5)") cflmax
 
     write(outunit,"(//,' ------  end of AMRCLAW integration --------  ')")
 

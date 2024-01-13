@@ -1,4 +1,4 @@
-# Makefile for Clawpack code in this directory.
+# Template Makefile for D-Claw code in this directory.
 # This version only sets the local files and frequently changed
 # options, and then includes the standard makefile pointed to by CLAWMAKE.
 CLAWMAKE = $(CLAW)/clawutil/src/Makefile.common
@@ -66,3 +66,16 @@ SOURCES = \
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:
 include $(CLAWMAKE)
+
+#-------------------------------------------------------------------
+# Common D-Claw make definitions
+
+# Construct input data
+input:
+	$(CLAW_PYTHON) setinput.py
+
+# Postprocess results
+postprocess: 
+	$(CLAW_PYTHON) setpostprocess.py 
+
+

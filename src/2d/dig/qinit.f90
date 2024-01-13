@@ -39,7 +39,14 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
     q(:,:,:) = 0.d0   ! set all to zero (set further below)
 
-    forall(i=1:mx, j=1:my)
+    ! DIG: old dclaw set sea level in ghost cells 1/12/24
+    ! calculation of taudir requires both ghost cells set.
+    ! this is so that gradients in eta can be calculated in 
+    ! taudir at the first ghost cell. 
+    ! Setting ghost cells in qinit (as is done here for eta and
+    ! other values is not typpi)
+
+    forall(i=1-mbc:mx+mbc, j=1-mbc:my-mbc) 
         q(1,i,j) = max(0.d0, veta(i,j) - aux(1,i,j))
     end forall
 

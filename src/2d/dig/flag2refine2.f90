@@ -61,14 +61,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
     real(kind=8) :: x_c,y_c,x_low,y_low,x_hi,y_hi
     real(kind=8) :: speed, eta, ds
 
-    ! Storm specific variables
-    real(kind=8) :: R_eye(2), wind_speed
-
-    ! Adjoint method specific variables
-    logical mask_selecta(totnum_adjoints)
-
     !!DIG:  Need to declare more flowgrade/keep_fine variables?
-    
     real(kind=8) :: flowgradenorm, flowgradegrad, depth, momentum, surface
     real(kind=8) :: xlow,xhi,ylow,yhi,xxlow,xxhi,yylow,yyhi
     real(kind=8) :: flowgrademeasure, h,hu,hv
