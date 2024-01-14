@@ -249,30 +249,6 @@ c     !find bounds in case of critical state resonance, or negative states
       del(4) = -gamma*rho*gmod*u*(hR-hL) + gamma*rho*gmod*del(1)
      &         + u*(pR-pL)
 
-      if (ixy.eq.2.and. .false.) then
-         write(58,*) ""
-         write(58,*) "++++ used to calculate del(2)"
-         write(58,599) hR
-         write(58,599) uR
-         write(58,599) hL
-         write(58,599) uL
-         write(58,599) kappa
-         write(58,599) gmod
-         write(58,599) h
-         write(58,599) rho
-
-         write(58,*) ""
-         write(58,*) "++++ used to calculate del(3)"
-         write(58,599) pR
-         write(58,599) pL
-         write(58,599) gamma
-         write(58,599) rho
-         write(58,599) gmod
-         write(58,599) deldelh
- 599  format(1e15.7)
-      endif
-
-
 *     !determine the source term
 
       if (ixy.eq.1) then
