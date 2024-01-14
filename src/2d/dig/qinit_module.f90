@@ -151,16 +151,17 @@ contains
         ! Topography integral function
         real(kind=8) :: topointegral
         
-        if (qinit_type > 0) then
-            do i=1-mbc,mx+mbc
-                x = xlow_patch + (i-0.5d0)*dx
-                xim = x - 0.5d0*dx
-                xip = x + 0.5d0*dx
-                do j=1-mbc,my+mbc
-                    y = ylow_patch + (j-0.5d0)*dy
-                    yjm = y - 0.5d0*dy
-                    yjp = y + 0.5d0*dy
+        if (qinit_type > 0) then ! DIG Check loop order.
+            do j=1-mbc,my+mbc
+                y = ylow_patch + (j-0.5d0)*dy
+                yjm = y - 0.5d0*dy
+                yjp = y + 0.5d0*dy
 
+                do i=1-mbc,mx+mbc
+                    x = xlow_patch + (i-0.5d0)*dx
+                    xim = x - 0.5d0*dx
+                    xip = x + 0.5d0*dx
+                
                     ! Check to see if we are in the qinit region at this grid point
                     if ((xip > x_low_qinit).and.(xim < x_hi_qinit).and.  &
                         (yjp > y_low_qinit).and.(yjm < y_hi_qinit)) then
@@ -372,10 +373,6 @@ contains
         
         close(unit=iunit)
     end subroutine read_eta_init
-
-    ! =======================================
-    ! DIG subroutines, renamed:
-
 
     ! ========================================================================
     ! Read qinit files as specified in setqinit_dclaw.data

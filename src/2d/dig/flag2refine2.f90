@@ -129,8 +129,6 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
             endif ! mflowgrades > 0
             
             ! keep fine added by KRB 2022/12/28
-
-            ! eventually make keep_fine a user defined variable.
             if (keep_fine.and.mflowgrades.gt.0) then
               ! if level is lower than lfine a grid exists here on lfine,
               ! enforce refinement here.

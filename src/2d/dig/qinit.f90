@@ -39,12 +39,12 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
     q(:,:,:) = 0.d0   ! set all to zero (set further below)
 
-    ! DIG: old dclaw set sea level in ghost cells 1/12/24
-    ! calculation of taudir requires both ghost cells set.
-    ! this is so that gradients in eta can be calculated in 
-    ! taudir at the first ghost cell. 
-    ! Setting ghost cells in qinit (as is done here for eta and
-    ! other values is not typpi)
+    ! DIG: 1/12/24: To make consistent with dclaw 4 we needed
+    ! to change the typical geoclaw behavior and set sea 
+    ! level in ghost cells (rather than just in interior cells). 
+    ! This is necessary because eta in ghost cells is used to 
+    ! calculate gradients in eta used by (at least) taudir_x and 
+    ! taudir_y. Flagging as not typical for current geoclaw. 
 
     forall(i=1-mbc:mx+mbc, j=1-mbc:my-mbc) 
         q(1,i,j) = max(0.d0, veta(i,j) - aux(1,i,j))
@@ -94,13 +94,14 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
         close(23)
     endif
     
-    !=============
-    ! DIG modifications:
-    
+    !===========================================
+    ! D-Claw specific initialization of q
+    !===========================================    
 
       xhigher = xlower + (mx-0.5d0)*dx
       yhigher = ylower + (my-0.5d0)*dy
 
+      ! loop through qinitfiles and fill in q. topo has already been set.
       do mf =1,mqinitfiles
 
         if ((xlower.le.xhiqinit(mf).and.xhigher.ge.xlowqinit(mf)).and. &
@@ -156,7 +157,11 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                      if (iqinit(mf).le.meqn) then
                         q(iqinit(mf),i,j) = q(iqinit(mf),i,j) + dq
                      else
-                        ! set h based on eta
+                        ! if a file is provide for eta, set h.
+                        ! if files are provided for both h and eta (
+                        ! not recommended, the second will take precedence.
+                        ! if eta is provided as less than topo, then 
+                        ! h will be zero.
                         if (dq-aux(1,i,j).gt.0.d0) then
                           q(1,i,j) = dmax1(q(1,i,j),dq-aux(1,i,j))
                         endif
@@ -169,6 +174,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          endif
       enddo
 
+      ! adjust q values.
       initm = 0
       initchi = 0
       do mf =1,mqinitfiles
@@ -179,8 +185,9 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          if (iqinit(mf).eq.6) initchi = 1
       enddo
 
-      do i=1-mbc,mx+mbc
-         do j=1-mbc,my+mbc
+      
+      do j=1-mbc,my+mbc ! DIG check loop order.
+         do i=1-mbc,mx+mbc
                if (initm.eq.0) then
                   q(4,i,j) = m0*q(1,i,j)
                else
@@ -213,6 +220,9 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       call calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       ! DIG - consider making pressures here reflect rho_fp and any other
       ! changes associated with hchi.
+
+      ! DIG - if restart p_initialized needs to be zero. can we know restart here and 
+      ! bypass.
       select case (init_ptype)
          case (-1)
             !p should already be 0 or set by qinit file
@@ -247,11 +257,16 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                          + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(1,i,j)
                   endif
 
-                  rho_dig = sv*rho_s + (1.d0-sv)*rho_f !!DIG rho array in geoclaw_module conflicts 
+                  rho_dig = sv*rho_s + (1.d0-sv)*rho_f 
+                  !!DIG rho array in geoclaw_module conflicts 
+                  
                   q(5,i,j) = p_ratioij*rho_dig*gmod*q(1,i,j)
                enddo
             enddo
             p_initialized = 1
+
+         ! DIG: remove cases three and 4. 
+
          case(3:4) ! DIG: Not yet tested
             !p will be updated in b4step2
             do i=1-mbc,mx+mbc
@@ -274,6 +289,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                enddo
             enddo
             p_initialized = 0
+      
       end select
 
       !===============set factor of safety=============================

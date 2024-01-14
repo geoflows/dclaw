@@ -2,7 +2,7 @@
 c-----------------------------------------------------------------------
       subroutine riemann_dig2_aug_sswave_ez(ixy,meqn,mwaves,hL,hR,
      &         huL,huR,hvL,hvR,hmL,hmR,pL,pR,bL,bR,uL,uR,vL,vR,mL,mR,
-     &         thetaL,thetaR,phiL,phiR,dx,sw,fw,w,wallprob,taudirL,
+     &         thetaL,thetaR,phiL,phiR,sw,fw,w,wallprob,taudirL,
      &         taudirR,chiL,chiR,fsL,fsR,ilook)
 
       !-----------------------------------------------------------------
@@ -16,7 +16,7 @@ c-----------------------------------------------------------------------
       !-----------------------------------------------------------------
 
       use geoclaw_module, only: grav, dry_tolerance
-      use digclaw_module
+      use digclaw_module ! DIG: specify which variables.
 
       implicit none
 
@@ -25,7 +25,7 @@ c-----------------------------------------------------------------------
 
       double precision hL,hR,huL,huR,hvL,hvR,hmL,hmR,pL,pR
       double precision bL,bR,uL,uR,vL,vR,mL,mR,chiL,chiR,seg_L,seg_R
-      double precision thetaL,thetaR,phiL,phiR,dx
+      double precision thetaL,thetaR,phiL,phiR
       double precision taudirL,taudirR,fsL,fsR
       logical wallprob
 
@@ -61,6 +61,10 @@ c-----------------------------------------------------------------------
          psi(m) = 0.d0
       enddo
 
+
+      ! DIG: move segregation into segeval() that 
+      ! adjusts rho_fp, etc.
+
       pmL = chiL
       pmR = chiR
       pm = 0.5*(chiL + chiR)
@@ -71,8 +75,6 @@ c-----------------------------------------------------------------------
       else
          seg = 1.0d0
       endif
-      !pmtanh01 = seg*(0.5d0*(tanh(20.0d0*(pm-0.80d0))+1.0d0))
-      !pmtanh01 = seg*(0.5d0*(tanh(40.0d0*(pm-0.90d0))+1.0d0))
       call calc_pmtanh(pm,seg,pmtanh01)
       rho_fp = (1.0d0-pmtanh01)*rho_f
 
@@ -268,22 +270,13 @@ c     !find bounds in case of critical state resonance, or negative states
          !   write(*,*) 'fsR', fsR
          !   write(*,*) 'ixy', ixy
          !endif
-         !DIG: check -- why are taudirL and taudirR treated differently?
-         if ((uL**2 + vL**2)==0.0d0) then
-            if (ixy.eq.2.and. .false.) then
-               write(58,*) ""
-               write(58,*) "^^^^^^^ taudirL = taudirR"
-               write(58,499) taudirL, taudirR
-            endif 
 
+
+         !DIG: check -- why are taudirL and taudirR treated differently?
+         ! could this be a symmetry issue?
+         if ((uL**2 + vL**2)==0.0d0) then
             taudirL = taudirR
          else
-            if (ixy.eq.2.and. .false.) then
-               write(58,*) ""
-               write(58,*) "^^^^^^^ taudirL = -uL/sqrt(uL**2 + vL**2)"
-               write(58,499) taudirL, -uL/sqrt(uL**2 + vL**2)
-            endif
-
             taudirL = -uL/sqrt(uL**2 + vL**2)
          endif
 
@@ -296,7 +289,9 @@ c     !find bounds in case of critical state resonance, or negative states
       !elseif (dx*max(abs(tauL*taudirL/rhoL),abs(tauR*taudirR/rhoR))
       
          !DIG: check dx
+
       elseif (0.5d0*abs(taudirR*tauR/rhoR + tauL*taudirR/rhoL)!*dx ! DIG krbdxfix
+         
          ! DIG Symmetry: should this be RRR, LLL? It is symmetric in the line above 
          ! that is commented out. Leaving as is b/c it is the same in dclaw4 and dclaw5
          ! KRB&MJB - 1/12/24 
@@ -319,32 +314,6 @@ c     !find bounds in case of critical state resonance, or negative states
       endif
       if (wallprob) then
          tausource = 0.0d0
-      endif
-
-      if (ixy.eq.2.and. .false.) then
-         write(58,*) ""
-         write(58,*) "ilook = ", ilook
-
-         ! if (abs(taudirL-200.d0).lt.1d-15.and.ilook.eq.0) then
-         !    write(*,*) " %%%%%%% debugtaudir"
-         ! endif 
-
-         write(58,*) "+++++ del(2), source2dx, tausource"
-         write(58, 499) del(2)
-         write(58, 499) source2dx
-         write(58, 499) tausource
-         write(58,*) "+++++ taudirR, tauR, rhoR"
-         write(58, 499) taudirR/200.d0
-         write(58, 499) tauR
-         write(58, 499) rhoR
-         write(58,*) "+++++ taudirL, tauL, rhoL"
-         write(58, 499) taudirL/200.d0 ! +++++++ dig krbdebug: here to make comparable
-         write(58, 499) tauL
-         write(58, 499) rhoL
-         write(58,*) "+++++ uR, uL"
-         write(58, 499) uR
-         write(58, 499) uL
-499      format(8e15.7)
       endif
 
       del(2) = del(2) - source2dx  - tausource
@@ -383,22 +352,6 @@ c      del(4) = del(4) - 0.5d0*dx*psi(4)
             A(m+1,mw+1)=R(m,mw+1)
          enddo
       enddo
-
-      if (ixy.eq.2.and. .false.) then 
-         write(58,*) ""
-         write(58,*) "+++++ before gaussj"
-         write(58, 799) A(1,1:3)
-         write(58, 789) A(2,1:3)
-         write(58, 779) A(2,1:3)
- 799      format("A(1,1:3)", 3e15.7)
- 789      format("A(2,1:3)", 3e15.7)
- 779      format("A(3,1:3)", 3e15.7)
-
-         write(58, 769) beta(1:3)
-769      format("beta(1:3)", 3e15.7)
-
-      endif 
-
       
       call gaussj(A,3,3,beta,1,1)
 
@@ -407,13 +360,6 @@ c      del(4) = del(4) - 0.5d0*dx*psi(4)
             fw(m,mw) = beta(mw)*R(m,mw)
          enddo
       enddo
-
-      if (ixy.eq.2.and. .false.) then 
-         write(58,*) ""
-         write(58,*) "+++++ after gaussj"
-         write(58, 699) beta(1:3), del(0:2)
-699      format("beta(1:3), del(0:2)", 6e15.7)
-      endif 
 
       !waves and fwaves for delta hum
       fw(4,1) = fw(1,1)*mL

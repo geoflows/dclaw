@@ -31,7 +31,7 @@ c
       use geoclaw_module, only: earth_radius, deg2rad
       use amr_module, only: mcapa
 
-      use digclaw_module
+      use digclaw_module ! DIG: specify which variables.
 
       implicit none
 
@@ -240,10 +240,9 @@ c               bL=hstartest+bR
          maxiter = 1
 
           ! current dclaw Riemann solver
-          dx = 0.0 !DIG do we need dx in riemann solver? 
           call riemann_dig2_aug_sswave_ez(ixy,6,3,hL,hR,huL,huR,
      &         hvL,hvR,hmL,hmR,pL,pR,bL,bR,uL,uR,vL,vR,mL,mR,
-     &         thetaL,thetaR,phi_bedL,phi_bedR,dx,sw,fw,wave,wallprob,
+     &         thetaL,thetaR,phi_bedL,phi_bedR,sw,fw,wave,wallprob,
      &         taudirL,taudirR,chiL,chiR,fsL,fsR,i)
 
 c        !eliminate ghost fluxes for wall
@@ -340,10 +339,13 @@ c============= compute fluctuations=============================================
                   apdq(1:meqn,i)  = apdq(1:meqn,i)
      &                          + fwave(1:meqn,mw,i)
                else
+
+
 ! DIG: 1/11/2024: KRB & MJB close comparing dclaw4 and dclaw5. These next four
 ! lines were commented out in dclaw4. We probably want them because in 
 ! geoclaw5 they are used. Keeping commented for now to do a debug ensuring 
 ! identical behavior of dclaw4 and dclaw5.
+
 !                 amdq(1:meqn,i) = amdq(1:meqn,i)
 !     &                              + 0.5d0 * fwave(1:meqn,mw,i)
 !                 apdq(1:meqn,i) = apdq(1:meqn,i)
