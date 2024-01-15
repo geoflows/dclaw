@@ -3,15 +3,22 @@
    !=========================================================
       subroutine src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)
    !=========================================================
-      use geoclaw_module, only: grav, dry_tolerance,deg2rad,friction_depth,manning_coefficient,friction_forcing
-      use digclaw_module ! DIG: specify which variables.
+      use geoclaw_module, only: grav, dry_tolerance,deg2rad,friction_depth
+      use geoclaw_module, only: manning_coefficient,friction_forcing
+
+      use digclaw_module, only: alpha,alpha_seg,bed_normal,curvature
+      use digclaw_module, only: entrainment,entrainment_rate
+      use digclaw_module, only: i_ent,i_fsphi,i_phi,i_theta
+      use digclaw_module, only: mu,p_initialized,rho_f,sigma_0
+      use digclaw_module, only: admissibleq,auxeval
+      use digclaw_module, only: calc_pmtanh
 
       implicit none
 
       ! Input parameters
       integer, intent(in) :: meqn,mbc,mx,my,maux
       double precision, intent(in) :: xlower,ylower,dx,dy,t,dt
-      
+
       ! Output
       double precision, intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
       double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
@@ -27,7 +34,7 @@
       real(kind=8) :: b_eroded,b_remaining,dtcoeff
       real(kind=8) :: gamma,zeta,krate,p_eq,dgamma
 
-      integer :: i,j,ii,jj,icount,curvature
+      integer :: i,j,ii,jj,icount
       logical :: ent
 
 
@@ -37,20 +44,17 @@
       gmod=grav
 
       if (friction_forcing) then
-         coeff = manning_coefficient(1) 
+         coeff = manning_coefficient(1)
       else
          coeff = 0.d0
       endif
-      
-      ! Current implementation of friction has manning as an array 
-      ! take the first element for now. If only one value is 
-      ! provided to geo_data.manning_coefficient 
+
+      ! Current implementation of friction has manning as an array
+      ! take the first element for now. If only one value is
+      ! provided to geo_data.manning_coefficient
       ! it will be manning_coefficient(1)
       ! DIG: FIX.
 
-      ! DIG: unhardcode curvature. 
-
-      curvature = 1 !add friction due to curvature acceleration KRB: why is this hardcoded to 0?
       !write(*,*) 'src:init,value',p_initialized,init_pmin_ratio
       if (entrainment>0) then
          ent = .true.
@@ -59,18 +63,18 @@
       endif
 
       do j=1-mbc+1,my+mbc-1
-         do i=1-mbc+1,mx+mbc-1 
+         do i=1-mbc+1,mx+mbc-1
          ! DIG: 1/12/24: KRB and MJB notice that here we are looping over ghost cells.
          ! These ghost cells have not been updated by the reimann solver? Are they used
          ! meaningfully (e.g., theta is diffed below. )
-         
+
             ! adjust gravity if bed_normal = 1
             theta = 0.d0
             dtheta = 0.d0
             if (bed_normal==1) then
                theta = aux(i_theta,i,j)
                gmod = grav*cos(theta)
-               dtheta = -(aux(i_theta,i+1,j) - theta)/dx 
+               dtheta = -(aux(i_theta,i+1,j) - theta)/dx
             endif
 
             ! Get state variable
@@ -145,7 +149,7 @@
                call calc_pmtanh(pm,seg,pmtanh01)
                rho_fp = max(0.d0,(1.d0-pmtanh01))*rho_f
       		endif
-  
+
             !integrate pressure relaxation
             zeta = ((m*(sigbed +  sigma_0))/alpha)*3.d0/(h*2.d0)  + (rho-rho_fp)*rho_fp*gmod/(4.d0*rho)
             krate=-zeta*2.d0*kperm/(h*max(mu,1.d-16))
@@ -155,7 +159,7 @@
             ! call admissible q and auxeval before moving on to dilatancy.
             call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
             call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-            
+
             ! calculate rate of change
             krate = D*(rho-rho_fp)/rho
 
@@ -167,15 +171,15 @@
 
 
             !======================mass entrainment===========================
-            
+
             ! call admissible q and auxeval before moving on to mass entrainment.
             call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
             call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-            
+
             vnorm = sqrt(u**2 + v**2)
             vlow = 0.1d0 ! minimum velocity for entrainment to occur. ! DIG: should this be a user
-            ! specified variable. 
-            
+            ! specified variable.
+
             if (ent.and.vnorm.gt.vlow) then
                if (aux(i_ent,i,j)>0.d0) then
                   b_x = (aux(1,i+1,j)+q(7,i+1,j)-aux(1,i-1,j)-q(7,i-1,j))/(2.d0*dx)
@@ -241,7 +245,7 @@
 
          do j=1,my
             do i=1,mx
-            
+
                if (bed_normal==1) gmod = grav*cos(aux(i_theta,i,j))
                   h=q(1, i,j)
                if (h<=friction_depth) then

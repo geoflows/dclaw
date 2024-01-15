@@ -9,14 +9,14 @@ module digclaw_module
     ! General digclaw parameters
     ! ========================================================================
     double precision :: rho_s,rho_f,phi_bed,theta_input,delta,kappita
-    double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,phi_seg_coeff,entrainment_rate
+    double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,entrainment_rate
 
-    integer :: init_ptype,p_initialized,bed_normal,entrainment
+    integer :: init_ptype,p_initialized,bed_normal,entrainment,curvature
     double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
     double precision :: chi_init_val
-    
-    ! momentum autostop 
+
+    ! momentum autostop
     logical :: mom_autostop
     integer :: momlevel
     logical :: amidoneyet = .FALSE.
@@ -24,10 +24,10 @@ module digclaw_module
     integer ::  i_dig
     integer ::  i_phi
     integer ::  i_theta
-    integer ::  i_fsphi 
-    integer ::  i_taudir_x 
+    integer ::  i_fsphi
+    integer ::  i_taudir_x
     integer ::  i_taudir_y
-    integer ::  i_ent 
+    integer ::  i_ent
     integer, parameter ::  DIG_PARM_UNIT = 78
 
 
@@ -57,7 +57,7 @@ contains
 
          !Set i_dig based on coordinate system
          if (coordinate_system == 2) then
-            i_dig = 4 
+            i_dig = 4
          else
             i_dig = 2
          endif
@@ -101,17 +101,17 @@ contains
          read(iunit,*) alpha_seg
          alpha_seg = 1.d0 - alpha_seg
          read(iunit,*) bed_normal
-         read(iunit,*) phi_seg_coeff
          read(iunit,*) entrainment
          read(iunit,*) entrainment_rate
          read(iunit,*) chi_init_val
          read(iunit,*) mom_autostop
          read(iunit,*) momlevel
+         read(iunit,*) curvature
          close(iunit)
 
          ! test that naux is large enough
          if (i_dig + 4 + entrainment > naux) then
-            write(*,*) 
+            write(*,*)
             write(*,*) "*******************************************************"
             write(*,*) "**************** AUX ERROR"
             write(*,*) "**************** Number of aux variables set for D-Claw"
@@ -146,12 +146,13 @@ contains
          write(DIG_PARM_UNIT,*) '    sigma_0:', sigma_0
          write(DIG_PARM_UNIT,*) '    alpha_seg:', alpha_seg
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal
-         write(DIG_PARM_UNIT,*) '    phi_seg_coeff:', phi_seg_coeff
          write(DIG_PARM_UNIT,*) '    entrainment:', entrainment
          write(DIG_PARM_UNIT,*) '    entrainment_rate:', entrainment_rate
          write(DIG_PARM_UNIT,*) '    chi_init_val:', chi_init_val
          write(DIG_PARM_UNIT,*) '    mom_autostop:', mom_autostop
          write(DIG_PARM_UNIT,*) '    momlevel:', momlevel
+         write(DIG_PARM_UNIT,*) '    curvature:', curvature
+
 
    end subroutine set_dig
 
@@ -325,7 +326,7 @@ contains
       endif
       !Note: m_eqn = m_crit/(1+sqrt(S))
       !From Boyer et. al
-   
+
       kperm = kappita*exp(-(m-m0)/(0.04d0))!*(10**(pmtanh01))
       m_crit_pm =  0.d0
 
@@ -439,7 +440,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       do j=2-mbc,my+mbc-1
          do i=2-mbc,mx+mbc-1 ! DIG : check loop order
-         
+
             h = q(1,i,j)
             hu = q(2,i,j)
             hv = q(3,i,j)
@@ -448,7 +449,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                hu=0.d0
                hv=0.d0
                hm=0.d0
-            endif      
+            endif
             p  = q(5,i,j)
             b = aux(1,i,j)
             eta = h+b
@@ -574,7 +575,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   !aux has cell centered interpretation in Riemann solver
                   Fproj = dot/vnorm
                   aux(i_fsphi,i,j) = min(1.d0,Fproj*rho/max(tau,1.d-16))
-                  
+
                   ! DIG: ensure that very low m does not contribute to static friction.
                   ! KRB thinks that this might be the right place to handle.
 

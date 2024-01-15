@@ -64,13 +64,12 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("sigma_0", 1.0e3)
         self.add_attribute("alpha_seg", 0.0)
         self.add_attribute("bed_normal", 0)
-        self.add_attribute("phi_seg_coeff",0.0) # DIG: Currently unused:
         self.add_attribute("entrainment", 0)
         self.add_attribute("entrainment_rate", 0.2)
         self.add_attribute("chi_init_val", 0.5)
         self.add_attribute("mom_autostop", False)
         self.add_attribute("momlevel", 1)
-        # DIG: should this be a user-flag? : self.add_attribute("curvature", 0)
+        self.add_attribute("curvature", 0)
 
 
 
@@ -92,13 +91,12 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write("sigma_0", description="baseline stress for definition of compressibility")
         self.data_write("alpha_seg", description="coefficient of segregation velocity profile. When alpha_seg = 0, no segregation occurs")
         self.data_write("bed_normal", description="use of bed normal coordinates (0=false, 1=true). bed_normal = 1 requires theta in aux for slope in one direction")
-        self.data_write("phi_seg_coeff", description="adjustment to friction coefficient based on segregation") # not currently used.)
         self.data_write("entrainment", description="flag for entrainment, 0 = no entrainment")
         self.data_write("entrainment_rate", description="rate of entrainment parameter 0-1")
         self.data_write("chi_init_val", description="initial fraction of species 1, (#). Between 0-1.")
         self.data_write("mom_autostop", description= "flag for momentum autostop False = no autostop, True = autostop") # currently only works with ascii output
         self.data_write("momlevel", description="level to do momentum calculation IF mom_autostop==True")
-        # DIG: These currently unused: self.data_write("curvature", description="flag for curvature correction 0 = not used, 1 = used")
+        self.data_write("curvature", description="flag for curvature correction 0 = not used, 1 = used")
 
         self.close_data_file()
 
@@ -106,52 +104,52 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
     r"""
     Qinit data class for D-Claw
 
-    To set input data files for the q array, similar to setting 
+    To set input data files for the q array, similar to setting
     topo files append lists with the following elements:
-    
+
         [qinitftype,iqinit, minlev, maxlev, fname]
 
     where:
-    
-    - qinitftype: 
+
+    - qinitftype:
         file-type, same as topo files, ie: 1, 2 or 3
-    - iqinit: 
+    - iqinit:
         The following values are allowed for iqinit:
             n=1,meqn perturbation of q(i,j,n)
             except for n=7 (b_eroded)
-            n=meqn+1: surface elevation eta is defined by 
+            n=meqn+1: surface elevation eta is defined by
             the file and results in h=max(eta-b,0)
 
             TODO, if h and eta are both defined, which wins
-    
+
     - minlev:
-    - maxlev: 
-    - fname: 
+    - maxlev:
+    - fname:
 
     TODO: will this way of setting flagregions work win 5.x?
 
     The elements of q accessible through setqinit are:
-    - q1, h: 
+    - q1, h:
         depth (most common value to be set this way)
-    - q2, hu: 
-        depth * x-directed velocity (unlikley to be set 
+    - q2, hu:
+        depth * x-directed velocity (unlikley to be set
         in this way)
         If specified in this way, provide u rather than h*u
         If not provided, hu is initialized to 0
-    - q3, hv: 
-        depth * y-directed velocity (unlikley to be set 
+    - q3, hv:
+        depth * y-directed velocity (unlikley to be set
         in this way)
         If specified in this way, provide v rather than h*v
         If not provided, hu is initialized to 0
-    - q4, hm: 
-        depth * solid volume fraction (provide m to 
+    - q4, hm:
+        depth * solid volume fraction (provide m to
         setqinit, not h*m)
         If not specified, hm is initialized as h*m0
-    - q5, pb: 
+    - q5, pb:
         basal pressure
         Provided as pb/h rather than the absolute value
         of pb
-    - q6, hchi: 
+    - q6, hchi:
         depth * chi, the fraction of species 1
         If specified this way, provide chi rather than h*chi
         TODO: should be chi_init_val rather than 0.5 by default
@@ -159,7 +157,7 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
     - q7, b_eroded: depth of material removed by
       entrainment (cannot be set in this way as it
       must start as zero).
-    - q8, eta: h+b 
+    - q8, eta: h+b
 
 
     """
@@ -173,7 +171,7 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
         self.open_data_file(out_file, data_source)
         self.nqinits = len(self.qinitfiles)
 
-        self.data_write("nqinits", description="nqinits")    
+        self.data_write("nqinits", description="nqinits")
         self._out_file.write("\n")
 
         for tfile in self.qinitfiles:
@@ -187,7 +185,7 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
 
             if not os.path.exists(tfile[-1]):
                 raise ValueError(f"*** Error: file not found: {tfile[-1]}")
-            
+
             self._out_file.write("\n%s  \n" % fname)
             self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
 
@@ -197,36 +195,36 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
     r"""
     AuxInit data class for D-Claw
 
-    To set input data files for the aux array, similar to setting 
+    To set input data files for the aux array, similar to setting
     topo files append lists with the following elements:
-    
+
         [auxinitftype,iauxinit, minlev, maxlev, fname]
 
     where:
-    
-    - auxinitftype: 
+
+    - auxinitftype:
         file-type, same as topo files, ie: 1, 2 or 3
-    - iauxinit: 
+    - iauxinit:
         The following values are allowed for iauxinit:
             n=1,maux perturbation of aux(i,j,n)
     - minlev:
-    - maxlev: 
-    - fname: 
+    - maxlev:
+    - fname:
 
     The elements of aux that are accessible in this way are:
 
     if coordinate system = 2 (lat/lon)
         - aux1, basal elevation, b
         - aux2, capacity array (set internally)
-        - aux3, latitude (modified in some way, 
+        - aux3, latitude (modified in some way,
             set internally)
-        - aux(i_phi=4,:,:), phi, basal friction angle (if not set, 
+        - aux(i_phi=4,:,:), phi, basal friction angle (if not set,
             phi_bed is used everywhere)
-        - aux(i_theta=5), theta, slope angle in X direction (if 
+        - aux(i_theta=5), theta, slope angle in X direction (if
             not set theta from setrun.digdata is used everywhere)
-            Only used if setrun digdata.bed_normal = 1 
-        - aux(i_fsphi=6), fsphi, used to determine whether friction 
-            is static (in rpn) or dynamic (src2) (set 
+            Only used if setrun digdata.bed_normal = 1
+        - aux(i_fsphi=6), fsphi, used to determine whether friction
+            is static (in rpn) or dynamic (src2) (set
             internally)
         - aux(i_taudir_x=7), taudir_x, friction direction (set internally)
         - aux(i_taudir_y=8), taudir_y, friction direction (set internally)
@@ -246,15 +244,15 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
     num_aux should either be 6 or 8 depending on whether coordinate
     system 1 or 2 is used.
 
-    the user will always specify 
+    the user will always specify
     aux(1) using topo
-    
+
     the other values a user is most likely to specify are
     - aux(i_theta), if using bed-normal coordinates
     - aux(i_ent), if using entrainment
     - aux(i_phi), if using spatially variable basal friction
 
-    the user should not specify any other aux values at initialization 
+    the user should not specify any other aux values at initialization
     as all other elements of the aux arrays are calculated internally.
 
     """
@@ -266,13 +264,13 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
     def write(self,data_source='setrun.py', out_file='setauxinit_dclaw.data'):
 
         # test that the number of aux variables
-        
+
 
 
         self.open_data_file(out_file, data_source)
         self.nauxinits = len(self.auxinitfiles)
 
-        self.data_write("nauxinits", description="nauxinits")    
+        self.data_write("nauxinits", description="nauxinits")
         self._out_file.write("\n")
 
         for tfile in self.auxinitfiles:
@@ -286,7 +284,7 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
 
             if not os.path.exists(tfile[-1]):
                 raise ValueError(f"*** Error: file not found: {tfile[-1]}")
-            
+
             self._out_file.write("\n%s  \n" % fname)
             self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
 
@@ -309,7 +307,7 @@ class PInitDClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("init_ptf2", 0.0)
 
     def write(self,out_file='setpinit_dclaw.data',data_source='setrun.py'):
-        self.open_data_file(out_file,data_source)   
+        self.open_data_file(out_file,data_source)
 
         # open file and write a warning header:
         self.data_write("init_ptype", description="-1 = zero pressure or user defined files in qinit, 0 = hydrostatic, 1,2 = failure pressure (1=min, 2=avg), 3,4 = rising pressure (3=min, 4=avg)")
@@ -324,21 +322,21 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
     Flowgrades data object.
 
     For using flowgrades for refinement append lines of the form
-    
+
     [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
-    
+
     where:
-    
-    - flowgradevalue: 
+
+    - flowgradevalue:
         floating point relevant flowgrade value for following measure:
-    - flowgradevariable: 
-        1=depth, 
-        2= momentum, 
+    - flowgradevariable:
+        1=depth,
+        2= momentum,
         3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
-    - flowgradetype: 
-        1 = norm(flowgradevariable), 
+    - flowgradetype:
+        1 = norm(flowgradevariable),
         2 = norm(grad(flowgradevariable))
-    - flowgrademinlevel: 
+    - flowgrademinlevel:
         refine to at least this level if flowgradevalue is exceeded.
 
     flowgradesdata.flowgrades = []
@@ -348,10 +346,10 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
 
     flowgradesdata.keep_fine = True
 
-    If the finest grid level meets the flowgrades refinement criteria, 
+    If the finest grid level meets the flowgrades refinement criteria,
     a coarser grid containing it that does not itself meet the refinement
     criteria will stay refined.
-    
+
     """
     def __init__(self):
         super(FlowGradesData,self).__init__()
@@ -363,9 +361,9 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
     def write(self,out_file='setflowgrades.data',data_source='setrun.py'):
         self.nflowgrades = len(self.flowgrades)
         self.open_data_file(out_file,data_source)
-        self.data_write("nflowgrades", description="nflowgrades")        
+        self.data_write("nflowgrades", description="nflowgrades")
         self._out_file.write("\n")
         for flowgrade in self.flowgrades:
             self._out_file.write(4 * "%g  " % tuple(flowgrade) + "\n")
-        self.data_write("keep_fine", description="keep_fine")        
+        self.data_write("keep_fine", description="keep_fine")
         self.close_data_file()

@@ -41,7 +41,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     use topo_module
 
     use adjoint_module, only : adjoint_flagging,innerprod_index
-    
+
     use auxinit_module ! DIG: should specify which variables
     use digclaw_module, only: i_dig,i_phi,i_theta,phi_bed,theta_input
 
@@ -58,7 +58,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     real(kind=8) :: xper,yper,xperm,yperm,xperp,yperp
     character(len=*), parameter :: aux_format = "(2i4,4d15.3)"
     integer :: skipcount,iaux,ilo,jlo
-    
+
     !DIG: Need to declare D-Claw variables...
     integer :: mf,istart,iend,jstart,jend,i,j
     real(kind=8) :: xhigher,yhigher,xintlow,xinthi,yintlow,yinthi
@@ -67,7 +67,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     logical :: use_phi_bed,use_theta_input,friction_correction
     ! Topography integral function
     real(kind=8) :: topointegral
-    
+
     ! Lat-Long coordinate system in use, check input variables
     if (coordinate_system == 2) then
         if (mcapa /= 2 .or. maux < 3) then
@@ -185,7 +185,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
         enddo
     endif
 
-    
+
     !=================================
     !DIG:  Adapted from D-Claw...
 
@@ -193,12 +193,12 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     do mf = 1,mauxinitfiles
        aux(iauxinit(mf),:,:) = 0.d0
     enddo
-    
+
     !--------zero all d-claw aux variables----
     do mf= i_dig,maux
        aux(mf,:,:) = 0.0
     enddo
-            
+
 !     --------------integrate auxinit files if they exist---------------
       xhigher = xlow + (mx-0.5d0)*dx
       yhigher = ylow + (my-0.5d0)*dy
@@ -286,6 +286,12 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
       endif
 
       friction_correction = .false.
+
+      ! Iverson, R. M., & George, D. L. (2019). Basal stress
+      ! equations for granular debris masses on smooth or
+      ! discretized slopes. Journal of Geophysical Research:
+      ! Earth Surface, 124, 1464–1484. https://doi.org/10.1029/2018JF004802
+
       if (friction_correction) then
         do j=1-mbc+1,my+mbc-1
             do i=1-mbc+1,mx+mbc-1
@@ -299,7 +305,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
             enddo
          enddo
       endif
-     
+
 
 contains
 
