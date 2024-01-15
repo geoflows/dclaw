@@ -154,7 +154,7 @@ contains
     ! ========================================================================
     subroutine read_auxinit(mx,my,filetype,fname,auxinit)
 
-        use geoclaw_module
+        use geoclaw_module ! DIG specify only
 
         implicit none
 
@@ -255,6 +255,7 @@ contains
     subroutine read_auxinit_header(fname,auxinit_type,mx,my,xll,yll,xhi,yhi,dx,dy)
 
         use geoclaw_module
+        use utility_module, only: parse_values
 
         implicit none
 
@@ -266,9 +267,11 @@ contains
 
         ! Local
         integer, parameter :: iunit = 19
-        integer :: auxinit_size, status
+        integer :: auxinit_size, status,n
         double precision :: x,y,z,nodata_value
         logical :: found_file
+        real(kind=8) :: values(10)
+        character(len=80) :: str
 
         inquire(file=fname,exist=found_file)
         if (.not. found_file) then
@@ -320,12 +323,41 @@ contains
 
             ! ASCII file with header followed by z data
             case(2:3)
-                read(iunit,*) mx
-                read(iunit,*) my
-                read(iunit,*) xll
-                read(iunit,*) yll
-                read(iunit,*) dx,dy
-                read(iunit,*) nodata_value
+
+                open(unit=iunit, file=fname, status='unknown',form='formatted')
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                mx = nint(values(1))
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                my = nint(values(1))
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                xll = values(1)
+                !str = to_lower(str)  ! convert to lower case
+                !xll_registered = (index(str, 'xllcorner') > 0) DIG: from newgeoclaw
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                yll = values(1)
+                !str = to_lower(str)  ! convert to lower case
+                !yll_registered = (index(str, 'yllcorner') > 0) DIG: from newgeoclaw
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                dx = values(1)
+                if (n == 2) then
+                    dy = values(2)
+                  else
+                    dy = dx
+                  endif
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                nodata_value = values(1)
+
                 xhi = xll + (mx-1)*dx
                 yhi = yll + (my-1)*dy
 
