@@ -21,6 +21,9 @@ import os,sys
 
 sea_level = 50.
 
+outdir2 = None
+#outdir2 = '_output_SL50_order2_trans0'
+
 #--------------------------
 def setplot(plotdata=None):
 #--------------------------
@@ -336,13 +339,20 @@ def setplot(plotdata=None):
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
         mwet = np.where(h > 0.01, m, np.nan) 
+        mmax = np.nanmax(mwet)
+        print('mmax = %.3e' % mmax)
+        q3max = abs(q[3,:,:]).max()
+        q4max = abs(q[4,:,:]).max()
+        q5max = abs(q[5,:,:]).max()
+        print('q3max = %.3e' % q3max, 'q4max = %.3e' % q4max,
+              'q5max = %.3e' % q5max)
         return mwet
         
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
     plotitem.plot_var = mass_frac
     plotitem.pcolor_cmap = colormaps.blue_yellow_red
     plotitem.pcolor_cmin = 0.
-    plotitem.pcolor_cmax = 0.65
+    plotitem.pcolor_cmax = 0.01 #0.65
     plotitem.add_colorbar = True
     plotitem.amr_celledges_show = [0,0,0]
     plotitem.patchedges_show = 0
@@ -372,8 +382,6 @@ def setplot(plotdata=None):
     plotaxes.title = 'Scatter plot'
     plotaxes.grid = True
 
-    # Set up for item on these axes: scatter of 2d data
-    plotitem = plotaxes.new_plotitem(plot_type='1d_from_2d_data')
     
     def h_vs_r(current_data):
         # Return radius of each grid cell and p value in the cell
@@ -385,12 +393,22 @@ def setplot(plotdata=None):
         h = q[0,:,:]
         return r,h
 
+    plotitem = plotaxes.new_plotitem(plot_type='1d_from_2d_data')
     plotitem.map_2d_to_1d = h_vs_r
     plotitem.plot_var = 0
     plotitem.plotstyle = '.'
     plotitem.color = 'b'
     plotitem.kwargs = {'markersize':1}
     plotitem.show = True       # show on plot?
+
+    if outdir2:
+        plotitem = plotaxes.new_plotitem(plot_type='1d_from_2d_data')
+        plotitem.outdir = outdir2
+        plotitem.map_2d_to_1d = h_vs_r
+        plotitem.plot_var = 0
+        plotitem.plotstyle = '.'
+        plotitem.color = 'r'
+        plotitem.kwargs = {'markersize':1}
 
     # Plots of timing (CPU and wall time):
 

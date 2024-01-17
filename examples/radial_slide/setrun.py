@@ -125,7 +125,7 @@ def setrun(claw_pkg='dclaw'):
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
         clawdata.num_output_times = 120 #240
-        clawdata.tfinal = 120. #240.
+        clawdata.tfinal = 480. #240.
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -154,7 +154,7 @@ def setrun(claw_pkg='dclaw'):
     # The current t, dt, and cfl will be printed every time step
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
-    clawdata.verbosity = 1
+    clawdata.verbosity = 0
 
 
 
@@ -396,7 +396,8 @@ def setrun(claw_pkg='dclaw'):
     etafile = 'surface_topo.tt3'
     qinitdclaw_data.qinitfiles.append([3, 8, 1, 2, etafile])
 
-    mfile = 'mass_frac.tt3'
+    #mfile = 'mass_frac.tt3' 
+    mfile = 'mass_frac0.tt3' # with m0 = 0 below
     qinitdclaw_data.qinitfiles.append([3, 4, 1, 2, mfile])
     
     #hfile = 'landslide_depth.tt3'
@@ -418,7 +419,7 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.phi_bed = 32.0
     dclaw_data.theta_input = 0.0
     dclaw_data.mu = 0.005
-    dclaw_data.m0 = 0.63
+    dclaw_data.m0 = 0. #0.63
     dclaw_data.m_crit = 0.64
     dclaw_data.kappita = 1.e-8
     #dclaw_data.kappita_diff = 1
