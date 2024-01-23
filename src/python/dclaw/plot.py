@@ -221,6 +221,42 @@ def velocity_v(current_data):
         v = ma.masked_where(h <= drytol, hv / h)
     return v
 
+def velocity_unorm(current_data):
+    """
+    Return a masked array containing velocity u in wet cells.
+    Normalized by the velocity magnitude.
+    """
+    if hasattr(current_data.plotdata, "geoclaw_data"):
+        drytol = current_data.plotdata.geoclaw_data.dry_tolerance
+    else:
+        drytol = _drytol
+
+    q = current_data.q
+    h = q[i_h, :, :]
+    hu = q[i_hu, :, :]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        u = ma.masked_where(h <= drytol, hu / h)
+    return u/velocity_magnitude(current_data)
+
+
+def velocity_vnorm(current_data):
+    """
+    Return a masked array containing velocity v in wet cells.
+    Normalized by the velocity magnitude.
+
+    """
+    if hasattr(current_data.plotdata, "geoclaw_data"):
+        drytol = current_data.plotdata.geoclaw_data.dry_tolerance
+    else:
+        drytol = _drytol
+
+    q = current_data.q
+    h = q[i_h, :, :]
+    hv = q[i_hv, :, :]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        v = ma.masked_where(h <= drytol, hv / h)
+    return v/velocity_magnitude(current_data)
+
 
 def velocity(current_data):
     """
@@ -338,6 +374,8 @@ def b_eroded(current_data):
     # eroded depth
     q = current_data.q
     b_eroded = q[i_beroded, :, :]
+    #if np.any(b_eroded>0):
+#        print(f'b_eroded gt zero, {np.sum(b_eroded>0)}')
     return b_eroded
 
 
@@ -833,7 +871,3 @@ def static_angle(current_data):
     theta = np.arctan(deta_dx)
     theta_deg = np.rad2deg(theta)
     return theta_deg
-
-
-
-
