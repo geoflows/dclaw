@@ -185,11 +185,15 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          if (iqinit(mf).eq.6) initchi = 1
       enddo
 
-      
+
       do j=1-mbc,my+mbc ! DIG check loop order.
          do i=1-mbc,mx+mbc
                if (initm.eq.0) then
-                  q(4,i,j) = m0*q(1,i,j)
+                  if (dabs((q(1,i,j) + aux(1,i,j))-sea_level).lt.1d-6) then
+                    q(4,i,j) = 0.d0
+                  else
+                    q(4,i,j) = m0*q(1,i,j)
+                  endif
                else
                   q(4,i,j) = q(1,i,j)*q(4,i,j)
                endif
