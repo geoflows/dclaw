@@ -46,7 +46,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     ! calculate gradients in eta used by (at least) taudir_x and
     ! taudir_y. Flagging as not typical for current geoclaw.
 
-    forall(i=1-mbc:mx+mbc, j=1-mbc:my-mbc)
+    forall(i=1-mbc:mx+mbc, j=1-mbc:my+mbc)
         q(1,i,j) = max(0.d0, veta(i,j) - aux(1,i,j))
     end forall
 
