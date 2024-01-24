@@ -180,9 +180,18 @@ c        Set-up eigenvectors
          r(1,2) = 0.d0
          r(2,2) = 1.d0
          r(3,2) = 0.d0
-         r(4,2) = delf4 - beta(1)*r(4,1) - beta(3)*r(4,3)
-         r(5,2) = delf5 - beta(1)*r(5,1) - beta(3)*r(5,3)
-         r(6,2) = delf6
+         if (abs(beta(2)) > 0.1d0) then
+             ! DIG: RJL experimenting - need to divide? what tolerance??
+             r(4,2) = (delf4 - beta(1)*r(4,1) - beta(3)*r(4,3))
+     &                 / beta(2)
+             r(5,2) = (delf5 - beta(1)*r(5,1) - beta(3)*r(5,3))
+     &                 / beta(2)
+             r(6,2) = delf6 / beta(2)
+         else
+             r(4,2) = 0.d0
+             r(5,2) = 0.d0
+             r(6,2) = 0.d0
+         endif
 
 
 
