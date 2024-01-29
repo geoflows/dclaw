@@ -196,9 +196,9 @@
                      !write(*,*) '------------'
                      !write(*,*) 'vu',t1bot
                      beta = 1.d0-m!tanh(10.d0*m) !tan(1.5d0*p/(rho*gmod*h))/14.0d0
-                     gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d0-2.d0)**(1.0d0/3.0d0))
+                     !! DIG not used. segfault. gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d0-2.d0)**(1.0d0/3.0d0))
                      !write(*,*) 'gamma', gamma
-                     t1bot = t1bot + gamma
+                     !! DIG not used. segfault. t1bot = t1bot + gamma
                      t1bot = t1bot + tau!+p*tan(phi)
                      !write(*,*) 'tau',tau
                      t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
