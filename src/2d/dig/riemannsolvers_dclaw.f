@@ -255,7 +255,7 @@ c     !find bounds in case of critical state resonance, or negative states
 
       if (ixy.eq.1) then
          ! DIG: note that theta = 0.0 unless bed_normal is true. For now, assume bed_normal is false. Resolve if dx is needed later.
-         source2dx = source2dx !+ dx*hbar*grav*dsin(theta)
+         source2dx = source2dx !+ dx*hbar*grav*dsin(theta) ! DIG KRB: this may be the only place dx is needed here
       endif
 
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
