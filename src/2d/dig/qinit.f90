@@ -196,7 +196,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       enddo
 
 
-      do j=1-mbc,my+mbc ! DIG check loop order.
+      do j=1-mbc,my+mbc 
          do i=1-mbc,mx+mbc
                if (initm.eq.0) then
                   if (dabs((q(1,i,j) + aux(1,i,j))-veta(i,j)).lt.1d-6) then
