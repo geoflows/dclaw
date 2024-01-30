@@ -160,7 +160,7 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
        endif
   
     !-----------------------------
-    ! For shallow water over topograpdy, in coarse cells convert from h to eta,
+    ! For shallow water over topography, in coarse cells convert from h to eta,
     ! before interpolating:
     !-----------------------------
 

@@ -500,11 +500,12 @@ program amr2
         !call set_storm()                  ! Set storm parameters
         call set_regions()                ! Set refinement regions
         !call read_adjoint_data()          ! Read adjoint solution
-        call set_dig()
+        call set_dig(naux)
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()
 
+        ! DIG: Ensure pinit flag is set correctly.
     else
 
         ! Create new timing file
@@ -542,7 +543,7 @@ program amr2
         call set_gauges(rest, nvar, naux) ! Set gauge output
         call set_fgmax()
         !call read_adjoint_data()          ! Read adjoint solution
-        call set_dig()
+        call set_dig(naux)
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()
@@ -853,7 +854,8 @@ program amr2
         ratmet = 0.0d0
     endif
     write(outunit,"(' percentage of cells advanced in time  = ', f10.2)") ratmet
-    write(outunit,"(' maximum Courant number seen = ', f10.2)") cflmax
+    write(outunit,"(' maximum Courant number seen = ', f10.5)") cflmax
+    write(*,"(' maximum Courant number seen = ', f10.5)") cflmax
 
     write(outunit,"(//,' ------  end of AMRCLAW integration --------  ')")
 

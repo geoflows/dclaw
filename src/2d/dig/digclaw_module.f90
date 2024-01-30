@@ -1,7 +1,7 @@
 
 module digclaw_module
 
-   use geoclaw_module, only: dry_tolerance, grav, pi
+   use geoclaw_module, only: dry_tolerance, grav, pi, coordinate_system
 
    implicit none
 
@@ -9,26 +9,25 @@ module digclaw_module
     ! General digclaw parameters
     ! ========================================================================
     double precision :: rho_s,rho_f,phi_bed,theta_input,delta,kappita
-    double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,phi_seg_coeff,entrainment_rate
+    double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,entrainment_rate
 
-    integer :: init_ptype,p_initialized,bed_normal,entrainment
+    integer :: init_ptype,p_initialized,bed_normal,entrainment,curvature
     double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
     double precision :: chi_init_val
-    
-    ! momentum autostop 
+
+    ! momentum autostop
     logical :: mom_autostop
     integer :: momlevel
     logical :: amidoneyet = .FALSE.
 
-
-    integer, parameter ::  i_dig    = 4 !Start of digclaw aux variables
-    integer, parameter ::  i_phi    = i_dig
-    integer, parameter ::  i_theta  = i_dig + 1
-    integer, parameter ::  i_fs     = i_dig + 2
-    integer, parameter ::  i_fsphi  = i_dig + 3
-    integer, parameter ::  i_taudir_x = i_dig + 4
-    integer, parameter ::  i_taudir_y = i_dig + 5
+    integer ::  i_dig
+    integer ::  i_phi
+    integer ::  i_theta
+    integer ::  i_fsphi
+    integer ::  i_taudir_x
+    integer ::  i_taudir_y
+    integer ::  i_ent
     integer, parameter ::  DIG_PARM_UNIT = 78
 
 
@@ -39,11 +38,12 @@ contains
     ! ========================================================================
     !  Reads in user parameters from the given file name if provided
     ! ========================================================================
-    subroutine set_dig(fname)
+    subroutine set_dig(naux, fname)
 
          implicit none
 
          ! Input
+         integer, intent(in) :: naux
          character*25, intent(in), optional :: fname
 
          ! Locals
@@ -54,6 +54,21 @@ contains
 
 
          deg2rad = pi/180.d0
+
+         !Set i_dig based on coordinate system
+         if (coordinate_system == 2) then
+            i_dig = 4
+         else
+            i_dig = 2
+         endif
+
+         ! set aux index values based on coordinate system
+         i_phi    = i_dig
+         i_theta  = i_dig + 1
+         i_fsphi  = i_dig + 2
+         i_taudir_x = i_dig + 3
+         i_taudir_y = i_dig + 4
+         i_ent = i_dig + 5
 
          ! Read user parameters from setgeo.data
          if (present(fname)) then
@@ -84,16 +99,32 @@ contains
          read(iunit,*) m0
          read(iunit,*) sigma_0
          read(iunit,*) alpha_seg
+         alpha_seg = 1.d0 - alpha_seg
          read(iunit,*) bed_normal
-         read(iunit,*) phi_seg_coeff
          read(iunit,*) entrainment
          read(iunit,*) entrainment_rate
          read(iunit,*) chi_init_val
          read(iunit,*) mom_autostop
          read(iunit,*) momlevel
+         read(iunit,*) curvature
          close(iunit)
 
-         alpha_seg = 1.0 - alpha_seg
+         ! test that naux is large enough
+         if (i_dig + 4 + entrainment > naux) then
+            write(*,*)
+            write(*,*) "*******************************************************"
+            write(*,*) "**************** AUX ERROR"
+            write(*,*) "**************** Number of aux variables set for D-Claw"
+            write(*,*) "**************** inconsistent with coordinate_system"
+            write(*,*) "**************** and entrainment."
+            write(*,*) "**************** Setrun num_aux    = ", naux
+            write(*,*) "**************** Aux required      = ", i_dig + 4 + entrainment
+            write(*,*) "**************** coordinate_system = ", coordinate_system
+            write(*,*) "**************** entrainment       = ", entrainment
+            write(*,*) "*******************************************************"
+            write(*,*)
+            stop
+         endif
 
          open(unit=DIG_PARM_UNIT,file='fort.dclaw',status="unknown",action="write")
 
@@ -115,12 +146,13 @@ contains
          write(DIG_PARM_UNIT,*) '    sigma_0:', sigma_0
          write(DIG_PARM_UNIT,*) '    alpha_seg:', alpha_seg
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal
-         write(DIG_PARM_UNIT,*) '    phi_seg_coeff:', phi_seg_coeff
          write(DIG_PARM_UNIT,*) '    entrainment:', entrainment
          write(DIG_PARM_UNIT,*) '    entrainment_rate:', entrainment_rate
          write(DIG_PARM_UNIT,*) '    chi_init_val:', chi_init_val
          write(DIG_PARM_UNIT,*) '    mom_autostop:', mom_autostop
          write(DIG_PARM_UNIT,*) '    momlevel:', momlevel
+         write(DIG_PARM_UNIT,*) '    curvature:', curvature
+
 
    end subroutine set_dig
 
@@ -140,7 +172,6 @@ contains
         integer, parameter :: iunit = 127
         character*25 :: file_name
         logical :: found_file
-
 
          ! Read user parameters from setgeo.data
          if (present(fname)) then
@@ -163,9 +194,9 @@ contains
 
          p_initialized = 0
          init_pmin_ratio = 1.d16
-         grad_eta_max = 0.0
-         cohesion_max = 0.0
-         grad_eta_ave = 0.0
+         grad_eta_max = 0.d0
+         cohesion_max = 0.d0
+         grad_eta_ave = 0.d0
          eta_cell_count = 1.e-6
 
 
@@ -178,7 +209,7 @@ contains
          write(DIG_PARM_UNIT,*) '    init_ptf:',init_ptf
          close(DIG_PARM_UNIT)
 
-
+         ! DIG if restart, p_initialized must be set to 1.
 
    end subroutine set_pinit
 
@@ -208,8 +239,8 @@ contains
          h =  0.d0
          hu = 0.d0
          hv = 0.d0
-         hm = h*m0
-         p  = h*gmod*rho_f
+         hm = 0.d0
+         p  = 0.d0 !h*gmod*rho_f
          u = 0.d0
          v = 0.d0
          m = 0.d0
@@ -220,17 +251,14 @@ contains
       v = hv/h
       m = hm/h
 
-      !mlo = 1.d-3
       mlo = 0.0d0
       mhi = 1.d0 - mlo
 
       if (m.lt.mlo) then
          m = dmax1(m,mlo)
-         !m = (m**2 + mlo**2)/(2.d0*mlo)
          hm = h*m
       elseif (m.gt.mhi) then
          m = dmin1(m,1.d0)
-         !m = 1.d0 - ((1.d0-mhi)**2 + (1.d0-m)**2)/(2.d0*(1.d0-mhi))
          hm = h*m
       endif
 
@@ -241,15 +269,11 @@ contains
       if (p.lt.plo) then
          if ((u**2+v**2)>0.d0) then
             p = dmax1(0.d0,p)
-            ! WHY not when static? 
+            ! DIG: why is this not enforced when static as well.
          endif
-         !p = dmax1(-5.0*pmax,p)
-         !p = (p**2 + plo**2)/(2.d0*plo)
       elseif (p.gt.phi) then
          p = dmin1(pmax,p)
-         !p = pmax - ((pmax-p)**2+ (pmax-phi)**2)/(2.d0*(pmax-phi))
       endif
-
       return
 
    end subroutine admissibleq
@@ -288,8 +312,6 @@ contains
          call calc_pmtanh(pm,seg,pmtanh01)
          rho_fp = (1.0d0-pmtanh01)*rho_f
       endif
-      !pmtanh01 = seg*(0.5*(tanh(20.0*(pm-0.80))+1.0))
-      !pmtanh01 = seg*(0.5*(tanh(40.0*(pm-0.90))+1.0))
 
       if (bed_normal.eq.1) gmod=grav*dcos(theta)
       vnorm = dsqrt(u**2 + v**2)
@@ -304,37 +326,14 @@ contains
       endif
       !Note: m_eqn = m_crit/(1+sqrt(S))
       !From Boyer et. al
-      !S = 0.0
-      !m_eqn = m_crit/(1.d0 + sqrt(S))
-      !if (m.gt.m_eqn) write(*,*) 'm,m_eqn,S:',m,m_eqn,S,sigbed,shear
-      !tanpsi = c1*(m-m_eqn)*tanh(shear/0.1)
-      !pmlin = seg*2.0*(pm-0.5)
-      !pmtan = seg*0.06*(tan(3.*(pm-0.5)))
-      !pmtanh = seg*tanh(3.*pmlin)
-      !pmtanh01 = seg*0.5*(tanh(8.0*(pm-0.75))+1.0)
-      !pmtanh01 = seg*0.5*(tanh(20.0*(pm-0.80))+1.0)
-      !pmtanh01s = seg*4.0*(tanh(8.0*(pm-0.95))+1.0)
 
-   
       kperm = kappita*exp(-(m-m0)/(0.04d0))!*(10**(pmtanh01))
-      !m_crit_pm - max(pm-0.5,0.0)*(0.15/0.5) - max(0.5-pm,0.0)*(0.15/0.5)
-      !m_crit_pm =  max(pm-0.7,0.0)*((m_crit- 0.55)/0.5) + max(0.3-pm,0.0)*((m_crit-0.55)/0.5)
-      m_crit_pm =  0.d0! max(pm-0.6,0.0)*((m_crit- 0.55)/0.4) + max(0.3-pm,0.0)*((m_crit-0.55)/0.3)
-      !m_crit_pm = max(pm-0.9,0.0)*((m_crit- 0.55)/0.1) + max(0.1-pm,0.0)*((m_crit-0.55)/0.1);
+      m_crit_pm =  0.d0
 
       m_crit_pm = pmtanh01*0.09d0
       m_crit_m = m_crit - m_crit_pm
       m_eqn = m_crit_m/(1.d0 + sqrt(S))
-      tanpsi = c1*(m-m_eqn)*tanh(shear/0.1)
-
-      !kperm = kperm + 1.0*pm*kappita
-      !compress = alpha/(sigbed + 1.d5)
-
-      !if (m.le.0.04) then
-          !eliminate coulomb friction for hyperconcentrated/fluid problems
-          !klugey, but won't effect debris-flow problems
-         !sigbed = sigbed*0.5d0*(tanh(400.d0*(m-0.02d0)) + 1.0d0)
-      !endif
+      tanpsi = c1*(m-m_eqn)*tanh(shear/0.1d0)
 
       if (m.le.1.d-16) then
          compress = 1.d16
@@ -345,14 +344,7 @@ contains
          compress = alpha/(m*(sigbed +  sigma_0))
       endif
 
-      !if (m.le.0.4) then
-      !   kperm = tanh(10.d0*m)*kperm
-      !   tanpsi = tanh(10.d0*m)*tanpsi
-      !   sigbed= tanh(10.d0*m)*sigbed
-      !endif
-
       if (p_initialized.eq.0.and.vnorm.le.0.d0) then
-      !if (vnorm.le.0.d0) then
          tanpsi = 0.d0
          D = 0.d0
       elseif (h*mu.gt.0.d0) then
@@ -361,25 +353,13 @@ contains
          D = 0.d0
       endif
 
-      tanphi = dtan(phi_bed + datan(tanpsi))! + phi_seg_coeff*pmtanh01*dtan(phi_bed)
-      !if (S.gt.0.0) then
-      !   tanphi = tanphi + 0.38*mu*shear/(shear + 0.005*sigbedc)
-      !endif
+      tanphi = dtan(phi_bed + datan(tanpsi))
+      ! DIG: is this from aux(i_phi)?
 
       tau = dmax1(0.d0,sigbed*tanphi)
 
-      !tau = (grav/gmod)*dmax1(0.d0,sigbed*tanphi)
       !kappa: earth pressure coefficient
-      !if (phi_int.eq.phi_bed) then
-      !   sqrtarg = 0.d0
-      !else
-      !   sqrtarg = 1.d0-(dcos(phi_int)**2)*(1.d0 + dtan(phi_bed)**2)
-      !endif
-
-      !kappa = (2.d0 - pm*2.d0*dsqrt(sqrtarg))/(dcos(phi_int)**2)
-      !kappa = kappa - 1.d0
       kappa = 1.d0
-      !kappa = 0.4d0
 
    end subroutine auxeval
 
@@ -387,7 +367,7 @@ contains
    !====================================================================
    !subroutine psieval: evaluate the source term
    !====================================================================
-
+   ! DIG: Is this used?
    subroutine psieval(tau,rho,D,tanpsi,kperm,compress,h,u,m,psi)
 
       implicit none
@@ -453,25 +433,23 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       double precision :: phi,kappa,S,tanpsi,D,sigbed,kperm,compress,pm
       double precision :: Fx,Fy,FxL,FxR,FyL,FyR,FyC,FxC,dot,vnorm,Fproj
 
-
       integer :: i,j
 
       dry_tol = dry_tolerance
       gmod = grav
 
-
-      do i=2-mbc,mx+mbc-1
-         do j=2-mbc,my+mbc-1
-
+      do j=2-mbc,my+mbc-1
+         do i=2-mbc,mx+mbc-1 ! DIG : check loop order
 
             h = q(1,i,j)
             hu = q(2,i,j)
             hv = q(3,i,j)
+            hm = q(4,i,j)
             if (h<dry_tol) then
                hu=0.d0
                hv=0.d0
+               hm=0.d0
             endif
-            hm = q(4,i,j)
             p  = q(5,i,j)
             b = aux(1,i,j)
             eta = h+b
@@ -544,7 +522,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                thetaB = 0.d0
             endif
 
-            pm = 0.50d0 !does not effect tau. only need tau in different cells
+            pm = 0.5d0 !does not effect tau. only need tau in different cells
             call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
             call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
             call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
@@ -581,13 +559,15 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             endif
 
             vnorm = sqrt(hu**2 + hv**2)
-            if (vnorm>0.d0) then
-               !DIG: check to see if adding dx and dy works everywhere. added in 4.x-->5.0
-               aux(i_taudir_x,i,j) = -dx*hu/sqrt(hv**2+hu**2)
-               aux(i_taudir_y,i,j) = -dy*hv/sqrt(hv**2+hu**2)
+            if (vnorm>0.d0) then ! If moving.
 
+               ! DIG: check to see if adding dx and dy works everywhere. added in 4.x-->5.0
+               ! DIG: 1/13/24 - adding dx here provides equivalent results to dclaw4. removing
+               ! dx from rpn/riemann
+               aux(i_taudir_x,i,j) = -dx*hu/vnorm
+               aux(i_taudir_y,i,j) = -dy*hv/vnorm
                dot = min(max(0.d0,Fx*hu) , max(0.d0,Fy*hv))
-               if (dot>0.0) then
+               if (dot>0.d0) then
                   !friction should oppose direction of velocity
                   !if net force is in same direction, split friction source term
                   !splitting is useful for small velocities and nearly balanced forces
@@ -595,13 +575,16 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   !aux has cell centered interpretation in Riemann solver
                   Fproj = dot/vnorm
                   aux(i_fsphi,i,j) = min(1.d0,Fproj*rho/max(tau,1.d-16))
+
+                  ! DIG: ensure that very low m does not contribute to static friction.
+                  ! KRB thinks that this might be the right place to handle.
+
                else
                   !net force is in same direction as friction
                   !if nearly balanced steady state not due to friction
                   !no splitting, integrate friction in src
-                  aux(i_fsphi,i,j) = 0.0
+                  aux(i_fsphi,i,j) = 0.d0
                endif
-
 
             else
                !aux now have cell edge interpretation in Riemann solver
@@ -613,14 +596,15 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   aux(i_taudir_x,i,j) = dx*1.d0
                endif
 
-               if ((Fx**2+FyL**2)>0.0) then
+               if ((Fx**2+FyL**2)>0.d0) then
                   aux(i_taudir_y,i,j) = -dy*FyL/sqrt(Fx**2+FyL**2)
                else
-                  !there is no motion or net force. resolve in src after Riemann
+                  !There is no motion or net force. Resolve in src after Riemann
                   aux(i_taudir_y,i,j) = dy*1.d0
                endif
 
-               if ((aux(i_taudir_y,i,j)**2 + aux(i_taudir_x,i,j)**2)>0.0) then
+               ! Calculate factor of safety
+               if ((aux(i_taudir_y,i,j)**2 + aux(i_taudir_x,i,j)**2)>0.d0) then
                   aux(i_fsphi,i,j) = 1.d0
                else
                   aux(i_fsphi,i,j) = 0.d0
@@ -637,6 +621,8 @@ end subroutine calc_taudir
    ! ========================================================================
    !  Determines splitting of tau for rp vs. src.
    ! ========================================================================
+
+   ! DIG: not currently used.
 
 subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
@@ -681,7 +667,7 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             p  = q(5,i,j)
 
             if ((hu**2 + hv**2)==0.d0) then
-               aux(i_fsphi,i,j) = 1.0
+               aux(i_fsphi,i,j) = 1.d0
                !cycle
             endif
 
@@ -748,7 +734,7 @@ subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             pm = q(6,i,j)/q(1,i,j)
             call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
 
-            if (tau>0.0) then
+            if (tau>0.d0) then
                aux(i_fsphi,i,j) = min(1.d0,grad_eta*rho*gmod*h/tau)
             else
                aux(i_fsphi,i,j) = 1.d0
@@ -798,7 +784,6 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hL = q(1,i-1,j)
             hR = q(1,i+1,j)
             if (h<dry_tol) then
-               aux(i_fs,i,j) = 10.d0
                cycle
             endif
 
@@ -806,7 +791,6 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hv = q(3,i,j)
 
             if ((hu**2+hv**2)>0.d0) then
-               aux(i_fs,i,j) = 0.d0
                cycle
             endif
 
@@ -815,8 +799,7 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             bL = aux(1,i-1,j)
             phi = aux(i_phi,i,j)
 
-            if ((phi)==0.0) then
-               aux(i_fs,i,j) = 0.d0
+            if ((phi)==0.d0) then
                init_pmin_ratio = 0.d0
                cycle
             endif
@@ -881,11 +864,6 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             init_pmin_ratio = min(init_pmin_ratio, 1.d0-grad_eta/tan(phi))
 
-            if (grad_eta>0.d0) then
-               aux(i_fs,i,j) = tan(phi)/grad_eta
-            else
-               aux(i_fs,i,j) = 10.d0
-            endif
          enddo
       enddo
 
@@ -896,8 +874,8 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          write(*,*) '--------------------------------------------'
          write(*,*) 'hydrostatic liquefaction ratio:', rho_f/rho
          write(*,*) 'initiation liquefaction  ratio:',init_pmin_ratio, grad_eta_ave
-         write(*,*) 'maximum surface slope angle:',180.*atan(tan(phi)*grad_eta_max)/3.14, grad_eta_max
-         write(*,*) 'average failure liquefaction ratio:', 1.0-(grad_eta_ave/eta_cell_count) , eta_cell_count
+         write(*,*) 'maximum surface slope angle:',180.d0*atan(tan(phi)*grad_eta_max)/3.14d0, grad_eta_max
+         write(*,*) 'average failure liquefaction ratio:', 1.d0-(grad_eta_ave/eta_cell_count) , eta_cell_count
          write(*,*) '--------------------------------------------'
       endif
    end subroutine calc_pmin

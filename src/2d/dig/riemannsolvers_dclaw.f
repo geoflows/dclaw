@@ -2,8 +2,8 @@
 c-----------------------------------------------------------------------
       subroutine riemann_dig2_aug_sswave_ez(ixy,meqn,mwaves,hL,hR,
      &         huL,huR,hvL,hvR,hmL,hmR,pL,pR,bL,bR,uL,uR,vL,vR,mL,mR,
-     &         thetaL,thetaR,phiL,phiR,dx,sw,fw,w,wallprob,taudirL,
-     &         taudirR,chiL,chiR,fsL,fsR)
+     &         thetaL,thetaR,phiL,phiR,sw,fw,w,wallprob,taudirL,
+     &         taudirR,chiL,chiR,fsL,fsR,ilook)
 
       !-----------------------------------------------------------------
       ! solve the dig Riemann problem for debris flow eqn
@@ -16,16 +16,16 @@ c-----------------------------------------------------------------------
       !-----------------------------------------------------------------
 
       use geoclaw_module, only: grav, dry_tolerance
-      use digclaw_module
+      use digclaw_module ! DIG: specify which variables.
 
       implicit none
 
 *     !i/o
-      integer ixy,meqn,mwaves
+      integer ixy,meqn,mwaves,ilook
 
       double precision hL,hR,huL,huR,hvL,hvR,hmL,hmR,pL,pR
       double precision bL,bR,uL,uR,vL,vR,mL,mR,chiL,chiR,seg_L,seg_R
-      double precision thetaL,thetaR,phiL,phiR,dx
+      double precision thetaL,thetaR,phiL,phiR
       double precision taudirL,taudirR,fsL,fsR
       logical wallprob
 
@@ -61,20 +61,22 @@ c-----------------------------------------------------------------------
          psi(m) = 0.d0
       enddo
 
+
+      ! DIG: move segregation into segeval() that 
+      ! adjusts rho_fp, etc.
+
       pmL = chiL
       pmR = chiR
       pm = 0.5*(chiL + chiR)
-      pm = min(1.0,pm)
-      pm = max(0.0,pm)
-      if (alpha_seg==1.0) then
-         seg = 0.0
+      pm = min(1.0d0,pm)
+      pm = max(0.0d0,pm)
+      if (alpha_seg==1.0d0) then
+         seg = 0.0d0
       else
-         seg = 1.0
+         seg = 1.0d0
       endif
-      !pmtanh01 = seg*(0.5*(tanh(20.0*(pm-0.80))+1.0))
-      !pmtanh01 = seg*(0.5*(tanh(40.0*(pm-0.90))+1.0))
       call calc_pmtanh(pm,seg,pmtanh01)
-      rho_fp = (1.0-pmtanh01)*rho_f
+      rho_fp = (1.0d0-pmtanh01)*rho_f
 
 
       if (hL.ge.drytol.and.hR.ge.drytol) then
@@ -90,8 +92,8 @@ c-----------------------------------------------------------------------
      &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmL)
          call auxeval(hL,uL,vL,mL,pL,phiL,thetaL,
      &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmL)
-         tauR=0.5*tauL
-         h = 0.5*hL
+         tauR=0.5d0*tauL
+         h = 0.5d0*hL
          v = vL
          mbar = mL
       else
@@ -99,8 +101,8 @@ c-----------------------------------------------------------------------
      &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmR)
          call auxeval(hR,uR,vR,mR,pR,phiR,thetaR,
      &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmR)
-         tauL=0.5*tauR
-         h = 0.5*hR
+         tauL=0.5d0*tauR
+         h = 0.5d0*hR
          v = vR
          mbar = mR
       endif
@@ -110,9 +112,9 @@ c-----------------------------------------------------------------------
       rho = 0.5d0*(rhoL + rhoR)
       tau = 0.5d0*(tauL + tauR)
       theta = 0.5d0*(thetaL + thetaR)
-      gamma = 0.25*(rho_fp + 3.0*rho)/rho
-      gammaL = 0.25*(rho_fp + 3.0*rhoL)/rhoL
-      gammaR = 0.25*(rho_fp + 3.0*rhoR)/rhoR
+      gamma = 0.25d0*(rho_fp + 3.0d0*rho)/rho
+      gammaL = 0.25d0*(rho_fp + 3.0d0*rhoL)/rhoL
+      gammaR = 0.25d0*(rho_fp + 3.0d0*rhoR)/rhoR
 
       eps = kappa + (1.d0-kappa)*gamma
 
@@ -249,17 +251,16 @@ c     !find bounds in case of critical state resonance, or negative states
       del(4) = -gamma*rho*gmod*u*(hR-hL) + gamma*rho*gmod*del(1)
      &         + u*(pR-pL)
 
-
 *     !determine the source term
 
       if (ixy.eq.1) then
          ! DIG: note that theta = 0.0 unless bed_normal is true. For now, assume bed_normal is false. Resolve if dx is needed later.
-         source2dx = source2dx !+ dx*hbar*grav*dsin(theta)
+         source2dx = source2dx !+ dx*hbar*grav*dsin(theta) ! DIG KRB: this may be the only place dx is needed here
       endif
 
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
       !vnorm = sqrt(u**2 + v**2)
-      if (vnorm>0.0) then
+      if (vnorm>0.0d0) then
          !tausource = - dx*0.5*(tauL/rhoL + tauR/rhoR)*u/vnorm
          !tausource = - dx*max(tauL/rhoL , tauR/rhoR)*u/vnorm
          !tausource =  0.0!dx*tauR*taudir/rhoR
@@ -269,41 +270,52 @@ c     !find bounds in case of critical state resonance, or negative states
          !   write(*,*) 'fsR', fsR
          !   write(*,*) 'ixy', ixy
          !endif
+
+
          !DIG: check -- why are taudirL and taudirR treated differently?
-         if ((uL**2 + vL**2)==0.0) then
+         ! could this be a symmetry issue?
+         if ((uL**2 + vL**2)==0.0d0) then
             taudirL = taudirR
          else
             taudirL = -uL/sqrt(uL**2 + vL**2)
          endif
 
-         if ((uR**2 + vR**2)>0.0) then
+         if ((uR**2 + vR**2)>0.0d0) then
             taudirR = -uR/sqrt(uR**2 + vR**2)
          endif
          !DIG: deterine if we can redefine tau or an aux array to eliminate need for dx
          !DIG: note: below tausource was 0.0 in 4.x also (friction ignored for moving material, treated in src2.)
-         tausource =  0.0!*dx*0.5*(taudirL*tauL/rhoL + tauR*taudirR/rhoR)
+         tausource =  0.0d0!*dx*0.5*(taudirL*tauL/rhoL + tauR*taudirR/rhoR)
       !elseif (dx*max(abs(tauL*taudirL/rhoL),abs(tauR*taudirR/rhoR))
-      !DIG: check dx
-      elseif (0.5*abs(taudirR*tauR/rhoR + tauL*taudirR/rhoL)!*dx
-     &      .gt.abs(del(2) - source2dx)) then 
+      
+         !DIG: check dx
+
+      elseif (0.5d0*abs(taudirR*tauR/rhoR + tauL*taudirR/rhoL)!*dx ! DIG krbdxfix
+         
+         ! DIG Symmetry: should this be RRR, LLL? It is symmetric in the line above 
+         ! that is commented out. Leaving as is b/c it is the same in dclaw4 and dclaw5
+         ! KRB&MJB - 1/12/24 
+         
+     &      .gt.abs(del(2) - source2dx)) then ! abs(del(2) - source2dx) was not adjusted by dx
       
          !no failure
          tausource = del(2) - source2dx
-         del(1) = 0.0
-         del(0) = 0.0
-         del(4) = 0.0
+         del(1) = 0.0d0
+         del(0) = 0.0d0
+         del(4) = 0.0d0
       else
          !failure
          !tausource =   sign(abs(dx*0.5*taudir*(tauL/rhoL + tauR/rhoR))
          !tausource =   sign(abs(dx*0.5*tau/rho)
          !tausource =   dx*taudir*tauR/rhoR
          
-         tausource = 0.5*((taudirR*tauR/rhoR)+(tauL*taudirR/rhoL))!*dx
+         tausource = 0.5d0*((taudirR*tauR/rhoR)+(tauL*taudirR/rhoL))!*dx
          tausource = dsign(tausource,del(2)-source2dx)
       endif
       if (wallprob) then
-         tausource = 0.0
+         tausource = 0.0d0
       endif
+
       del(2) = del(2) - source2dx  - tausource
       !del(4) = del(4) + dx*3.0*vnorm*tanpsi/(h*compress)
 
@@ -340,6 +352,7 @@ c      del(4) = del(4) - 0.5d0*dx*psi(4)
             A(m+1,mw+1)=R(m,mw+1)
          enddo
       enddo
+      
       call gaussj(A,3,3,beta,1,1)
 
       do mw=1,3
@@ -367,10 +380,10 @@ c      del(4) = del(4) - 0.5d0*dx*psi(4)
 
 
       !fwaves for segregation
-      seg_L = chiL*hL*uL*(1.0+(1.0-alpha_seg)*(1.0-chiL))
-      seg_R = chiR*hR*uR*(1.0+(1.0-alpha_seg)*(1.0-chiR))
-      fw(6,1) = fw(1,1)*chiL*(1.0+(1.0-alpha_seg)*(1.0-chiL))
-      fw(6,3) = fw(1,3)*chiR*(1.0+(1.0-alpha_seg)*(1.0-chiR))
+      seg_L = chiL*hL*uL*(1.0d0+(1.0d0-alpha_seg)*(1.0d0-chiL))
+      seg_R = chiR*hR*uR*(1.0d0+(1.0d0-alpha_seg)*(1.0d0-chiR))
+      fw(6,1) = fw(1,1)*chiL*(1.0+(1.0d0-alpha_seg)*(1.0d0-chiL))
+      fw(6,3) = fw(1,3)*chiR*(1.0+(1.0d0-alpha_seg)*(1.0d0-chiR))
       fw(6,2) = seg_R - seg_L - fw(6,1) - fw(6,3)
       return
       end !subroutine riemann_dig2_aug_sswave_ez
@@ -465,7 +478,7 @@ c           !root finding using a Newton iteration on dsqrt(h)===
 
             do iter=1,maxiter
                F0=delu + 2.d0*(dsqrt(g*h0)-dsqrt(g*h_max))
-     &                  + (h0-h_min)*dsqrt(.5d0*g*(1/h0+1/h_min))
+     &                  + (h0-h_min)*dsqrt(.5d0*g*(1.d0/h0+1.d0/h_min))
                slope=(F_max-F0)/(h_max-h_min)
                h0=h0-F0/slope
             enddo
@@ -509,7 +522,7 @@ c  On output a is replaced by it's inverse, and b replaced by x.
         ipiv(j)=0
 11    continue
       do 22 i=1,n
-        big=0.
+        big=0.d0
         do 13 j=1,n
           if(ipiv(j).ne.1)then
             do 12 k=1,n
@@ -541,10 +554,10 @@ c  On output a is replaced by it's inverse, and b replaced by x.
         endif
         indxr(i)=irow
         indxc(i)=icol
-        if (a(icol,icol).eq.0.) write(*,*) 'singular matrix in gaussj'
+        if (a(icol,icol).eq.0.d0) write(*,*) 'singular matrix in gaussj'
 
         pivinv=1./a(icol,icol)
-        a(icol,icol)=1.
+        a(icol,icol)=1.d0
         do 16 l=1,n
           a(icol,l)=a(icol,l)*pivinv
 16      continue
@@ -554,7 +567,7 @@ c  On output a is replaced by it's inverse, and b replaced by x.
         do 21 ll=1,n
           if(ll.ne.icol)then
             dum=a(ll,icol)
-            a(ll,icol)=0.
+            a(ll,icol)=0.d0
             do 18 l=1,n
               a(ll,l)=a(ll,l)-a(icol,l)*dum
 18          continue

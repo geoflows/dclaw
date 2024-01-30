@@ -12,6 +12,37 @@ import os, sys
 import numpy as np
 
 
+coordinate_system = 1
+entrainment = 1
+
+aux_type = [  "center"]
+
+
+if coordinate_system == 1:
+    i_dig = 2
+    num_geo = 1
+    i_capa = 0
+else:
+    i_dig = 4
+    num_geo = 3
+    i_capa = 2
+    aux_type.extend(["center","yleft"])
+
+aux_type.extend(["center",
+        "center",
+        "center",
+        "center",
+        "center",
+    ])
+if entrainment == 1:
+    num_ent = 1
+    i_ent = i_dig + 5
+    aux_type.extend(["center",])
+else:
+    num_ent = 0
+num_aux = num_geo + 5 + num_ent
+
+
 try:
     CLAW = os.environ['CLAW']
 except:
@@ -89,10 +120,10 @@ def setrun(claw_pkg='dclaw'):
     clawdata.num_eqn = 7
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
-    clawdata.num_aux = 10
+    clawdata.num_aux = 4#num_aux
 
     # Index of aux array corresponding to capacity function, if there is one:
-    clawdata.capa_index = 0
+    clawdata.capa_index = i_capa
 
     
     
@@ -119,7 +150,7 @@ def setrun(claw_pkg='dclaw'):
     # Note that the time integration stops after the final output time.
     # The solution at initial time t0 is always written in addition.
 
-    clawdata.output_style = 1
+    clawdata.output_style = 3
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
@@ -134,7 +165,7 @@ def setrun(claw_pkg='dclaw'):
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
         clawdata.output_step_interval = 1
-        clawdata.total_steps = 20
+        clawdata.total_steps = 10
         clawdata.output_t0 = True
         
 
@@ -167,7 +198,7 @@ def setrun(claw_pkg='dclaw'):
 
     # Initial time step for variable dt.
     # If dt_variable==0 then dt=dt_initial for all steps:
-    clawdata.dt_initial = 0.1
+    clawdata.dt_initial = 0.03
 
     # Max time step to be allowed if variable dt used:
     clawdata.dt_max = 1e+99
@@ -175,7 +206,7 @@ def setrun(claw_pkg='dclaw'):
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
     # D-Claw requires CFL<0.5
-    clawdata.cfl_desired = 0.45 
+    clawdata.cfl_desired = 0.4 
     clawdata.cfl_max = 0.5
 
     # Maximum number of time steps to allow between output times:
@@ -295,18 +326,7 @@ def setrun(claw_pkg='dclaw'):
     # This must be a list of length maux, each element of which is one of:
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
-    amrdata.aux_type = [
-        "center",
-        "center",
-        "yleft",
-        "center",
-        "center",
-        "center",
-        "center",
-        "center",
-        "center",
-        "center",
-    ]
+    amrdata.aux_type = aux_type
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -362,7 +382,7 @@ def setrun(claw_pkg='dclaw'):
        
     # == Physics ==
     geo_data.gravity = 9.81
-    geo_data.coordinate_system = 1
+    geo_data.coordinate_system = coordinate_system
     geo_data.earth_radius = 6367.5e3
 
     # == Forcing Options
@@ -371,7 +391,7 @@ def setrun(claw_pkg='dclaw'):
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 0.0
     geo_data.dry_tolerance = 1.e-3
-    geo_data.friction_forcing = True # TODO change?
+    geo_data.friction_forcing = True
     geo_data.manning_coefficient =.025
     geo_data.friction_depth = 1e6
 
@@ -407,7 +427,7 @@ def setrun(claw_pkg='dclaw'):
     auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
 
     auxinitdclaw_data.auxinitfiles = []
-    auxinitdclaw_data.auxinitfiles.append([3, 5, 1, 3, 'input_files/aux5.tt3'])
+    auxinitdclaw_data.auxinitfiles.append([3, i_ent, 1, 3, 'input_files/entrainable.tt3'])
     # for auxinit perturbations append lines of the form
     #   [auxinitftype,iauxinit, minlev, maxlev, fname]
 
@@ -428,22 +448,19 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.phi_bed = 36.0
     dclaw_data.theta_input = 0.0
     dclaw_data.mu = 0.005
-    dclaw_data.m0 = 0.64
+    dclaw_data.m0 = 0.62
     dclaw_data.m_crit = 0.64
-    dclaw_data.kappita = 1e-8
-    #dclaw_data.kappita_diff = 1
-    dclaw_data.chi_init_val=0.7 # not currently used.
+    dclaw_data.kappita = 1e-9
+    dclaw_data.chi_init_val=0.7
     dclaw_data.alpha_c = 0.05
-    dclaw_data.alpha_seg =0.0
-    #dclaw_data.phi_seg_coeff = 0.0
+    dclaw_data.alpha_seg =1.0
     dclaw_data.delta = 0.001
     dclaw_data.bed_normal = 0
-    dclaw_data.entrainment = 1
-    dclaw_data.entrainment_rate = 0.2
+    dclaw_data.entrainment = entrainment
+    dclaw_data.entrainment_rate = 0.05
     dclaw_data.sigma_0 = 1.0e3
     dclaw_data.mom_autostop = True
-    #dclaw_data.momlevel = 1
-    #dclaw_data.mom_perc = 0.0
+    dclaw_data.momlevel = 1
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated

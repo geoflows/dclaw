@@ -1,6 +1,6 @@
 
 subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
-    
+
     use geoclaw_module, only: sea_level,grav
     use amr_module, only: t0
     !use qinit_module, only: qinit_type,add_perturbation
@@ -13,7 +13,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     use qinit_module
     use digclaw_module  !!DIG specify which variables
 
-    
+
     !implicit none  !!DIG need to declare variables properly
     implicit double precision (a-h,o-z)  !!DIG temporary
 
@@ -22,13 +22,13 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     real(kind=8), intent(in) :: xlower,ylower,dx,dy
     real(kind=8), intent(inout) :: q(meqn,1-mbc:mx+mbc,1-mbc:my+mbc)
     real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
-    
+
     ! Locals
     integer :: i,j,m, ii,jj
     real(kind=8) :: x,y
     real(kind=8) :: veta(1-mbc:mx+mbc,1-mbc:my+mbc)
     real(kind=8) :: ddxy
-    
+
 
     if (variable_eta_init) then
         ! Set initial surface eta based on eta_init
@@ -39,12 +39,19 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
     q(:,:,:) = 0.d0   ! set all to zero (set further below)
 
-    forall(i=1:mx, j=1:my)
+    ! DIG: 1/12/24: To make consistent with dclaw 4 we needed
+    ! to change the typical geoclaw behavior and set sea
+    ! level in ghost cells (rather than just in interior cells).
+    ! This is necessary because eta in ghost cells is used to
+    ! calculate gradients in eta used by (at least) taudir_x and
+    ! taudir_y. Flagging as not typical for current geoclaw.
+
+    forall(i=1-mbc:mx+mbc, j=1-mbc:my+mbc)
         q(1,i,j) = max(0.d0, veta(i,j) - aux(1,i,j))
     end forall
 
     if (use_force_dry .and. (t0 <= tend_force_dry)) then
-     ! only use the force_dry if it specified on a grid that matches the 
+     ! only use the force_dry if it specified on a grid that matches the
      ! resolution of this patch, since we only check the cell center:
      ddxy = max(abs(dx-dx_fdry), abs(dy-dy_fdry))
      if (ddxy < 0.01d0*min(dx_fdry,dy_fdry)) then
@@ -58,8 +65,8 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
               if ((ii>=1) .and. (ii<=mx_fdry) .and. &
                   (jj>=1) .and. (jj<=my_fdry)) then
                   ! grid cell lies in region covered by force_dry,
-                  ! check if this cell is forced to be dry 
-                  ! Otherwise don't change value set above:                  
+                  ! check if this cell is forced to be dry
+                  ! Otherwise don't change value set above:
                   if (force_dry(ii,jj) == 1) then
                       q(1,i,j) = 0.d0
                       endif
@@ -69,7 +76,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
        endif ! dx and dy agree with dx_fdry, dy_fdry
     endif ! use_force_dry
 
-    
+
     ! Add perturbation to initial conditions
     if (qinit_type > 0) then
         call add_perturbation(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
@@ -86,14 +93,15 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
         enddo
         close(23)
     endif
-    
-    !=============
-    ! DIG modifications:
-    
+
+    !===========================================
+    ! D-Claw specific initialization of q
+    !===========================================
 
       xhigher = xlower + (mx-0.5d0)*dx
       yhigher = ylower + (my-0.5d0)*dy
 
+      ! loop through qinitfiles and fill in q. topo has already been set.
       do mf =1,mqinitfiles
 
         if ((xlower.le.xhiqinit(mf).and.xhigher.ge.xlowqinit(mf)).and. &
@@ -101,13 +109,13 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             xintlow = dmax1(xlower,xlowqinit(mf))
             xinthi  = dmin1(xhigher,xhiqinit(mf))
-            istart  = max(1-mbc,int(0.5 + (xintlow-xlower)/dx)-mbc)
-            iend    = min(mx+mbc,int(1.0 + (xinthi-xlower)/dx)+mbc)
+            istart  = max(1-mbc,int(0.5d0 + (xintlow-xlower)/dx)-mbc)
+            iend    = min(mx+mbc,int(1.0d0 + (xinthi-xlower)/dx)+mbc)
 
             yintlow = dmax1(ylower,ylowqinit(mf))
             yinthi  = dmin1(yhigher,yhiqinit(mf))
-            jstart  = max(1-mbc,int(0.5 + (yintlow-ylower)/dy)-mbc)
-            jend    = min(my+mbc,int(1.0 + (yinthi-ylower)/dy)+mbc)
+            jstart  = max(1-mbc,int(0.5d0 + (yintlow-ylower)/dy)-mbc)
+            jend    = min(my+mbc,int(1.0d0 + (yinthi-ylower)/dy)+mbc)
 
             do i=istart,iend
                x = xlower + (i-0.5d0)*dx
@@ -139,11 +147,21 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                         qinitwork(i1:i2), 1)
                          ! qinitwork(i0qinit(mf):i0qinit(mf)+mqinit(mf)-1) ,1)
 
-                     dq=dq/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     if (coordinate_system == 2) then
+                        dq=dq/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     else
+                        dq=dq/((xipc-ximc)*(yjpc-yjmc))
+                     endif
+
 
                      if (iqinit(mf).le.meqn) then
                         q(iqinit(mf),i,j) = q(iqinit(mf),i,j) + dq
                      else
+                        ! if a file is provide for eta, set h.
+                        ! if files are provided for both h and eta (
+                        ! not recommended, the second will take precedence.
+                        ! if eta is provided as less than topo, then
+                        ! h will be zero.
                         if (dq-aux(1,i,j).gt.0.d0) then
                           q(1,i,j) = dmax1(q(1,i,j),dq-aux(1,i,j))
                         endif
@@ -156,6 +174,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          endif
       enddo
 
+      ! adjust q values.
       initm = 0
       initchi = 0
       do mf =1,mqinitfiles
@@ -166,10 +185,15 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          if (iqinit(mf).eq.6) initchi = 1
       enddo
 
-      do i=1-mbc,mx+mbc
-         do j=1-mbc,my+mbc
+
+      do j=1-mbc,my+mbc ! DIG check loop order.
+         do i=1-mbc,mx+mbc
                if (initm.eq.0) then
-                  q(4,i,j) = m0*q(1,i,j)
+                  if (dabs((q(1,i,j) + aux(1,i,j))-veta(i,j)).lt.1d-6) then
+                    q(4,i,j) = 0.d0 ! DIG: check that this is right. 
+                  else
+                    q(4,i,j) = m0*q(1,i,j)
+                  endif
                else
                   q(4,i,j) = q(1,i,j)*q(4,i,j)
                endif
@@ -187,6 +211,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                if (initpv.eq.1) then
                   q(5,i,j) = q(1,i,j)*q(5,i,j)
                endif
+
                if (q(1,i,j).le.dry_tolerance) then
                   do m = 1,meqn
                      q(m,i,j) = 0.d0
@@ -199,6 +224,9 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       call calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       ! DIG - consider making pressures here reflect rho_fp and any other
       ! changes associated with hchi.
+
+      ! DIG - if restart p_initialized needs to be zero. can we know restart here and
+      ! bypass.
       select case (init_ptype)
          case (-1)
             !p should already be 0 or set by qinit file
@@ -207,11 +235,11 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             !set to hydrostatic
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
-                 if (bed_normal.eq.1) then 
+                 if (bed_normal.eq.1) then
                      gmod = grav*cos(aux(i_theta,i,j))
                  else
                      gmod=grav
-                 endif 
+                 endif
                  q(5,i,j) = rho_f*gmod*q(1,i,j)
                enddo
             enddo
@@ -233,11 +261,16 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                          + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(1,i,j)
                   endif
 
-                  rho_dig = sv*rho_s + (1.d0-sv)*rho_f !!DIG rho array in geoclaw_module conflicts 
+                  rho_dig = sv*rho_s + (1.d0-sv)*rho_f
+                  !!DIG rho array in geoclaw_module conflicts
+
                   q(5,i,j) = p_ratioij*rho_dig*gmod*q(1,i,j)
                enddo
             enddo
             p_initialized = 1
+
+         ! DIG: remove cases three and 4.
+
          case(3:4) ! DIG: Not yet tested
             !p will be updated in b4step2
             do i=1-mbc,mx+mbc
@@ -250,7 +283,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                  call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j), &
                              q(4,i,j),q(5,i,j),u,v,sv,aux(i_theta,i,j))
                  if (bed_normal.eq.1) then
-                     gmod = grav*cos(aux(i,j,i_theta))
+                     gmod = grav*cos(aux(i_theta,i,j))
                      p_ratioij = init_pmin_ratio &
                          + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(1,i,j)
                  endif
@@ -260,8 +293,8 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                enddo
             enddo
             p_initialized = 0
+
       end select
-      !write(*,*) 'qinit:init,dx,dy:',init_pmin_ratio,dx,dy
 
       !===============set factor of safety=============================
       call calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
