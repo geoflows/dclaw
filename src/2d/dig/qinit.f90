@@ -3,19 +3,19 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
     use geoclaw_module, only: sea_level,grav
     use amr_module, only: t0
-    !use qinit_module, only: qinit_type,add_perturbation
-    !use qinit_module, only: variable_eta_init
-    !use qinit_module, only: force_dry,use_force_dry,mx_fdry, my_fdry
-    !use qinit_module, only: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry
-    !use qinit_module, only: dx_fdry, dy_fdry
-    !use qinit_module, only: tend_force_dry
-    !use qinit_module, only: qinitwork
-    use qinit_module
-    use digclaw_module  !!DIG specify which variables
+    use qinit_module, only: qinit_type,add_perturbation
+    use qinit_module, only: variable_eta_init
+    use qinit_module, only: force_dry,use_force_dry,mx_fdry, my_fdry
+    use qinit_module, only: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry
+    use qinit_module, only: dxqinit,dyqinit,i0qinit,iqinit,mqinit
+    use qinit_module, only: mxqinit,myqinit,xhiqinit,xlowqinit
+    use qinit_module, only: yhiqinit,ylowqinit
+    use qinit_module, only: dx_fdry, dy_fdry
+    use qinit_module, only: tend_force_dry
+    use qinit_module, only: qinitwork
 
+    use digclaw_module, only: admissibleq,calc_pmin,calc_taudir
 
-    !implicit none  !!DIG need to declare variables properly
-    implicit double precision (a-h,o-z)  !!DIG temporary
 
     ! Subroutine arguments
     integer, intent(in) :: meqn,mbc,mx,my,maux
@@ -28,6 +28,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     real(kind=8) :: x,y
     real(kind=8) :: veta(1-mbc:mx+mbc,1-mbc:my+mbc)
     real(kind=8) :: ddxy
+    real(kind=8) :: u,v,sv
 
 
     if (variable_eta_init) then
