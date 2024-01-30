@@ -77,6 +77,9 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
     def write(self,out_file='setdclaw.data',data_source='setrun.py'):
         self.open_data_file(out_file,data_source)
 
+        if self.bed_normal == 1:
+            raise ValueError('bed_normal=1 not currently supported because of dx dy not accessible in riemann solver')
+
         self.data_write("rho_s", description="solid grain density (kg/m^3)")
         self.data_write("rho_f", description="pore-fluid density  (kg/m^3)")
         self.data_write("phi_bed", description="basal friction angle (degrees)")
