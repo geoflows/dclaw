@@ -38,11 +38,16 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     use friction_module, only: variable_friction, friction_index
     use friction_module, only: set_friction_field
 
-    use topo_module
+    use topo_module, only: mtopofiles
 
     use adjoint_module, only : adjoint_flagging,innerprod_index
 
-    use auxinit_module ! DIG: should specify which variables
+    use auxinit_module, only: mauxinitfiles,iauxinit,ylowauxinit
+    use auxinit_module, only: yhiauxinit,xlowauxinit,xhiauxinit
+    use auxinit_module, only: i0auxinit,auxinitwork,mxauxinit
+    use auxinit_module, only: dyauxinit,dxauxinit,myauxinit
+    use auxinit_module, only: mauxinit
+
     use digclaw_module, only: i_dig,i_phi,i_theta,phi_bed,theta_input
 
     implicit none
@@ -59,7 +64,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     character(len=*), parameter :: aux_format = "(2i4,4d15.3)"
     integer :: skipcount,iaux,ilo,jlo
 
-    !DIG: Need to declare D-Claw variables...
+    ! Declare D-Claw variables...
     integer :: mf,istart,iend,jstart,jend,i,j
     real(kind=8) :: xhigher,yhigher,xintlow,xinthi,yintlow,yinthi
     real(kind=8) :: xim,xip,yjm,yjp,xipc,ximc,xc,yjpc,yjmc,yc,daux
