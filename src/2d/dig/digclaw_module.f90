@@ -188,7 +188,7 @@ contains
          call opendatafile(iunit, file_name)
          read(iunit,*) init_ptype
          read(iunit,*) init_pmax_ratio
-         read(iunit,*) init_ptf
+         read(iunit,*) init_ptf ! DIG - some of these parameters are no longer needed
          read(iunit,*) init_ptf2
          close(unit=iunit)
 
