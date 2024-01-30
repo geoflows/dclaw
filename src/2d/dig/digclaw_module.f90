@@ -361,40 +361,6 @@ contains
    end subroutine auxeval
 
 
-   !====================================================================
-   !subroutine psieval: evaluate the source term
-   !====================================================================
-   ! DIG: Is this used?
-   subroutine psieval(tau,rho,D,tanpsi,kperm,compress,h,u,m,psi)
-
-      implicit none
-
-      !i/o
-      double precision, intent(out) :: psi(4)
-      double precision, intent(in)  :: tau,rho,D,tanpsi,kperm,compress
-      double precision, intent(in)  :: h,u,m
-
-      !local
-      double precision :: taushear,drytol,vnorm
-
-      drytol = dry_tolerance
-
-      taushear = (tau/rho)*dsign(1.d0,u)
-      vnorm = dabs(u)
-      if (h.lt.drytol.or..true.) then
-         psi(1) = 0.d0
-         psi(2) = 0.d0
-         psi(3) = 0.d0
-         psi(4) = 0.d0
-      else
-         psi(1) =  D*(rho-rho_f)/rho
-         psi(2) =  u*D*(rho-rho_f)/rho
-         psi(3) = -D*m*(rho_f/rho)
-         psi(4) = 0.d0
-      endif
-
-   end subroutine psieval
-
    ! ========================================================================
    !  calc_taudir
    ! ========================================================================
