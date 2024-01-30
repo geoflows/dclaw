@@ -186,33 +186,54 @@
                   dbdv = (u*b_x+v*b_y)/vnorm
                   slopebound = 1.d10
                   b_eroded = q(7,i,j)
+
                   if (dbdv<slopebound.and.b_eroded<aux(i_ent,i,j)) then
                      b_remaining = aux(i_ent,i,j)-b_eroded
+
+                     ! value for m for entrained material
                      m2 = 0.6d0
+                     ! eventually make this a user defined variable or an aux value.
+                     ! should there also be a substrate value for chi?
+
+                     ! calculate entrained material density, using default values
+                     ! for rho_f and rho_s
                      rho2 = m2*2700.d0 + (1.d0-m2)*1000.d0
+
                      beta2 = 0.66d0
+
+                     ! calculate top and bottom shear stress.
                      t1bot = beta2*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d0-2.d0))
-                     !write(*,*) '------------'
-                     !write(*,*) 'vu',t1bot
-                     beta = 1.d0-m!tanh(10.d0*m) !tan(1.5d0*p/(rho*gmod*h))/14.0d0
-                     !write(*,*) 'gamma', gamma
+                     beta = 1.d0-m!tanh(10.d0*m)
+
                      t1bot = t1bot + tau!+p*tan(phi)
-                     !write(*,*) 'tau',tau
+
                      t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
-                     !write(*,*) 't2top',t2top
+
+                     ! calculate pressure ratio
                      prat = p/(rho*h)
+
+                     ! regularize v
                      vreg = ((vnorm-vlow)**2/((vnorm-vlow)**2+1.d0))
+
                      dtcoeff = entrainment_rate*dt*vreg/(beta2*(vnorm+vlow)*rho2)
+
+                     ! calculate dh
                      dh = entrainment_rate*dt*(t1bot-t2top)/(rho2*beta2*vnorm)
-                     !write(*,*) 'dh/dt', dh/dt
                      dh = min(dh,b_remaining)
+
+                     ! increment h based on dh
                      h = h + dh
                      hm = hm + dh*m2
+
+                     ! store amount eroded in q7
                      q(7,i,j) = q(7,i,j) + dh
 
                      call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                      call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
+
+                     ! update pressure based on prior pressure ratio.
                      p = prat*rho*h
+
                      call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                   endif
                endif
