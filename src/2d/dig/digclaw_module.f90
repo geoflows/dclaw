@@ -404,17 +404,23 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       do j=2-mbc,my+mbc-1
          do i=2-mbc,mx+mbc-1
 
+            if (bed_normal.eq.1) then
+              theta = aux(i_theta,i,j)
+              thetaL = aux(i_theta,i-1,j)
+              thetaB = aux(i_theta,i,j-1)
+              gmod = grav*cos(theta)
+            else
+              theta = 0.d0
+              thetaL = 0.d0
+              thetaB = 0.d0
+            endif
 
             h = q(1,i,j)
             hu = q(2,i,j)
             hv = q(3,i,j)
             hm = q(4,i,j)
-            if (h<dry_tol) then
-               hu=0.d0
-               hv=0.d0
-               hm=0.d0
-            endif
             p  = q(5,i,j)
+            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
             b = aux(1,i,j)
             eta = h+b
             phi = aux(i_phi,i,j)
@@ -424,6 +430,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvL= q(3,i-1,j)
             hmL = q(4,i-1,j)
             pL  = q(5,i-1,j)
+            call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
             bL = aux(1,i-1,j)
             etaL= hL+bL
             if (hL<dry_tol) then
@@ -435,6 +442,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvR= q(3,i+1,j)
             hmR = q(4,i+1,j)
             pR  = q(5,i+1,j)
+            call admissibleq(hR,huR,hvR,hmR,pR,uR,vR,mR,theta)
             bR = aux(1,i+1,j)
             etaR= hR+bR
             if (hR<dry_tol) then
@@ -446,6 +454,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvB= q(3,i,j-1)
             hmB = q(4,i,j-1)
             pB  = q(5,i,j-1)
+            call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
             bB = aux(1,i,j-1)
             etaB= hB+bB
             if (hB<dry_tol) then
@@ -457,6 +466,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvT= q(3,i,j+1)
             hmT = q(4,i,j+1)
             pT  = q(5,i,j+1)
+            call admissibleq(hT,huT,hvT,hmT,pT,uT,vT,mT,theta)
             bT = aux(1,i,j+1)
             etaT= hT+bT
             if (hT<dry_tol) then
@@ -475,25 +485,8 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                cycle
             endif
 
-            if (bed_normal.eq.1) then
-               theta = aux(i_theta,i,j)
-               thetaL = aux(i_theta,i-1,j)
-               thetaB = aux(i_theta,i,j-1)
-               gmod = grav*cos(theta)
-            else
-               theta = 0.d0
-               thetaL = 0.d0
-               thetaB = 0.d0
-            endif
 
             pm = 0.5d0 !does not effect tau. only need tau in different cells
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
-            call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
-            call admissibleq(hR,huR,hvR,hmR,pR,uR,vR,mR,theta)
-            call admissibleq(hT,huT,hvT,hmT,pT,uT,vT,mT,theta)
-
-
             call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
             call auxeval(hL,uL,vL,mL,pL,phi,theta,kappa,S,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pm)
             call auxeval(hR,uR,vR,mR,pR,phi,theta,kappa,S,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pm)
