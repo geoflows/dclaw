@@ -263,10 +263,14 @@ contains
       pmax = rho*gmod*h
       plo = rho_f*dry_tol*gmod*dry_tol
       phi = pmax - plo
+      ! DIG : at a later time, with some testing, change this to
+      ! plo = 0d0 and phi = pmax (KRB and DLG, 1/30/2024)
       if (p.lt.plo) then
          if ((u**2+v**2)>0.d0) then
             p = dmax1(0.d0,p)
             ! DIG: why is this not enforced when static as well.
+            ! This should also probably change along with the prior
+            ! lines (KRB and DLG, 1/30/2024)
          endif
       elseif (p.gt.phi) then
          p = dmin1(pmax,p)
@@ -351,7 +355,6 @@ contains
       endif
 
       tanphi = dtan(phi_bed + datan(tanpsi))
-      ! DIG: is this from aux(i_phi)?
 
       tau = dmax1(0.d0,sigbed*tanphi)
 
