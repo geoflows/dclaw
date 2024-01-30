@@ -192,7 +192,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
 
                             ! Calculate sufaces
                             eta = h + alloc(iaddaux(1,i,j))
-                            eta = eta - alloc(iadd(7,i,j))  ! DIG
+                            eta = eta - alloc(iadd(7,i,j))   ! Adjust eta based on entrainment
                             if (abs(eta) < 1d-99) then
                                 eta = 0.d0
                             end if
@@ -242,7 +242,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                             qeta(iaddqeta(m, i, j)) = alloc(iadd(m, i, j))
                         end do
                         eta = alloc(iadd(1, i, j)) + alloc(iaddaux(1, i ,j))
-                        eta = eta - alloc(iadd(7,i,j))  ! DIG
+                        eta = eta - alloc(iadd(7,i,j))  ! Adjust eta based on entrainment
                         qeta(iaddqeta(num_eqn + 1, i, j)) = eta
                     end do
                 end do
