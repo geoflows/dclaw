@@ -41,12 +41,13 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
     q(:,:,:) = 0.d0   ! set all to zero (set further below)
 
-    ! DIG: 1/12/24: To make consistent with dclaw 4 we needed
+    ! 1/12/24: To make consistent with dclaw 4 we needed
     ! to change the typical geoclaw behavior and set sea
     ! level in ghost cells (rather than just in interior cells).
     ! This is necessary because eta in ghost cells is used to
     ! calculate gradients in eta used by (at least) taudir_x and
-    ! taudir_y. Flagging as not typical for current geoclaw.
+    ! taudir_y.
+    ! 1/30/24: Confirmed with DLG that this is the behavior we want.
 
     forall(i=1-mbc:mx+mbc, j=1-mbc:my+mbc)
         q(1,i,j) = max(0.d0, veta(i,j) - aux(1,i,j))
