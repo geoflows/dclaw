@@ -34,9 +34,10 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     if (variable_eta_init) then
         ! Set initial surface eta based on eta_init
         call set_eta_init(mbc,mx,my,xlower,ylower,dx,dy,t0,veta)
-      else
+        ! DIG: this is redundant to current method of passing a file.
+    else
         veta = sea_level  ! same value everywhere
-      endif
+    endif
 
     q(:,:,:) = 0.d0   ! set all to zero (set further below)
 
@@ -191,7 +192,9 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          do i=1-mbc,mx+mbc
                if (initm.eq.0) then
                   if (dabs((q(1,i,j) + aux(1,i,j))-veta(i,j)).lt.1d-6) then
-                    q(4,i,j) = 0.d0 ! DIG: check that this is right.
+                    q(4,i,j) = 0.d0 ! If eta is sea level (stored in veta), assume m is zero
+                    ! DIG: This may need to change if treatment of sea level does not use veta.
+                    ! potentially have a m0fill and m0perm
                   else
                     q(4,i,j) = m0*q(1,i,j)
                   endif
