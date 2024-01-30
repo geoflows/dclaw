@@ -190,7 +190,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          do i=1-mbc,mx+mbc
                if (initm.eq.0) then
                   if (dabs((q(1,i,j) + aux(1,i,j))-veta(i,j)).lt.1d-6) then
-                    q(4,i,j) = 0.d0 ! DIG: check that this is right. 
+                    q(4,i,j) = 0.d0 ! DIG: check that this is right.
                   else
                     q(4,i,j) = m0*q(1,i,j)
                   endif
@@ -225,12 +225,9 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       ! DIG - consider making pressures here reflect rho_fp and any other
       ! changes associated with hchi.
 
-      ! DIG - if restart p_initialized needs to be zero. can we know restart here and
-      ! bypass.
       select case (init_ptype)
          case (-1)
             !p should already be 0 or set by qinit file
-            p_initialized = 1
          case (0)
             !set to hydrostatic
             do i=1-mbc,mx+mbc
@@ -243,7 +240,6 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                  q(5,i,j) = rho_f*gmod*q(1,i,j)
                enddo
             enddo
-            p_initialized = 1
          case(1:2) ! DIG: Not yet tested
             !set to failure
             do i=1-mbc,mx+mbc
@@ -267,32 +263,6 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   q(5,i,j) = p_ratioij*rho_dig*gmod*q(1,i,j)
                enddo
             enddo
-            p_initialized = 1
-
-         ! DIG: remove cases three and 4.
-
-         case(3:4) ! DIG: Not yet tested
-            !p will be updated in b4step2
-            do i=1-mbc,mx+mbc
-               do j=1-mbc,my+mbc
-                 p_ratioij = init_pmin_ratio
-                 if (q(1,i,j).le.dry_tolerance) then
-                     q(5,i,j) = init_pmin_ratio*rho_f*gmod*q(1,i,j)
-                     cycle
-                 endif
-                 call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j), &
-                             q(4,i,j),q(5,i,j),u,v,sv,aux(i_theta,i,j))
-                 if (bed_normal.eq.1) then
-                     gmod = grav*cos(aux(i_theta,i,j))
-                     p_ratioij = init_pmin_ratio &
-                         + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(1,i,j)
-                 endif
-                 rho = sv*rho_s + (1.0-sv)*rho_f
-                     pfail = p_ratioij*rho_dig*gmod*q(1,i,j)
-                     q(5,i,j) = pfail - abs(pfail)
-               enddo
-            enddo
-            p_initialized = 0
 
       end select
 

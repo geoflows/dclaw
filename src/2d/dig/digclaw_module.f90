@@ -11,7 +11,7 @@ module digclaw_module
     double precision :: rho_s,rho_f,phi_bed,theta_input,delta,kappita
     double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,entrainment_rate
 
-    integer :: init_ptype,p_initialized,bed_normal,entrainment,curvature
+    integer :: init_ptype,bed_normal,entrainment,curvature
     double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
     double precision :: chi_init_val
@@ -192,7 +192,6 @@ contains
          read(iunit,*) init_ptf2
          close(unit=iunit)
 
-         p_initialized = 0
          init_pmin_ratio = 1.d16
          grad_eta_max = 0.d0
          cohesion_max = 0.d0
@@ -208,8 +207,6 @@ contains
          write(DIG_PARM_UNIT,*) '    init_pmax_ratio:',init_pmax_ratio
          write(DIG_PARM_UNIT,*) '    init_ptf:',init_ptf
          close(DIG_PARM_UNIT)
-
-         ! DIG if restart, p_initialized must be set to 1.
 
    end subroutine set_pinit
 
@@ -344,7 +341,7 @@ contains
          compress = alpha/(m*(sigbed +  sigma_0))
       endif
 
-      if (p_initialized.eq.0.and.vnorm.le.0.d0) then
+      if (vnorm.le.0.d0) then
          tanpsi = 0.d0
          D = 0.d0
       elseif (h*mu.gt.0.d0) then

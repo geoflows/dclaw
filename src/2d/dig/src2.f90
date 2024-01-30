@@ -9,7 +9,7 @@
       use digclaw_module, only: alpha,alpha_seg,bed_normal,curvature
       use digclaw_module, only: entrainment,entrainment_rate
       use digclaw_module, only: i_ent,i_fsphi,i_phi,i_theta
-      use digclaw_module, only: mu,p_initialized,rho_f,sigma_0
+      use digclaw_module, only: mu,rho_f,sigma_0
       use digclaw_module, only: admissibleq,auxeval
       use digclaw_module, only: calc_pmtanh
 
@@ -55,7 +55,6 @@
       ! it will be manning_coefficient(1)
       ! DIG: FIX.
 
-      !write(*,*) 'src:init,value',p_initialized,init_pmin_ratio
       if (entrainment>0) then
          ent = .true.
       else
@@ -121,8 +120,6 @@
                hu = hvnorm*hu/hvnorm0
                hv = hvnorm*hv/hvnorm0
             endif
-
-            if (p_initialized==0) cycle
 
             ! call admissible q and auxeval before moving on to shear induced
             ! dilatancy.
