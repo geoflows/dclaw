@@ -177,7 +177,7 @@ c        !set normal direction
          if (hR.le.drytol) then
             hR = 0.d0
             pR = 0.d0
-            mR=mL ! DIG: KRB added this back 1/11/2024
+            mR=mL ! KRB added this back 1/11/2024
             chiR = chiL
             drystate=.true.
             call riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,
@@ -207,7 +207,7 @@ c                bR=hstartest+bL
          elseif (hL.le.drytol) then ! right surface is lower than left topo
             hL = 0.d0
             pL = 0.d0
-            mL = mR ! DIG: KRB added this back 1/11/2024
+            mL = mR ! KRB added this back 1/11/2024
             chiL= chiR
             drystate=.true.
             call riemanntype(hR,hR,-uR,uR,hstar,s1m,s2m,
