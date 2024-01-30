@@ -150,8 +150,8 @@ contains
         
         ! Topography integral function
         real(kind=8) :: topointegral
-        
-        if (qinit_type > 0) then ! DIG Check loop order.
+
+        if (qinit_type > 0) then
             do j=1-mbc,my+mbc
                 y = ylow_patch + (j-0.5d0)*dy
                 yjm = y - 0.5d0*dy
