@@ -607,8 +607,8 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       gmod = grav
       rho = m0*rho_s + (1.d0-m0)*rho_f
 
-      do i=1,mx
-         do j=1,my
+      do j=1,my
+         do i=1,mx
 
             h = q(1,i,j)
             hL = q(1,i-1,j)
