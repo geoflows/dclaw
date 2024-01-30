@@ -402,7 +402,8 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       gmod = grav
 
       do j=2-mbc,my+mbc-1
-         do i=2-mbc,mx+mbc-1 ! DIG : check loop order
+         do i=2-mbc,mx+mbc-1
+
 
             h = q(1,i,j)
             hu = q(2,i,j)
