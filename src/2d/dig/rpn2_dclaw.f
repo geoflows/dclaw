@@ -254,8 +254,6 @@ c        !eliminate ghost fluxes for wall
             enddo
          enddo
 
-         ! DIG : Check all indexing. 
-
 c============segregation================================================
 
          s(1,i) = sw(1)
