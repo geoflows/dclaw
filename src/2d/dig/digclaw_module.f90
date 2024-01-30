@@ -518,9 +518,10 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             vnorm = sqrt(hu**2 + hv**2)
             if (vnorm>0.d0) then ! If moving.
 
-               ! DIG: check to see if adding dx and dy works everywhere. added in 4.x-->5.0
-               ! DIG: 1/13/24 - adding dx here provides equivalent results to dclaw4. removing
-               ! dx from rpn/riemann
+               ! In D-Claw 4 dx and dy were accessible in the riemann solver.
+               ! To fix in the transition, dx and dy are multiplied by taudir_x and y
+               ! here. This works for everything except for bed normal and produces
+               ! equivalent results (1/13/24)
                aux(i_taudir_x,i,j) = -dx*hu/vnorm
                aux(i_taudir_y,i,j) = -dy*hv/vnorm
                dot = min(max(0.d0,Fx*hu) , max(0.d0,Fy*hv))
@@ -546,7 +547,6 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             else
                !aux now have cell edge interpretation in Riemann solver
                !friction should oppose net force. resolve in Riemann solver
-               !DIG: check to see if adding dx and dy works everywhere. added in 4.x-->5.0
                if ((FxL**2+Fy**2)>0.d0) then
                   aux(i_taudir_x,i,j) = -dx*FxL/sqrt(FxL**2+Fy**2)
                else
