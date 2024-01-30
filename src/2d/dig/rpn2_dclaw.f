@@ -31,7 +31,8 @@ c
       use geoclaw_module, only: earth_radius, deg2rad
       use amr_module, only: mcapa
 
-      use digclaw_module ! DIG: specify which variables.
+      use digclaw_module, only: bed_normal,i_theta,admissibleq
+      use digclaw_module, only: i_fsphi,i_phi,i_taudir_x,i_taudir_y
 
       implicit none
 
