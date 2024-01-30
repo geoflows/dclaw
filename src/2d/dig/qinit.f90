@@ -1,7 +1,7 @@
 
 subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
-    use geoclaw_module, only: sea_level,grav
+    use geoclaw_module, only: sea_level,grav,coordinate_system,dry_tolerance
     use amr_module, only: t0
     use qinit_module, only: qinit_type,add_perturbation
     use qinit_module, only: variable_eta_init
@@ -12,10 +12,14 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     use qinit_module, only: yhiqinit,ylowqinit
     use qinit_module, only: dx_fdry, dy_fdry
     use qinit_module, only: tend_force_dry
-    use qinit_module, only: qinitwork
+    use qinit_module, only: qinitwork,mqinitfiles
+
 
     use digclaw_module, only: admissibleq,calc_pmin,calc_taudir
+    use digclaw_module, only: bed_normal,chi_init_val,init_ptype
+    use digclaw_module, only: i_theta,m0,rho_f,rho_s,init_pmin_ratio
 
+    implicit none
 
     ! Subroutine arguments
     integer, intent(in) :: meqn,mbc,mx,my,maux
@@ -24,12 +28,15 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
     ! Locals
-    integer :: i,j,m, ii,jj
-    real(kind=8) :: x,y
+    integer :: i,j,m,ii,jj,i1,i2,iend,istart,jstart,jend,mf
+    integer :: initchi,initm,initpv,initu,initv
+    real(kind=8) :: x,y,xc,xhigher,xim,ximc,xinthi,xintlow,xip,xipc
+    real(kind=8) :: yc,yhigher,yinthi,yintlow,yjm,yjmc,yjp,yjpc
     real(kind=8) :: veta(1-mbc:mx+mbc,1-mbc:my+mbc)
     real(kind=8) :: ddxy
-    real(kind=8) :: u,v,sv
-
+    real(kind=8) :: u,v,sv,dq,gmod,p_ratioij,rho
+    ! Topography integral function
+    real(kind=8) :: topointegral
 
     if (variable_eta_init) then
         ! Set initial surface eta based on eta_init
@@ -262,10 +269,9 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                          + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(1,i,j)
                   endif
 
-                  rho_dig = sv*rho_s + (1.d0-sv)*rho_f
-                  !!DIG rho array in geoclaw_module conflicts
+                  rho = sv*rho_s + (1.d0-sv)*rho_f
 
-                  q(5,i,j) = p_ratioij*rho_dig*gmod*q(1,i,j)
+                  q(5,i,j) = p_ratioij*rho*gmod*q(1,i,j)
                enddo
             enddo
 
