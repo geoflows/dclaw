@@ -203,9 +203,9 @@
 
                      ! calculate top and bottom shear stress.
                      t1bot = beta2*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d0-2.d0))
-                     beta = 1.d0-m!tanh(10.d0*m)
+                     beta = 1.d0-m
 
-                     t1bot = t1bot + tau!+p*tan(phi)
+                     t1bot = t1bot + tau
 
                      t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
 
