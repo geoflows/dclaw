@@ -11,7 +11,7 @@ module digclaw_module
     double precision :: rho_s,rho_f,phi_bed,theta_input,delta,kappita
     double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,entrainment_rate
 
-    integer :: init_ptype,p_initialized,bed_normal,entrainment,curvature
+    integer :: init_ptype,bed_normal,entrainment,curvature
     double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
     double precision :: chi_init_val
@@ -188,11 +188,10 @@ contains
          call opendatafile(iunit, file_name)
          read(iunit,*) init_ptype
          read(iunit,*) init_pmax_ratio
-         read(iunit,*) init_ptf
+         read(iunit,*) init_ptf ! DIG - some of these parameters are no longer needed
          read(iunit,*) init_ptf2
          close(unit=iunit)
 
-         p_initialized = 0
          init_pmin_ratio = 1.d16
          grad_eta_max = 0.d0
          cohesion_max = 0.d0
@@ -208,8 +207,6 @@ contains
          write(DIG_PARM_UNIT,*) '    init_pmax_ratio:',init_pmax_ratio
          write(DIG_PARM_UNIT,*) '    init_ptf:',init_ptf
          close(DIG_PARM_UNIT)
-
-         ! DIG if restart, p_initialized must be set to 1.
 
    end subroutine set_pinit
 
@@ -266,10 +263,14 @@ contains
       pmax = rho*gmod*h
       plo = rho_f*dry_tol*gmod*dry_tol
       phi = pmax - plo
+      ! DIG : at a later time, with some testing, change this to
+      ! plo = 0d0 and phi = pmax (KRB and DLG, 1/30/2024)
       if (p.lt.plo) then
          if ((u**2+v**2)>0.d0) then
             p = dmax1(0.d0,p)
             ! DIG: why is this not enforced when static as well.
+            ! This should also probably change along with the prior
+            ! lines (KRB and DLG, 1/30/2024)
          endif
       elseif (p.gt.phi) then
          p = dmin1(pmax,p)
@@ -344,7 +345,7 @@ contains
          compress = alpha/(m*(sigbed +  sigma_0))
       endif
 
-      if (p_initialized.eq.0.and.vnorm.le.0.d0) then
+      if (vnorm.le.0.d0) then
          tanpsi = 0.d0
          D = 0.d0
       elseif (h*mu.gt.0.d0) then
@@ -354,7 +355,6 @@ contains
       endif
 
       tanphi = dtan(phi_bed + datan(tanpsi))
-      ! DIG: is this from aux(i_phi)?
 
       tau = dmax1(0.d0,sigbed*tanphi)
 
@@ -363,40 +363,6 @@ contains
 
    end subroutine auxeval
 
-
-   !====================================================================
-   !subroutine psieval: evaluate the source term
-   !====================================================================
-   ! DIG: Is this used?
-   subroutine psieval(tau,rho,D,tanpsi,kperm,compress,h,u,m,psi)
-
-      implicit none
-
-      !i/o
-      double precision, intent(out) :: psi(4)
-      double precision, intent(in)  :: tau,rho,D,tanpsi,kperm,compress
-      double precision, intent(in)  :: h,u,m
-
-      !local
-      double precision :: taushear,drytol,vnorm
-
-      drytol = dry_tolerance
-
-      taushear = (tau/rho)*dsign(1.d0,u)
-      vnorm = dabs(u)
-      if (h.lt.drytol.or..true.) then
-         psi(1) = 0.d0
-         psi(2) = 0.d0
-         psi(3) = 0.d0
-         psi(4) = 0.d0
-      else
-         psi(1) =  D*(rho-rho_f)/rho
-         psi(2) =  u*D*(rho-rho_f)/rho
-         psi(3) = -D*m*(rho_f/rho)
-         psi(4) = 0.d0
-      endif
-
-   end subroutine psieval
 
    ! ========================================================================
    !  calc_taudir
@@ -439,18 +405,25 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       gmod = grav
 
       do j=2-mbc,my+mbc-1
-         do i=2-mbc,mx+mbc-1 ! DIG : check loop order
+         do i=2-mbc,mx+mbc-1
+
+            if (bed_normal.eq.1) then
+              theta = aux(i_theta,i,j)
+              thetaL = aux(i_theta,i-1,j)
+              thetaB = aux(i_theta,i,j-1)
+              gmod = grav*cos(theta)
+            else
+              theta = 0.d0
+              thetaL = 0.d0
+              thetaB = 0.d0
+            endif
 
             h = q(1,i,j)
             hu = q(2,i,j)
             hv = q(3,i,j)
             hm = q(4,i,j)
-            if (h<dry_tol) then
-               hu=0.d0
-               hv=0.d0
-               hm=0.d0
-            endif
             p  = q(5,i,j)
+            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
             b = aux(1,i,j)
             eta = h+b
             phi = aux(i_phi,i,j)
@@ -460,6 +433,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvL= q(3,i-1,j)
             hmL = q(4,i-1,j)
             pL  = q(5,i-1,j)
+            call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
             bL = aux(1,i-1,j)
             etaL= hL+bL
             if (hL<dry_tol) then
@@ -471,6 +445,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvR= q(3,i+1,j)
             hmR = q(4,i+1,j)
             pR  = q(5,i+1,j)
+            call admissibleq(hR,huR,hvR,hmR,pR,uR,vR,mR,theta)
             bR = aux(1,i+1,j)
             etaR= hR+bR
             if (hR<dry_tol) then
@@ -482,6 +457,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvB= q(3,i,j-1)
             hmB = q(4,i,j-1)
             pB  = q(5,i,j-1)
+            call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
             bB = aux(1,i,j-1)
             etaB= hB+bB
             if (hB<dry_tol) then
@@ -493,6 +469,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvT= q(3,i,j+1)
             hmT = q(4,i,j+1)
             pT  = q(5,i,j+1)
+            call admissibleq(hT,huT,hvT,hmT,pT,uT,vT,mT,theta)
             bT = aux(1,i,j+1)
             etaT= hT+bT
             if (hT<dry_tol) then
@@ -511,25 +488,8 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                cycle
             endif
 
-            if (bed_normal.eq.1) then
-               theta = aux(i_theta,i,j)
-               thetaL = aux(i_theta,i-1,j)
-               thetaB = aux(i_theta,i,j-1)
-               gmod = grav*cos(theta)
-            else
-               theta = 0.d0
-               thetaL = 0.d0
-               thetaB = 0.d0
-            endif
 
             pm = 0.5d0 !does not effect tau. only need tau in different cells
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
-            call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
-            call admissibleq(hR,huR,hvR,hmR,pR,uR,vR,mR,theta)
-            call admissibleq(hT,huT,hvT,hmT,pT,uT,vT,mT,theta)
-
-
             call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
             call auxeval(hL,uL,vL,mL,pL,phi,theta,kappa,S,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pm)
             call auxeval(hR,uR,vR,mR,pR,phi,theta,kappa,S,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pm)
@@ -561,9 +521,10 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             vnorm = sqrt(hu**2 + hv**2)
             if (vnorm>0.d0) then ! If moving.
 
-               ! DIG: check to see if adding dx and dy works everywhere. added in 4.x-->5.0
-               ! DIG: 1/13/24 - adding dx here provides equivalent results to dclaw4. removing
-               ! dx from rpn/riemann
+               ! In D-Claw 4 dx and dy were accessible in the riemann solver.
+               ! To fix in the transition, dx and dy are multiplied by taudir_x and y
+               ! here. This works for everything except for bed normal and produces
+               ! equivalent results (1/13/24)
                aux(i_taudir_x,i,j) = -dx*hu/vnorm
                aux(i_taudir_y,i,j) = -dy*hv/vnorm
                dot = min(max(0.d0,Fx*hu) , max(0.d0,Fy*hv))
@@ -589,7 +550,6 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             else
                !aux now have cell edge interpretation in Riemann solver
                !friction should oppose net force. resolve in Riemann solver
-               !DIG: check to see if adding dx and dy works everywhere. added in 4.x-->5.0
                if ((FxL**2+Fy**2)>0.d0) then
                   aux(i_taudir_x,i,j) = -dx*FxL/sqrt(FxL**2+Fy**2)
                else
@@ -616,133 +576,6 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
 end subroutine calc_taudir
 
-   ! ========================================================================
-   !  calc_tausplit
-   ! ========================================================================
-   !  Determines splitting of tau for rp vs. src.
-   ! ========================================================================
-
-   ! DIG: not currently used.
-
-subroutine calc_tausplit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
-
-
-      implicit none
-
-      !Input
-      double precision :: dx,dy,xlower,ylower
-      double precision :: q(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
-      double precision :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
-      integer :: mx,my,mbc,meqn,maux
-
-      !Locals
-      double precision :: h,hL,hR,hu,hv,hm,p,b,bL,bR,bT,bB,hT,hB,u,v,m
-      double precision :: phi,theta,rho,kappa,S,tanpsi,D,tau,sigbed,kperm,compress,pm
-      double precision :: gmod,dry_tol
-      double precision :: EtaL,EtaR,EtaT,EtaB,Eta
-      double precision :: detadx,detadxL,detadxR,detady,detadyT,detadyB
-      double precision :: grad_eta
-
-
-      integer :: i,j
-
-      dry_tol = dry_tolerance
-      gmod = grav
-      rho = m0*rho_s + (1.d0-m0)*rho_f
-
-      do i=2-mbc,mx+mbc-1
-         do j=2-mbc,my+mbc-1
-
-            h = q(1,i,j)
-            hL = q(1,i-1,j)
-            hR = q(1,i+1,j)
-            if (h<dry_tol) then
-               aux(i_fsphi,i,j) = 1.d0
-               cycle
-            endif
-
-            hu = q(2,i,j)
-            hv = q(3,i,j)
-            hm = q(4,i,j)
-            p  = q(5,i,j)
-
-            if ((hu**2 + hv**2)==0.d0) then
-               aux(i_fsphi,i,j) = 1.d0
-               !cycle
-            endif
-
-            b = aux(1,i,j)
-            bR = aux(1,i+1,j)
-            bL = aux(1,i-1,j)
-            phi = aux(i_phi,i,j)
-
-            hT = q(1,i,j+1)
-            bT = aux(1,i,j+1)
-            hB = q(1,i,j-1)
-            bB = aux(1,i,j-1)
-
-            if (bed_normal.eq.1) then
-               theta = aux(i_theta,i,j)
-               gmod = grav*cos(theta)
-            else
-               theta = 0.d0
-            endif
-
-            Eta  = h+b
-            !---------max deta/dx-------------------
-            EtaR = hR+bR
-            EtaL = hL+bL
-            if (hR<=dry_tol) then
-               EtaR = min(Eta,bR)
-            endif
-            if (hL<=dry_tol) then
-               EtaL = min(Eta,bL)
-            endif
-            detadxR = (EtaR-Eta)/dx -tan(theta)
-            detadxL = (Eta-EtaL)/dx -tan(theta)
-            if (detadxR*detadxL<=0.d0) then
-               detadx = 0.d0
-            elseif (abs(detadxR)>abs(detadxL)) then
-               detadx = detadxL
-            else
-               detadx = detadxR
-            endif
-
-
-            !---------max deta/dy-------------------
-            EtaT = hT+bT
-            EtaB = hB+bB
-            if (hT<=dry_tol) then
-               EtaT = min(Eta,bT)
-            endif
-            if (hB<=dry_tol) then
-               EtaB = min(Eta,bB)
-            endif
-            detadyT = (EtaT-Eta)/dy
-            detadyB = (Eta-EtaB)/dy
-            if (detadyT*detadyB<=0.d0) then
-               detady = 0.d0
-            elseif (abs(detadyT)>abs(detadyB)) then
-               detady = detadyB
-            else
-               detady = detadyT
-            endif
-
-            grad_eta = sqrt(detadx**2 + detady**2)
-
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            pm = q(6,i,j)/q(1,i,j)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-
-            if (tau>0.d0) then
-               aux(i_fsphi,i,j) = min(1.d0,grad_eta*rho*gmod*h/tau)
-            else
-               aux(i_fsphi,i,j) = 1.d0
-            endif
-         enddo
-      enddo
-
-   end subroutine calc_tausplit
 
    ! ========================================================================
    !  calc_pmin
@@ -777,8 +610,8 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       gmod = grav
       rho = m0*rho_s + (1.d0-m0)*rho_f
 
-      do i=1,mx
-         do j=1,my
+      do j=1,my
+         do i=1,mx
 
             h = q(1,i,j)
             hL = q(1,i-1,j)

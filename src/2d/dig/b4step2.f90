@@ -46,8 +46,8 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     ! check for h < 0 and reset to zero
     ! check for h < drytolerance
     ! set other variables appropriately for these cells
-    
-    do j=1-mbc,my+mbc ! DIG : Check loop order
+
+    do j=1-mbc,my+mbc
         do i=1-mbc,mx+mbc
             theta = 0.d0
             if (bed_normal.eq.1) theta=aux(i_theta,i,j)

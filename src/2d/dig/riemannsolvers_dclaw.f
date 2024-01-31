@@ -56,13 +56,13 @@ c-----------------------------------------------------------------------
       veltol2=0.d0
       criticaltol=1.d-6
       drytol = dry_tolerance
-      
+
       do m=1,4
          psi(m) = 0.d0
       enddo
 
 
-      ! DIG: move segregation into segeval() that 
+      ! DIG: move segregation into segeval() that
       ! adjusts rho_fp, etc.
 
       pmL = chiL
@@ -255,73 +255,40 @@ c     !find bounds in case of critical state resonance, or negative states
 
       if (ixy.eq.1) then
          ! DIG: note that theta = 0.0 unless bed_normal is true. For now, assume bed_normal is false. Resolve if dx is needed later.
-         source2dx = source2dx !+ dx*hbar*grav*dsin(theta) ! DIG KRB: this may be the only place dx is needed here
+         source2dx = source2dx !+ dx*hbar*grav*dsin(theta)
+         ! DIG: this is the only place dx is needed
+         ! until fixed, bed_normal = 1 yields error in make .data (1/30/24)
       endif
 
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
-      !vnorm = sqrt(u**2 + v**2)
       if (vnorm>0.0d0) then
-         !tausource = - dx*0.5*(tauL/rhoL + tauR/rhoR)*u/vnorm
-         !tausource = - dx*max(tauL/rhoL , tauR/rhoR)*u/vnorm
-         !tausource =  0.0!dx*tauR*taudir/rhoR
-         !tausource = - dx*0.5*(tau/rho)*u/vnorm
-         !if (  (.not.wallprob).and.((-uR*taudirR)<0.0)) then
-         !   write(*,*) 'wtf:', uR,taudirR
-         !   write(*,*) 'fsR', fsR
-         !   write(*,*) 'ixy', ixy
-         !endif
+
+         tausource =  0.0d0 ! if vnorm>0 then src2 handles friction.
+
+      elseif (0.5d0*abs(taudirR*tauR/rhoR + tauL*taudirR/rhoL)
+     &      .gt.abs(del(2) - source2dx)) then
 
 
-         !DIG: check -- why are taudirL and taudirR treated differently?
-         ! could this be a symmetry issue?
-         if ((uL**2 + vL**2)==0.0d0) then
-            taudirL = taudirR
-         else
-            taudirL = -uL/sqrt(uL**2 + vL**2)
-         endif
+!       DIG Symmetry: should this be RRR, LLL? It is symmetric in the line above
+!       that is commented out. Leaving as is b/c it is the same in dclaw4 and dclaw5
+!       KRB&MJB - 1/12/24
 
-         if ((uR**2 + vR**2)>0.0d0) then
-            taudirR = -uR/sqrt(uR**2 + vR**2)
-         endif
-         !DIG: deterine if we can redefine tau or an aux array to eliminate need for dx
-         !DIG: note: below tausource was 0.0 in 4.x also (friction ignored for moving material, treated in src2.)
-         tausource =  0.0d0!*dx*0.5*(taudirL*tauL/rhoL + tauR*taudirR/rhoR)
-      !elseif (dx*max(abs(tauL*taudirL/rhoL),abs(tauR*taudirR/rhoR))
-      
-         !DIG: check dx
-
-      elseif (0.5d0*abs(taudirR*tauR/rhoR + tauL*taudirR/rhoL)!*dx ! DIG krbdxfix
-         
-         ! DIG Symmetry: should this be RRR, LLL? It is symmetric in the line above 
-         ! that is commented out. Leaving as is b/c it is the same in dclaw4 and dclaw5
-         ! KRB&MJB - 1/12/24 
-         
-     &      .gt.abs(del(2) - source2dx)) then ! abs(del(2) - source2dx) was not adjusted by dx
-      
-         !no failure
+         ! no failure of static material
          tausource = del(2) - source2dx
          del(1) = 0.0d0
          del(0) = 0.0d0
          del(4) = 0.0d0
       else
-         !failure
-         !tausource =   sign(abs(dx*0.5*taudir*(tauL/rhoL + tauR/rhoR))
-         !tausource =   sign(abs(dx*0.5*tau/rho)
-         !tausource =   dx*taudir*tauR/rhoR
-         
+         ! failure of static material
          tausource = 0.5d0*((taudirR*tauR/rhoR)+(tauL*taudirR/rhoL))!*dx
          tausource = dsign(tausource,del(2)-source2dx)
       endif
+
       if (wallprob) then
          tausource = 0.0d0
       endif
 
       del(2) = del(2) - source2dx  - tausource
-      !del(4) = del(4) + dx*3.0*vnorm*tanpsi/(h*compress)
-
-c      del(1) = del(1) - 0.5d0*dx*psi(1)
-c      del(2) = del(2) - dx*psi(2)
-c      del(4) = del(4) - 0.5d0*dx*psi(4)
 
       !--------theta--------------------
       if (sw(1).ge.0.d0) then
@@ -352,7 +319,7 @@ c      del(4) = del(4) - 0.5d0*dx*psi(4)
             A(m+1,mw+1)=R(m,mw+1)
          enddo
       enddo
-      
+
       call gaussj(A,3,3,beta,1,1)
 
       do mw=1,3
@@ -375,8 +342,6 @@ c      del(4) = del(4) - 0.5d0*dx*psi(4)
       fw(5,1) = fw(1,1)*gammaL*rhoL*grav*dcos(theta1)
       fw(5,3) = fw(1,3)*gammaR*rhoR*grav*dcos(theta3)
       fw(5,2) = del(4) - fw(5,3) - fw(5,1)
-      !fw(5,2) = sw(2)*(del(3)-grav*(gammaL*rhoL*dcos(theta1)*beta(1)
-      !&      +       gammaR*rhoR*dcos(theta3)*beta(3)))
 
 
       !fwaves for segregation

@@ -9,7 +9,7 @@
       use digclaw_module, only: alpha,alpha_seg,bed_normal,curvature
       use digclaw_module, only: entrainment,entrainment_rate
       use digclaw_module, only: i_ent,i_fsphi,i_phi,i_theta
-      use digclaw_module, only: mu,p_initialized,rho_f,sigma_0
+      use digclaw_module, only: mu,rho_f,sigma_0
       use digclaw_module, only: admissibleq,auxeval
       use digclaw_module, only: calc_pmtanh
 
@@ -53,9 +53,8 @@
       ! take the first element for now. If only one value is
       ! provided to geo_data.manning_coefficient
       ! it will be manning_coefficient(1)
-      ! DIG: FIX.
+      ! DIG: Decide if this should be handled in some other way.
 
-      !write(*,*) 'src:init,value',p_initialized,init_pmin_ratio
       if (entrainment>0) then
          ent = .true.
       else
@@ -65,8 +64,9 @@
       do j=1-mbc+1,my+mbc-1
          do i=1-mbc+1,mx+mbc-1
          ! DIG: 1/12/24: KRB and MJB notice that here we are looping over ghost cells.
-         ! These ghost cells have not been updated by the reimann solver? Are they used
-         ! meaningfully (e.g., theta is diffed below. )
+         ! These ghost cells have not been updated by the riemann solver? Are they used
+         ! meaningfully (e.g., theta is diffed below.)
+         ! 1/30/2024 - Leaving this as is for the moment, this is something to evaluate later.
 
             ! adjust gravity if bed_normal = 1
             theta = 0.d0
@@ -122,8 +122,6 @@
                hv = hvnorm*hv/hvnorm0
             endif
 
-            if (p_initialized==0) cycle
-
             ! call admissible q and auxeval before moving on to shear induced
             ! dilatancy.
             call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
@@ -139,7 +137,8 @@
                p = p - dt*3.d0*vnorm*tanpsi/(h*compress)
             endif
 
-            !DIG move segregation to segeval
+            ! update pmtanh01 and rho_fp for segregation
+            ! DIG: if segregation is compartmentalized
             if (dabs(alpha_seg-1.d0)<1.d-6) then
          		seg = 0.d0
                rho_fp = rho_f
@@ -150,7 +149,7 @@
                rho_fp = max(0.d0,(1.d0-pmtanh01))*rho_f
       		endif
 
-            !integrate pressure relaxation
+            ! integrate pressure relaxation
             zeta = ((m*(sigbed +  sigma_0))/alpha)*3.d0/(h*2.d0)  + (rho-rho_fp)*rho_fp*gmod/(4.d0*rho)
             krate=-zeta*2.d0*kperm/(h*max(mu,1.d-16))
             p_eq = h*rho_fp*gmod
@@ -187,38 +186,54 @@
                   dbdv = (u*b_x+v*b_y)/vnorm
                   slopebound = 1.d10
                   b_eroded = q(7,i,j)
+
                   if (dbdv<slopebound.and.b_eroded<aux(i_ent,i,j)) then
                      b_remaining = aux(i_ent,i,j)-b_eroded
+
+                     ! value for m for entrained material
                      m2 = 0.6d0
+                     ! eventually make this a user defined variable or an aux value.
+                     ! should there also be a substrate value for chi?
+
+                     ! calculate entrained material density, using default values
+                     ! for rho_f and rho_s
                      rho2 = m2*2700.d0 + (1.d0-m2)*1000.d0
+
                      beta2 = 0.66d0
+
+                     ! calculate top and bottom shear stress.
                      t1bot = beta2*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d0-2.d0))
-                     !write(*,*) '------------'
-                     !write(*,*) 'vu',t1bot
-                     beta = 1.d0-m!tanh(10.d0*m) !tan(1.5d0*p/(rho*gmod*h))/14.0d0
-                     !! DIG not used. segfault. gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d0-2.d0)**(1.0d0/3.0d0))
-                     !write(*,*) 'gamma', gamma
-                     !! DIG not used. segfault. t1bot = t1bot + gamma
-                     t1bot = t1bot + tau!+p*tan(phi)
-                     !write(*,*) 'tau',tau
+                     beta = 1.d0-m
+
+                     t1bot = t1bot + tau
+
                      t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
-                     !write(*,*) 't2top',t2top
+
+                     ! calculate pressure ratio
                      prat = p/(rho*h)
-                     !dh = dt*(t1bot-t2top)/(beta2*tanh(vnorm+1.d-2)*rho2)
+
+                     ! regularize v
                      vreg = ((vnorm-vlow)**2/((vnorm-vlow)**2+1.d0))
+
                      dtcoeff = entrainment_rate*dt*vreg/(beta2*(vnorm+vlow)*rho2)
-                     !dh = dtcoeff*t1bot/(1.d0 + dtcoeff*tan(phi))
-                     dh = dtcoeff*(t1bot-t2top)
+
+                     ! calculate dh
                      dh = entrainment_rate*dt*(t1bot-t2top)/(rho2*beta2*vnorm)
-                     !write(*,*) 'dh/dt', dh/dt
                      dh = min(dh,b_remaining)
+
+                     ! increment h based on dh
                      h = h + dh
                      hm = hm + dh*m2
+
+                     ! store amount eroded in q7
                      q(7,i,j) = q(7,i,j) + dh
 
                      call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                      call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
+
+                     ! update pressure based on prior pressure ratio.
                      p = prat*rho*h
+
                      call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                   endif
                endif

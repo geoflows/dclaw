@@ -31,7 +31,8 @@ c
       use geoclaw_module, only: earth_radius, deg2rad
       use amr_module, only: mcapa
 
-      use digclaw_module ! DIG: specify which variables.
+      use digclaw_module, only: bed_normal,i_theta,admissibleq
+      use digclaw_module, only: i_fsphi,i_phi,i_taudir_x,i_taudir_y
 
       implicit none
 
@@ -176,7 +177,7 @@ c        !set normal direction
          if (hR.le.drytol) then
             hR = 0.d0
             pR = 0.d0
-            mR=mL ! DIG: KRB added this back 1/11/2024
+            mR=mL ! KRB added this back 1/11/2024
             chiR = chiL
             drystate=.true.
             call riemanntype(hL,hL,uL,-uL,hstar,s1m,s2m,
@@ -206,7 +207,7 @@ c                bR=hstartest+bL
          elseif (hL.le.drytol) then ! right surface is lower than left topo
             hL = 0.d0
             pL = 0.d0
-            mL = mR ! DIG: KRB added this back 1/11/2024
+            mL = mR ! KRB added this back 1/11/2024
             chiL= chiR
             drystate=.true.
             call riemanntype(hR,hR,-uR,uR,hstar,s1m,s2m,
@@ -252,8 +253,6 @@ c        !eliminate ghost fluxes for wall
                fw(m,mw)=fw(m,mw)*wall(mw)
             enddo
          enddo
-
-         ! DIG : Check all indexing. 
 
 c============segregation================================================
 
@@ -342,9 +341,17 @@ c============= compute fluctuations=============================================
 
 
 ! DIG: 1/11/2024: KRB & MJB close comparing dclaw4 and dclaw5. These next four
-! lines were commented out in dclaw4. We probably want them because in 
-! geoclaw5 they are used. Keeping commented for now to do a debug ensuring 
+! lines were commented out in dclaw4. We probably want them because in
+! geoclaw5 they are used. Keeping commented for now to do a debug ensuring
 ! identical behavior of dclaw4 and dclaw5.
+
+! if there is a wave speed of zero (s(mw,i)) and there is a jump in the
+! flux (fwave(1:meqn,mw,i)>0) then split the fwave value equally between the
+! two directions (plus and minus)
+
+! Because of how the source term is handled, DLG does not think we should add
+! this back in. (1/30/2024) Also unclear how often s(mw,i)=0 and
+! fwave(1:meqn,mw,i)>0 occurs.
 
 !                 amdq(1:meqn,i) = amdq(1:meqn,i)
 !     &                              + 0.5d0 * fwave(1:meqn,mw,i)
