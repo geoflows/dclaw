@@ -240,31 +240,33 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
 
             if (q(1,i,j) > dry_tolerance) then
 
-                if(adjoint_flagging) then
-                    if(aux(innerprod_index,i,j) > tolsp) then
-                        amrflags(i,j) = DOFLAG
-                        cycle x_loop
-                    endif
-                else
-                
-                    ! Check wave criteria
-                    eta = q(1,i,j) + aux(1,i,j)
-                    if (abs(eta - sea_level) > wave_tolerance) then
-                        amrflags(i,j) = DOFLAG
-                        cycle x_loop
-                    endif
+! DIG: D-claw not yet compatible with adjoint
+!                if(adjoint_flagging) then
+!                    if(aux(innerprod_index,i,j) > tolsp) then
+!                        amrflags(i,j) = DOFLAG
+!                        cycle x_loop
+!                    endif
+!                else
 
-                    ! Check speed criteria, note that it might be useful to
-                    ! also have a per layer criteria since this is not
-                    ! gradient based
-                    speed = sqrt(q(2,i,j)**2 + q(3,i,j)**2) / q(1,i,j)
-                    do m=1,min(size(speed_tolerance),mxnest)
-                        if (speed > speed_tolerance(m) .and. level <= m) then
-                            amrflags(i,j) = DOFLAG
-                            cycle x_loop
-                        endif
-                    enddo
+                ! Check wave criteria
+                eta = q(1,i,j) + aux(1,i,j)
+                if (abs(eta - sea_level) > wave_tolerance) then
+                    amrflags(i,j) = DOFLAG
+                    cycle x_loop
                 endif
+
+                ! DIG: Speed criteria comparable to flowgrades and keep fine?
+                ! Check speed criteria (distinct values for each level), note that it might be useful to
+                ! also have a per layer criteria since this is not
+                ! gradient based
+                speed = sqrt(q(2,i,j)**2 + q(3,i,j)**2) / q(1,i,j)
+                do m=1,min(size(speed_tolerance),mxnest)
+                    if (speed > speed_tolerance(m) .and. level <= m) then
+                        amrflags(i,j) = DOFLAG
+                        cycle x_loop
+                    endif
+                enddo
+!                endif
             endif
 
 
