@@ -107,8 +107,8 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                           flowgradenorm=dabs(surface)
                           flowgradegrad=dabs(surface)
                         else
-                          flowgradenorm=0.0
-                          flowgradegrad=0.0
+                          flowgradenorm=0.d0
+                          flowgradegrad=0.d0
                         endif
                       endif
 
@@ -205,8 +205,8 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                           flowgradenorm=dabs(surface)
                           flowgradegrad=dabs(surface)
                         else
-                          flowgradenorm=0.0
-                          flowgradegrad=0.0
+                          flowgradenorm=0.d0
+                          flowgradegrad=0.d0
                         endif
                       endif
                       if (iflowgradetype(iflow).eq.1) then
