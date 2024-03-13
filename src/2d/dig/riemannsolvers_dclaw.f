@@ -35,9 +35,9 @@ c-----------------------------------------------------------------------
       double precision psi(4)
 
 *     !local
-      integer m,mw,ks,mp
+      integer m,mw,ks,mp,k
       double precision h,u,v,mbar
-      double precision det1,det2,det3,detR
+      double precision det1,det2,det3,detR,determinant
       double precision R(0:2,1:3),A(3,3),del(0:4)
       double precision beta(3)
       double precision rho,rhoL,rhoR,tauL,tauR,tau
@@ -49,7 +49,6 @@ c-----------------------------------------------------------------------
       double precision hstarHLL,deldelh,drytol,gmod,geps,tausource
       double precision raremin,raremax,rare1st,rare2st,sdelta,rho_fp,seg
       double precision gammaL,gammaR,theta1,theta2,theta3,vnorm,pmtanh01
-      double precision det1,det2,det3,determinant
       logical sonic,rare1,rare2
       logical rarecorrectortest,rarecorrector
 
@@ -333,9 +332,9 @@ c     !find bounds in case of critical state resonance, or negative states
       enddo
 
 c     !Determine determinant of eigenvector matrix========
-      det1=R(1,1)*(R(2,2)*R(3,3)-R(2,3)*R(3,2))
-      det2=R(1,2)*(R(2,1)*R(3,3)-R(2,3)*R(3,1))
-      det3=R(1,3)*(R(2,1)*R(3,2)-R(2,2)*R(3,1))
+      det1=A(1,1)*(A(2,2)*A(3,3)-A(2,3)*A(3,2))
+      det2=A(1,2)*(A(2,1)*A(3,3)-A(2,3)*A(3,1))
+      det3=A(1,3)*(A(2,1)*A(3,2)-A(2,2)*A(3,1))
       determinant=det1-det2+det3
 c     !solve for beta(k) using Cramers Rule=================
       do k=1,3
