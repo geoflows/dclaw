@@ -44,7 +44,7 @@ include $(DIGLIB)/Makefile.dclaw
 
 # ---------------------------------------
 # package sources specifically to exclude
-# (i.e. if a custom replacement source 
+# (i.e. if a custom replacement source
 #  under a different name is provided)
 # ---------------------------------------
 
@@ -69,10 +69,9 @@ include $(CLAWMAKE)
 # Construct the topography data
 .PHONY: topo all
 topo:
-	$(CLAW_PYTHON) maketopo.py
+	$(CLAW_PYTHON) maketopo_radial.py
 
-all: 
+all:
 	$(MAKE) topo
 	$(MAKE) .plots
 	$(MAKE) .htmls
-

@@ -46,6 +46,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     ! check for h < 0 and reset to zero
     ! check for h < drytolerance
     ! set other variables appropriately for these cells
+
     do j=1-mbc,my+mbc
         do i=1-mbc,mx+mbc
             theta = 0.d0
@@ -57,7 +58,6 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
         enddo
     enddo
 
-
     if (aux_finalized < 2 .and. actualstep) then
         ! topo arrays might have been updated by dtopo more recently than
         ! aux arrays were set unless at least 1 step taken on all levels
@@ -65,7 +65,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
         call setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux)
     endif
 
-    ! find factor of safety ratios
+    ! find factor of safety ratios and friction orientation
       call calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
 end subroutine b4step2

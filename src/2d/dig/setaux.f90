@@ -38,11 +38,16 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     use friction_module, only: variable_friction, friction_index
     use friction_module, only: set_friction_field
 
-    use topo_module
+    use topo_module, only: mtopofiles
 
     use adjoint_module, only : adjoint_flagging,innerprod_index
-    
-    use auxinit_module ! DIG: should specify which variables
+
+    use auxinit_module, only: mauxinitfiles,iauxinit,ylowauxinit
+    use auxinit_module, only: yhiauxinit,xlowauxinit,xhiauxinit
+    use auxinit_module, only: i0auxinit,auxinitwork,mxauxinit
+    use auxinit_module, only: dyauxinit,dxauxinit,myauxinit
+    use auxinit_module, only: mauxinit
+
     use digclaw_module, only: i_dig,i_phi,i_theta,phi_bed,theta_input
 
     implicit none
@@ -58,8 +63,8 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     real(kind=8) :: xper,yper,xperm,yperm,xperp,yperp
     character(len=*), parameter :: aux_format = "(2i4,4d15.3)"
     integer :: skipcount,iaux,ilo,jlo
-    
-    !DIG: Need to declare D-Claw variables...
+
+    ! Declare D-Claw variables...
     integer :: mf,istart,iend,jstart,jend,i,j
     real(kind=8) :: xhigher,yhigher,xintlow,xinthi,yintlow,yinthi
     real(kind=8) :: xim,xip,yjm,yjp,xipc,ximc,xc,yjpc,yjmc,yc,daux
@@ -67,7 +72,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     logical :: use_phi_bed,use_theta_input,friction_correction
     ! Topography integral function
     real(kind=8) :: topointegral
-    
+
     ! Lat-Long coordinate system in use, check input variables
     if (coordinate_system == 2) then
         if (mcapa /= 2 .or. maux < 3) then
@@ -84,16 +89,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     jlo = floor((ylow - ylower + .05d0*dy)/dy)
 
     ! Set geometry values
-    if (coordinate_system == 1) then
-        if (maux == 0 .and. mcapa > 0) then
-            print *, "ERROR:  Capacity array requested but number of aux"
-            print *, "variables is set to 0."
-            stop
-        end if
-        
-        aux(2,:,:) = 1.d0
-        aux(3,:,:) = 1.d0
-    else if (coordinate_system == 2) then
+    if (coordinate_system == 2) then
         do jj = 1 - mbc, my + mbc
             do ii = 1 - mbc, mx + mbc
                 ym = ylower + (jlo+jj-1.d0) * dy
@@ -194,7 +190,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
         enddo
     endif
 
-    
+
     !=================================
     !DIG:  Adapted from D-Claw...
 
@@ -202,12 +198,12 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     do mf = 1,mauxinitfiles
        aux(iauxinit(mf),:,:) = 0.d0
     enddo
-    
+
     !--------zero all d-claw aux variables----
     do mf= i_dig,maux
        aux(mf,:,:) = 0.0
     enddo
-            
+
 !     --------------integrate auxinit files if they exist---------------
       xhigher = xlow + (mx-0.5d0)*dx
       yhigher = ylow + (my-0.5d0)*dy
@@ -257,7 +253,12 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
                              auxinitwork(i0auxinit(mf):i0auxinit(mf) &
                              +mauxinit(mf)-1), 1)
 
-                     daux=daux/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     ! Correct for geometry
+                     if (coordinate_system == 2) then
+                        daux=daux/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     else
+                        daux=daux/((xipc-ximc)*(yjpc-yjmc))
+                     endif
 
                      aux(iauxinit(mf),i,j) = aux(iauxinit(mf),i,j)+daux
                   endif
@@ -290,6 +291,12 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
       endif
 
       friction_correction = .false.
+
+      ! Iverson, R. M., & George, D. L. (2019). Basal stress
+      ! equations for granular debris masses on smooth or
+      ! discretized slopes. Journal of Geophysical Research:
+      ! Earth Surface, 124, 1464–1484. https://doi.org/10.1029/2018JF004802
+
       if (friction_correction) then
         do j=1-mbc+1,my+mbc-1
             do i=1-mbc+1,mx+mbc-1
@@ -303,7 +310,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
             enddo
          enddo
       endif
-     
+
 
 contains
 

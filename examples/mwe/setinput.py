@@ -76,7 +76,7 @@ print('Created ', topofile)
 ### Create initial value for aux5, depth of entrainable material
 
 # Define piecewise linear function (unequally spaced):
-xdepth = np.array([140, 200])
+xdepth = np.array([120, 200])
 zdepth = np.array([5, 5])
 
 # Set dx, ymin, and ymax
@@ -99,6 +99,6 @@ Zo = np.vstack((zo,zo))
 topo = topotools.Topography()
 topo.set_xyZ(xo,yo,Zo)
 
-topofile = '%s/aux5.tt3' % inputdir
+topofile = '%s/entrainable.tt3' % inputdir
 topo.write(topofile, topo_type=3, Z_format="%11.3e")
 print('Created ', topofile)

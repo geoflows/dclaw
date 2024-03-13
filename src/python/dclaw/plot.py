@@ -22,11 +22,12 @@ i_topo = 0
 i_capax = 1
 i_capay = 2
 
-i_dig = 3
+# if coordinate_system == 1 i_dig = 1
+# else i_dig = 3
+
+i_dig = 1
 i_phi = i_dig
 i_theta = i_dig + 1
-i_fs = i_dig + 2
-i_cohesion = i_dig + 3
 i_taudir_x = i_dig + 4
 i_taudir_y = i_dig + 5
 
@@ -220,6 +221,42 @@ def velocity_v(current_data):
         v = ma.masked_where(h <= drytol, hv / h)
     return v
 
+def velocity_unorm(current_data):
+    """
+    Return a masked array containing velocity u in wet cells.
+    Normalized by the velocity magnitude.
+    """
+    if hasattr(current_data.plotdata, "geoclaw_data"):
+        drytol = current_data.plotdata.geoclaw_data.dry_tolerance
+    else:
+        drytol = _drytol
+
+    q = current_data.q
+    h = q[i_h, :, :]
+    hu = q[i_hu, :, :]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        u = ma.masked_where(h <= drytol, hu / h)
+    return u/velocity_magnitude(current_data)
+
+
+def velocity_vnorm(current_data):
+    """
+    Return a masked array containing velocity v in wet cells.
+    Normalized by the velocity magnitude.
+
+    """
+    if hasattr(current_data.plotdata, "geoclaw_data"):
+        drytol = current_data.plotdata.geoclaw_data.dry_tolerance
+    else:
+        drytol = _drytol
+
+    q = current_data.q
+    h = q[i_h, :, :]
+    hv = q[i_hv, :, :]
+    with np.errstate(divide="ignore", invalid="ignore"):
+        v = ma.masked_where(h <= drytol, hv / h)
+    return v/velocity_magnitude(current_data)
+
 
 def velocity(current_data):
     """
@@ -337,6 +374,8 @@ def b_eroded(current_data):
     # eroded depth
     q = current_data.q
     b_eroded = q[i_beroded, :, :]
+    #if np.any(b_eroded>0):
+#        print(f'b_eroded gt zero, {np.sum(b_eroded>0)}')
     return b_eroded
 
 
@@ -832,40 +871,3 @@ def static_angle(current_data):
     theta = np.arctan(deta_dx)
     theta_deg = np.rad2deg(theta)
     return theta_deg
-
-
-def fs(current_data):
-    """
-    Return a masked array containing factor of safety.
-    """
-
-    if hasattr(current_data.plotdata, "geoclaw_data"):
-        drytol = current_data.plotdata.geoclaw_data.dry_tolerance
-    else:
-        drytol = _drytol
-
-    q = current_data.q
-    h = q[i_h, :, :]
-    aux = current_data.aux
-    fs = aux[i_fs, :, :]
-    fs = ma.masked_where(h <= drytol, fs)
-    return fs
-
-
-def cohesion(current_data):
-    """
-    Return a masked array containing cohesion.
-    """
-
-    if hasattr(current_data.plotdata, "geoclaw_data"):
-        drytol = current_data.plotdata.geoclaw_data.dry_tolerance
-    else:
-        drytol = _drytol
-
-    q = current_data.q
-    h = q[i_h, :, :]
-    aux = current_data.aux
-    c = aux[i_cohesion, :, :]
-    c = ma.masked_where(h <= drytol, c)
-
-    return c

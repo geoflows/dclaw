@@ -170,10 +170,3 @@ COMMON_SOURCES += \
   $(DIGLIB)/rpt2_dclaw.f \
   $(DIGLIB)/src2.f90 \
 
-
-# Construct input data
-input:
-	$(CLAW_PYTHON) setinput.py
-
-postprocess: 
-	$(CLAW_PYTHON) postprocess 

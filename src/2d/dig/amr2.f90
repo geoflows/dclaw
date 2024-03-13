@@ -117,7 +117,7 @@ program amr2
     integer :: nstart, nsteps, nv1, nx, ny, lentotsave, num_gauge_SAVE
     integer :: omp_get_max_threads, maxthreads
     real(kind=8) :: time, ratmet, cut, dtinit, dt_max
-    logical :: vtime, rest, output_t0    
+    logical :: vtime, rest, output_t0
 
     ! Timing variables
     integer(kind=8) :: clock_start, clock_finish, clock_rate, ttotal, count_max
@@ -154,15 +154,15 @@ program amr2
     call opendatafile(inunit,clawfile)
 
     ! Number of space dimensions, not really a parameter but we read it in and
-    ! check to make sure everyone is on the same page. 
-    read(inunit,"(i1)") ndim  
+    ! check to make sure everyone is on the same page.
+    read(inunit,"(i1)") ndim
     if (ndim /= 2) then
         print *,'Error ***   ndim = 2 is required,  ndim = ',ndim
         print *,'*** Are you sure input has been converted'
         print *,'*** to Clawpack 5.x form?'
         stop
     endif
-          
+
     ! Domain variables
     read(inunit,*) xlower, ylower
     read(inunit,*) xupper, yupper
@@ -233,7 +233,7 @@ program amr2
     read(inunit,*) cflv1      ! cfl_max
     read(inunit,*) cfl        ! clf_desired
     read(inunit,*) nv1        ! steps_max
-      
+
     if (output_style /= 3) then
         nstop = nv1
     endif
@@ -259,7 +259,7 @@ program amr2
     read(inunit,*) method(4)   ! verbosity
     read(inunit,*) method(5)   ! src_split
     read(inunit,*) mcapa1
-    
+
     read(inunit,*) use_fwaves
     allocate(mthlim(mwaves))
     read(inunit,*) (mthlim(mw), mw=1,mwaves)
@@ -276,7 +276,7 @@ program amr2
 
     if ((mthbc(1).eq.2 .and. mthbc(2).ne.2) .or. &
         (mthbc(2).eq.2 .and. mthbc(1).ne.2)) then
-        
+
         print *, '*** ERROR ***  periodic boundary conditions: '
         print *, '  mthbc(1) and mthbc(2) must BOTH be set to 2'
         stop
@@ -292,7 +292,7 @@ program amr2
 
     if ((mthbc(3).eq.5 .and. mthbc(4).ne.5) .or. &
         (mthbc(4).eq.5 .and. mthbc(3).ne.5)) then
-    
+
         print *, '*** ERROR ***  sphere bcs at top and bottom: '
         print *, '  mthbc(3) and mthbc(4) must BOTH be set to 5'
         stop
@@ -339,11 +339,11 @@ program amr2
     if (mxnest <= 0) then
         stop 'Error ***   mxnest (amrlevels_max) <= 0 not allowed'
     endif
-          
+
     if (mxnest > maxlv) then
         stop 'Error ***   mxnest > max. allowable levels (maxlv) in common'
     endif
-      
+
     ! Anisotropic refinement always allowed in 5.x:
     read(inunit,*) (intratx(i),i=1,max(1,mxnest-1))
     read(inunit,*) (intraty(i),i=1,max(1,mxnest-1))
@@ -351,7 +351,7 @@ program amr2
     read(inunit,*)
 
     do i=1,mxnest-1
-        if ((intratx(i) > max1d) .or. (intraty(i) > max1d)) then 
+        if ((intratx(i) > max1d) .or. (intraty(i) > max1d)) then
             print *, ""
             format_string = "(' *** Error: Refinement ratios must be no " // &
                             "larger than max1d = ',i5,/,'     (set max1d" // &
@@ -366,7 +366,7 @@ program amr2
         read(inunit,*) (auxtype(iaux), iaux=1,naux)
     endif
     read(inunit,*)
-              
+
     read(inunit,*) flag_richardson
     read(inunit,*) tol            ! for richardson
     read(inunit,*) flag_gradient
@@ -429,7 +429,7 @@ program amr2
         print *, 'Error ***   need finer domain >', mindim, ' cells'
         stop
     endif
-    if (mcapa > naux) then     
+    if (mcapa > naux) then
         stop 'Error ***   mcapa > naux in input file'
     endif
 
@@ -452,7 +452,7 @@ program amr2
     hxposs(1) = (xupper - xlower) / nx
     hyposs(1) = (yupper - ylower) / ny
 
-    ! initialize frame number for output.  
+    ! initialize frame number for output.
     ! Note: might be reset in restrt if this is a restart
     if (output_t0) then
         matlabu   = 0
@@ -465,15 +465,14 @@ program amr2
         open(outunit, file=outfile, status='unknown', position='append', &
                       form='formatted')
 
-        ! moved upt before restrt or won't properly initialize 
-        call set_fgmax()   
-        
+        ! moved upt before restrt or won't properly initialize
+        call set_fgmax()
+
         ! need these before set_gauges so num_out_vars set right for gauges
         call set_geo()                    ! sets basic parameters g and coord system
-        !call set_multilayer()             ! Set multilayer SWE parameters
-        
+
         ! Set gauge output, note that restrt might reset x,y for lagrangian:
-        call set_gauges(rest, nvar, naux) 
+        call set_gauges(rest, nvar, naux)
 
         call restrt(nsteps,time,nvar,naux)
 
@@ -488,19 +487,13 @@ program amr2
         call setprob()
 
         ! Non-user defined setup routine
-        !call set_geo()                    ! sets basic parameters g and coord system
         call set_refinement()             ! sets refinement control parameters
         call read_dtopo_settings()        ! specifies file with dtopo from earthquake
         call read_topo_settings(rest)     ! specifies topography (bathymetry) files
-        !call set_qinit()   !!DIG               ! specifies file with dh if this used
         call set_auxinit()            ! specifies file(s) for auxiliary variables
         call set_fgout(rest)            ! Fixed grid settings
-        !call setup_variable_friction()    ! Variable friction parameter
-        !call set_multilayer()             ! Set multilayer SWE parameters
-        !call set_storm()                  ! Set storm parameters
         call set_regions()                ! Set refinement regions
-        !call read_adjoint_data()          ! Read adjoint solution
-        call set_dig()
+        call set_dig(naux)
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()
@@ -532,22 +525,17 @@ program amr2
         call set_refinement()             ! sets refinement control parameters
         call read_dtopo_settings()        ! specifies file with dtopo from earthquake
         call read_topo_settings(rest)     ! specifies topography (bathymetry) files
-        !call set_qinit()    !!DIG         ! specifies file with dh if this used instead
         call set_auxinit()            ! specifies file(s) for auxiliary variables
         call set_fgout(rest)            ! Fixed grid settings
-        !call setup_variable_friction()    ! Variable friction parameter
-        !call set_multilayer()             ! Set multilayer SWE parameters
-        !call set_storm()                  ! Set storm parameters
         call set_regions()                ! Set refinement regions
         call set_gauges(rest, nvar, naux) ! Set gauge output
         call set_fgmax()
-        !call read_adjoint_data()          ! Read adjoint solution
-        call set_dig()
+        call set_dig(naux)
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()
 
-        cflmax = 0.d0   ! otherwise use previously heckpointed val
+        cflmax = 0.d0   ! otherwise use previously checkpointed val
 
         lentot = 0
         lenmax = 0
@@ -567,8 +555,8 @@ program amr2
 
         call domain(nvar,vtime,nx,ny,naux,t0)
 
-        ! Hold off on gauges until grids are set. 
-        ! The fake call to advance at the very first timestep 
+        ! Hold off on gauges until grids are set.
+        ! The fake call to advance at the very first timestep
         ! looks at the gauge array but it is not yet built
         num_gauge_SAVE = num_gauges
         num_gauges = 0
@@ -597,10 +585,10 @@ program amr2
     write(parmunit,*) '   start time = ',time
     write(parmunit,*) ' '
 
-!$   maxthreads = omp_get_max_threads() 
+!$   maxthreads = omp_get_max_threads()
      write(outunit,*)" max threads set to ",maxthreads
      print *," max threads set to ",maxthreads
-    
+
     !
     !  print out program parameters for this run
     !
@@ -650,7 +638,7 @@ program amr2
     endif
     close(parmunit)
 
- 
+
 
     ! --------------------------------------------------------
     !  Tick is the main routine which drives the computation:
@@ -662,12 +650,12 @@ program amr2
 
     ! Print out the fgmax files
     if (FG_num_fgrids > 0) call fgmax_finalize()
-    
+
     write(*,"('See fort.amr for more info on this run and memory usage')")
 
     ! call system_clock to get clock_finish and count_max for debug output:
     call system_clock(clock_finish,clock_rate,count_max)
-    
+
     !output timing data
     open(timing_unit, file=timing_base_name//"txt", status='unknown',       &
          form='formatted')
@@ -679,22 +667,22 @@ program amr2
 
     write(*,*)
     write(timing_unit,*)
-    
+
     !Integration time
     format_string="('Integration Time (stepgrid + BC + overhead)')"
     write(timing_unit,format_string)
     write(*,format_string)
-    
+
     !Advanc time
     format_string="('Level           Wall Time (seconds)    CPU Time (seconds)   Total Cell Updates')"
     write(timing_unit,format_string)
     write(*,format_string)
 
-    ! level counters are cumulative after restart, so initialize sums to zero 
+    ! level counters are cumulative after restart, so initialize sums to zero
     ! even after restart to sum up time over all levels
     ttotalcpu=0.d0
     ttotal=0
-      
+
     do level=1,mxnest
         format_string="(i3,'           ',1f15.3,'        ',1f15.3,'    ', e17.3)"
         write(timing_unit,format_string) level, &
@@ -704,52 +692,52 @@ program amr2
         ttotalcpu=ttotalcpu+tvollCPU(level)
         ttotal=ttotal+tvoll(level)
     end do
-    
+
     format_string="('total         ',1f15.3,'        ',1f15.3,'    ', e17.3)"
     write(timing_unit,format_string) &
              real(ttotal,kind=8) / real(clock_rate,kind=8), ttotalCPU, rvol
     write(*,format_string) &
              real(ttotal,kind=8) / real(clock_rate,kind=8), ttotalCPU, rvol
-    
+
     write(*,*)
     write(timing_unit,*)
-    
-    
+
+
     format_string="('All levels:')"
     write(*,format_string)
     write(timing_unit,format_string)
-    
+
     !stepgrid
     format_string="('stepgrid      ',1f15.3,'        ',1f15.3,'    ',e17.3)"
     write(timing_unit,format_string) &
          real(timeStepgrid,kind=8) / real(clock_rate,kind=8), timeStepgridCPU
     write(*,format_string) &
          real(timeStepgrid,kind=8) / real(clock_rate,kind=8), timeStepgridCPU
-    
+
     !bound
     format_string="('BC/ghost cells',1f15.3,'        ',1f15.3)"
     write(timing_unit,format_string) &
          real(timeBound,kind=8) / real(clock_rate,kind=8), timeBoundCPU
     write(*,format_string) &
          real(timeBound,kind=8) / real(clock_rate,kind=8), timeBoundCPU
-    
+
     !regridding time
     format_string="('Regridding    ',1f15.3,'        ',1f15.3,'  ')"
     write(timing_unit,format_string) &
             real(timeRegridding,kind=8) / real(clock_rate,kind=8), timeRegriddingCPU
     write(*,format_string) &
             real(timeRegridding,kind=8) / real(clock_rate,kind=8), timeRegriddingCPU
-    
+
     !output time
     format_string="('Output (valout)',1f14.3,'        ',1f15.3,'  ')"
     write(timing_unit,format_string) &
             real(timeValout,kind=8) / real(clock_rate,kind=8), timeValoutCPU
     write(*,format_string) &
             real(timeValout,kind=8) / real(clock_rate,kind=8), timeValoutCPU
-    
+
     write(*,*)
     write(timing_unit,*)
-    
+
     !Total Time
     format_string="('Total time:   ',1f15.3,'        ',1f15.3,'  ')"
 
@@ -758,16 +746,16 @@ program amr2
     write(timing_unit,format_string) real(timeTick,kind=8)/real(clock_rate,kind=8), &
             timeTickCPU
 
-    
+
     format_string="('Using',i3,' thread(s)')"
     write(timing_unit,format_string) maxthreads
     write(*,format_string) maxthreads
-    
-    
+
+
     write(*,*)
     write(timing_unit,*)
-    
-    
+
+
     write(*,"('Note: The CPU times are summed over all threads.')")
     write(timing_unit,"('Note: The CPU times are summed over all threads.')")
     write(*,"('      Total time includes more than the subroutines listed above')")
@@ -781,7 +769,7 @@ program amr2
     write(*, "('      in the file timing.csv.')")
     write(timing_unit, "('Note: timings are also recorded for each output step')")
     write(timing_unit, "('      in the file timing.csv.')")
-    
+
 
     write(*,*)
     write(timing_unit,*)
@@ -810,7 +798,7 @@ program amr2
         write(outunit,*) lentot," words not accounted for in memory cleanup"
         print *,         lentot," words not accounted for in memory cleanup"
     endif
-    
+
     !
     ! report on statistics
     !
@@ -853,7 +841,8 @@ program amr2
         ratmet = 0.0d0
     endif
     write(outunit,"(' percentage of cells advanced in time  = ', f10.2)") ratmet
-    write(outunit,"(' maximum Courant number seen = ', f10.2)") cflmax
+    write(outunit,"(' maximum Courant number seen = ', f10.5)") cflmax
+    write(*,"(' maximum Courant number seen = ', f10.5)") cflmax
 
     write(outunit,"(//,' ------  end of AMRCLAW integration --------  ')")
 

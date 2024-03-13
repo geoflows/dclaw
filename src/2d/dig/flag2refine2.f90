@@ -61,36 +61,12 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
     real(kind=8) :: x_c,y_c,x_low,y_low,x_hi,y_hi
     real(kind=8) :: speed, eta, ds
 
-    ! Storm specific variables
-    real(kind=8) :: R_eye(2), wind_speed
-
-    ! Adjoint method specific variables
-    logical mask_selecta(totnum_adjoints)
-
     !!DIG:  Need to declare more flowgrade/keep_fine variables?
-    
     real(kind=8) :: flowgradenorm, flowgradegrad, depth, momentum, surface
     real(kind=8) :: xlow,xhi,ylow,yhi,xxlow,xxhi,yylow,yyhi
     real(kind=8) :: flowgrademeasure, h,hu,hv
     integer :: nx,ny,loc,locaux,mitot,mjtot,mptr,iflow,ii,jj
     
-
-    if(adjoint_flagging) then
-        aux(innerprod_index,:,:) = 0.0
-        call select_snapshots(t,mask_selecta)
-
-        ! Loop over adjoint snapshots
-        aloop: do r=1,totnum_adjoints
-
-            ! Consider only snapshots that are within the desired time range
-            if (mask_selecta(r)) then
-                ! Calculate inner product with current snapshot
-                call calculate_innerproduct(q,r,mx,my,xlower,   &
-                        ylower,dx,dy,meqn,mbc,maux,aux)
-            endif
-
-        enddo aloop
-    endif
 
     ! Loop over interior points on this grid
     ! (i,j) grid cell is [x_low,x_hi] x [y_low,y_hi], cell center at (x_c,y_c)
@@ -131,8 +107,8 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                           flowgradenorm=dabs(surface)
                           flowgradegrad=dabs(surface)
                         else
-                          flowgradenorm=0.0
-                          flowgradegrad=0.0
+                          flowgradenorm=0.d0
+                          flowgradegrad=0.d0
                         endif
                       endif
 
@@ -153,8 +129,6 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
             endif ! mflowgrades > 0
             
             ! keep fine added by KRB 2022/12/28
-
-            ! eventually make keep_fine a user defined variable.
             if (keep_fine.and.mflowgrades.gt.0) then
               ! if level is lower than lfine a grid exists here on lfine,
               ! enforce refinement here.
@@ -231,8 +205,8 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                           flowgradenorm=dabs(surface)
                           flowgradegrad=dabs(surface)
                         else
-                          flowgradenorm=0.0
-                          flowgradegrad=0.0
+                          flowgradenorm=0.d0
+                          flowgradegrad=0.d0
                         endif
                       endif
                       if (iflowgradetype(iflow).eq.1) then
@@ -262,65 +236,37 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
             ! end keep fine
 
 
-            ! ************* Storm Based Refinement ****************
-            ! Check to see if we are some specified distance from the eye of
-            ! the storm and refine if we are
-            if (storm_specification_type /= 0) then
-                R_eye = storm_location(t)
-                do m=1,size(R_refine,1)
-                    if (coordinate_system == 2) then
-                        ds = spherical_distance(x_c, y_c, R_eye(1), R_eye(2))
-                    else
-                        ds = sqrt((x_c - R_eye(1))**2 + (y_c - R_eye(2))**2)
-                    end if
-                    
-                    if (ds < R_refine(m) .and. level <= m) then
-                        amrflags(i,j) = DOFLAG
-                        cycle x_loop
-                    endif
-                enddo
-                
-                ! Refine based on wind speed
-                if (wind_forcing) then
-                    wind_speed = sqrt(aux(wind_index,i,j)**2 + aux(wind_index+1,i,j)**2)
-                    do m=1,size(wind_refine,1)
-                        if ((wind_speed > wind_refine(m)) .and. (level <= m)) then
-                            amrflags(i,j) = DOFLAG
-                            cycle x_loop
-                        endif
-                    enddo
-                endif
-            endif
-
             ! ********* criteria applied only to wet cells:
 
             if (q(1,i,j) > dry_tolerance) then
 
-                if(adjoint_flagging) then
-                    if(aux(innerprod_index,i,j) > tolsp) then
-                        amrflags(i,j) = DOFLAG
-                        cycle x_loop
-                    endif
-                else
-                
-                    ! Check wave criteria
-                    eta = q(1,i,j) + aux(1,i,j)
-                    if (abs(eta - sea_level) > wave_tolerance) then
-                        amrflags(i,j) = DOFLAG
-                        cycle x_loop
-                    endif
+! DIG: D-claw not yet compatible with adjoint
+!                if(adjoint_flagging) then
+!                    if(aux(innerprod_index,i,j) > tolsp) then
+!                        amrflags(i,j) = DOFLAG
+!                        cycle x_loop
+!                    endif
+!                else
 
-                    ! Check speed criteria, note that it might be useful to
-                    ! also have a per layer criteria since this is not
-                    ! gradient based
-                    speed = sqrt(q(2,i,j)**2 + q(3,i,j)**2) / q(1,i,j)
-                    do m=1,min(size(speed_tolerance),mxnest)
-                        if (speed > speed_tolerance(m) .and. level <= m) then
-                            amrflags(i,j) = DOFLAG
-                            cycle x_loop
-                        endif
-                    enddo
+                ! Check wave criteria
+                eta = q(1,i,j) + aux(1,i,j)
+                if (abs(eta - sea_level) > wave_tolerance) then
+                    amrflags(i,j) = DOFLAG
+                    cycle x_loop
                 endif
+
+                ! DIG: Speed criteria comparable to flowgrades and keep fine?
+                ! Check speed criteria (distinct values for each level), note that it might be useful to
+                ! also have a per layer criteria since this is not
+                ! gradient based
+                speed = sqrt(q(2,i,j)**2 + q(3,i,j)**2) / q(1,i,j)
+                do m=1,min(size(speed_tolerance),mxnest)
+                    if (speed > speed_tolerance(m) .and. level <= m) then
+                        amrflags(i,j) = DOFLAG
+                        cycle x_loop
+                    endif
+                enddo
+!                endif
             endif
 
 

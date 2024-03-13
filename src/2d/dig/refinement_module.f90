@@ -14,7 +14,7 @@ module refinement_module
     real(kind=8) :: wave_tolerance
     real(kind=8), allocatable :: speed_tolerance(:)
     logical :: varRefTime = .FALSE. ! Choose dt refinement automatically
-    
+
 
     ! ========================================================================
     !  Flow grades flagging support adapted from D-Claw
@@ -24,23 +24,23 @@ module refinement_module
     integer, allocatable :: iflowgradevariable(:), iflowgradetype(:)
     integer, allocatable :: iflowgrademinlevel(:)
     integer :: mflowgrades
-    logical, parameter :: keep_fine = .false.  !!DIG - add to setrun
-    
+    logical :: keep_fine
+
 contains
-    
+
     ! =========================================================================
     !  Reads in the refinement control parameters
     ! =========================================================================
     subroutine set_refinement(file_name)
-        
+
         use amr_module, only: mxnest
         use utility_module, only: get_value_count
-        
+
         implicit none
-        
+
         ! Arguments
         character(len=*), optional, intent(in) :: file_name
-        
+
         ! Locals
         integer, parameter :: unit = 127
         integer :: i
@@ -67,18 +67,18 @@ contains
             read(unit,*)
             read(unit,*) varRefTime
             close(unit)
-            
+
             ! Write out data to parameter file
             write(GEO_PARM_UNIT,*) '   wave_tolerance:',wave_tolerance
             write(GEO_PARM_UNIT,*) '   speed_tolerance:',speed_tolerance
             write(GEO_PARM_UNIT,*) '   Variable dt Refinement Ratios:',varRefTime
             write(GEO_PARM_UNIT,*) ''
-            
+
             module_setup = .true.
         end if
 
     end subroutine set_refinement
-    
+
 
     subroutine set_flow_grades(fname)
 
@@ -131,6 +131,9 @@ contains
                 iflowgradetype(i),iflowgrademinlevel(i)
         enddo
 
+        read(iunit,*) keep_fine
+        write(*,*) 'keep_fine', keep_fine
+
         close(iunit)
 
         write(GEO_PARM_UNIT,*) '   mflowgrades:',  mflowgrades
@@ -143,5 +146,5 @@ contains
 
     end subroutine set_flow_grades
 
-    
+
 end module refinement_module
