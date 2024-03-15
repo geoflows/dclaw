@@ -60,7 +60,7 @@
 
 
       do i=2-mbc,mx+mbc
-
+         g = grav
          if (bed_normal.eq.1) then
             g = grav*cos(0.5d0*(aux2(i_theta,i-1)+aux2(i_theta,i)))
          endif
