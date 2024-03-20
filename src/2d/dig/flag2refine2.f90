@@ -104,8 +104,8 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                       elseif (iflowgradevariable(iflow).eq.3) then
 
                         if (depth.gt.dry_tolerance) then
-                          flowgradenorm=dabs(surface)
-                          flowgradegrad=dabs(surface)
+                          flowgradenorm=dabs(surface-sea_level)
+                          flowgradegrad=dabs(surface-sea_level)
                         else
                           flowgradenorm=0.d0
                           flowgradegrad=0.d0
@@ -202,8 +202,8 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                         flowgradegrad=momentum
                       elseif (iflowgradevariable(iflow).eq.3) then
                         if (depth.gt.dry_tolerance) then
-                          flowgradenorm=dabs(surface)
-                          flowgradegrad=dabs(surface)
+                          flowgradenorm=dabs(surface-sea_level)
+                          flowgradegrad=dabs(surface-sea_level)
                         else
                           flowgradenorm=0.d0
                           flowgradegrad=0.d0
