@@ -100,7 +100,7 @@
          endif
 
          rho = m*rho_s + (1.d0-m)*rho_f
-         gamma = 0.25d0*(rho_f + 3.0*rho)/rho
+         gamma = 0.25d0*(rho_f + 3.d0*rho)/rho
 
          ! check if cell that transverse waves go into are both too high:
          ! Note: prior to v5.8.0 this checked against max rather than min
@@ -168,14 +168,14 @@ c        Set-up eigenvectors
          r(3,1) = s(1)
          r(4,1) = m
          r(5,1) = gamma*rho*g
-         r(6,1) = 0.0
+         r(6,1) = 0.0d0
 
          r(1,3) = 1.d0
          r(2,3) = u    ! v5.8.0: fixed bug, u not s(2)=v
          r(3,3) = s(3)
          r(4,3) = m
          r(5,3) = gamma*rho*g
-         r(6,3) = 0.0
+         r(6,3) = 0.0d0
 
          r(1,2) = 0.d0
          r(2,2) = 1.d0
