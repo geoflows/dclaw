@@ -3,7 +3,7 @@
      &                ql,qr,aux1,aux2,aux3,asdq,bmasdq,bpasdq)
 ! =====================================================
 !
-!     Riemann solver in the transverse direction using 
+!     Riemann solver in the transverse direction using
 !     Jacobian matrix from left cell (if imp==1) or right cell (if imp==2).
 !
 !     Note this has been modified from the version used in v5.7.x and
@@ -12,7 +12,7 @@
 !      - a bug in the second component of the eigenvectors was fixed.
 !      - when s(2) is close to zero this component of flux difference
 !        is split equally between bmasdq and bpasdq to improve symmetry.
-!   
+!
 !     Further modified to clean up and avoid a lot of work in dry cells.
 
 !-----------------------last modified October 2020 ----------------------
@@ -42,7 +42,7 @@
       real(kind=8) ::  dxdcm,dxdcp,topo1,topo3,eta
 
       integer :: i,mw,mu,mv
-      
+
 
       if (ixy == 1) then
          ! normal solve was in x-direction
@@ -58,7 +58,7 @@
       bmasdq(:,:) = 0.d0
       bpasdq(:,:) = 0.d0
 
-      g = grav  
+      g = grav
       do i=2-mbc,mx+mbc
 
          if (bed_normal.eq.1) then
@@ -74,7 +74,7 @@
          if (h <= dry_tolerance) then
              ! fluctuation going into a dry cell, don't know how to split,
              ! so leave bmadsq(:,i)=bpasdq(:,i)=0 and go on to next i:
-             cycle  
+             cycle
          endif
 
          ! compute velocities in relevant cell, and other quantities:
@@ -130,7 +130,7 @@
          endif
 
 c        Determine some speeds necessary for the Jacobian
-            
+
          ! In v5.7.x and prior versions,
          ! we used left right states to define Roe averages,
          ! which is consistent with those used in rpn2.
