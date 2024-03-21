@@ -63,6 +63,7 @@
 
          if (bed_normal.eq.1) then
             g = grav*cos(0.5d0*(aux2(i_theta,i-1)+aux2(i_theta,i)))
+         else
          endif
 
          if (imp==1) then
