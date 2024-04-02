@@ -19,10 +19,7 @@ from clawpack.visclaw import gridtools
 
 import os,sys
 
-sea_level = 50.
-
-outdir2 = None
-#outdir2 = '_output_SL50_order2_trans0'
+sea_level = -1.
 
 #--------------------------
 def setplot(plotdata=None):
@@ -45,7 +42,7 @@ def setplot(plotdata=None):
 
 
     plotdata.clearfigures()  # clear any old figures,axes,items data
-    plotdata.format = 'binary'
+    #plotdata.format = 'binary'
 
 
 
@@ -145,10 +142,10 @@ def setplot(plotdata=None):
         
     # Water
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
-    #plotitem.plot_var = geoplot.surface
+    plotitem.plot_var = geoplot.surface
     #plotitem.plot_var = geoplot.surface_or_depth
     #plotitem.show = False
-    plotitem.plot_var = pure_water
+    #plotitem.plot_var = pure_water
     plotitem.pcolor_cmap = geoplot.tsunami_colormap
     plotitem.pcolor_cmin = sea_level - 20.
     plotitem.pcolor_cmax = sea_level + 20.
@@ -172,7 +169,7 @@ def setplot(plotdata=None):
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
     #plotitem.plot_var = geoplot.surface
     #plotitem.plot_var = geoplot.surface_or_depth
-    #plotitem.show = False
+    plotitem.show = False
     plotitem.plot_var = landslide
     cmap_mass = colormaps.make_colormap({0.:'w', 1.:'brown'})
     plotitem.pcolor_cmap = cmap_mass
@@ -238,19 +235,21 @@ def setplot(plotdata=None):
         hout = gridtools.grid_output_2d(framesoln, 0, xout, yout)
         zetaout = where(hout>0.001, etaout, nan)
         Bout = etaout - hout
-        hmout = gridtools.grid_output_2d(framesoln, 3, xout, yout)
-        with np.errstate(divide="ignore", invalid="ignore"):
-            mout = hmout / hout
-        water = where(mout<0.1, etaout, nan)
-        landslide = where(mout>0.5, etaout, nan)
-        mixed = where(logical_and(0.1<mout,mout<0.5), etaout, nan)
-        #plot(xout, etaout, 'm')
-        fill_between(rout,Bout,water,color=[.4,.4,1])
-        fill_between(rout,Bout,landslide,color='brown')
-        fill_between(rout,Bout,mixed,color='orange')
+        if 0:
+            hmout = gridtools.grid_output_2d(framesoln, 3, xout, yout)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                mout = hmout / hout
+            water = where(mout<0.1, etaout, nan)
+            landslide = where(mout>0.5, etaout, nan)
+            mixed = where(logical_and(0.1<mout,mout<0.5), etaout, nan)
+            #plot(xout, etaout, 'm')
+            fill_between(rout,Bout,landslide,color='brown')
+            fill_between(rout,Bout,mixed,color='orange')
+            fill_between(rout,Bout,water,color=[.4,.4,1])
+        fill_between(rout,Bout,etaout,color=[.4,.4,1])
         #plot(xout, Bout, 'g')
         fill_between(rout,Bout,0,color='lightgreen')
-        plot(rout, etaout, 'k')
+        plot(-rout, etaout, 'k')
 
     plotaxes.afteraxes = plot_xsec
 
@@ -258,13 +257,11 @@ def setplot(plotdata=None):
     # Figure for depth
     #-----------------------------------------
     plotfigure = plotdata.new_plotfigure(name='Depth', figno=2)
-    #plotfigure.show = False
+    plotfigure.show = False
     
     # Set up for axes in this figure:
     plotaxes = plotfigure.new_plotaxes('pcolor')
-    #plotaxes.title = 'Water or landslide depth'
-    mq = 5
-    plotaxes.title = 'q[%i+1]' % mq
+    plotaxes.title = 'Water or landslide depth'
     plotaxes.scaled = True
     plotaxes.xlimits = [-3e3,3e3]
     plotaxes.ylimits = [-3e3,3e3]
@@ -285,10 +282,10 @@ def setplot(plotdata=None):
     #plotitem.plot_var = geoplot.surface
     #plotitem.plot_var = geoplot.surface_or_depth
     #plotitem.show = False
-    plotitem.plot_var = mq
+    plotitem.plot_var = 0
     plotitem.pcolor_cmap = colormaps.white_red
-    #plotitem.pcolor_cmin = 0.
-    #plotitem.pcolor_cmax = 100.
+    plotitem.pcolor_cmin = 0.
+    plotitem.pcolor_cmax = 100.
     plotitem.add_colorbar = True
     plotitem.amr_celledges_show = [0,0,0]
     plotitem.patchedges_show = 0
@@ -323,7 +320,7 @@ def setplot(plotdata=None):
     #-----------------------------------------
     plotfigure = plotdata.new_plotfigure(name='Mass Fraction', figno=6)
     plotfigure.kwargs = {'figsize':(8,7)}
-    #plotfigure.show = False
+    plotfigure.show = False
 
     # Set up for axes in this figure:
     plotaxes = plotfigure.new_plotaxes('pcolor')
@@ -341,13 +338,6 @@ def setplot(plotdata=None):
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
         mwet = np.where(h > 0.01, m, np.nan) 
-        mmax = np.nanmax(mwet)
-        print('mmax = %.3e' % mmax)
-        q3max = abs(q[3,:,:]).max()
-        q4max = abs(q[4,:,:]).max()
-        q5max = abs(q[5,:,:]).max()
-        print('q3max = %.3e' % q3max, 'q4max = %.3e' % q4max,
-              'q5max = %.3e' % q5max)
         return mwet
         
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
@@ -372,7 +362,6 @@ def setplot(plotdata=None):
 
     
     
-    # -----------------------
     # Figure for scatter plot
     # -----------------------
 
@@ -385,6 +374,8 @@ def setplot(plotdata=None):
     plotaxes.title = 'Scatter plot'
     plotaxes.grid = True
 
+    # Set up for item on these axes: scatter of 2d data
+    plotitem = plotaxes.new_plotitem(plot_type='1d_from_2d_data')
     
     def h_vs_r(current_data):
         # Return radius of each grid cell and p value in the cell
@@ -396,7 +387,6 @@ def setplot(plotdata=None):
         h = q[0,:,:]
         return r,h
 
-    plotitem = plotaxes.new_plotitem(plot_type='1d_from_2d_data')
     plotitem.map_2d_to_1d = h_vs_r
     plotitem.plot_var = 0
     plotitem.plotstyle = '.'
@@ -404,65 +394,6 @@ def setplot(plotdata=None):
     plotitem.kwargs = {'markersize':1}
     plotitem.show = True       # show on plot?
 
-    if outdir2:
-        plotitem = plotaxes.new_plotitem(plot_type='1d_from_2d_data')
-        plotitem.outdir = outdir2
-        plotitem.map_2d_to_1d = h_vs_r
-        plotitem.plot_var = 0
-        plotitem.plotstyle = '.'
-        plotitem.color = 'r'
-        plotitem.kwargs = {'markersize':1}
-    
-    # -----------------------
-    # Figure for scatter plot of pressure
-    # -----------------------
-
-    plotfigure = plotdata.new_plotfigure(name='scatter_pressure', figno=7)
-
-    # Set up for axes in this figure:
-    plotaxes = plotfigure.new_plotaxes()
-    plotaxes.xlimits = [0, 3e3*np.sqrt(2)]
-    plotaxes.ylimits = 'auto'
-    plotaxes.title = 'pressure'
-    plotaxes.grid = True
-
-    
-    def p_vs_r(current_data):
-        # Return radius of each grid cell and p value in the cell
-        from pylab import sqrt
-        x = current_data.x
-        y = current_data.y
-        r = np.sqrt(x**2 + y**2)
-        q = current_data.q
-        p = q[4,:,:]
-        return r,p
-
-    plotitem = plotaxes.new_plotitem(plot_type='1d_from_2d_data')
-    plotitem.map_2d_to_1d = p_vs_r
-    #plotitem.plot_var = 0
-    plotitem.plotstyle = '+'
-    plotitem.color = 'r'
-    plotitem.kwargs = {'markersize':1}
-    plotitem.show = True       # show on plot?
-
-    def hydrostatic_vs_r(current_data):
-        # Return radius of each grid cell and hydrostatic p value in the cell
-        from pylab import sqrt
-        x = current_data.x
-        y = current_data.y
-        r = np.sqrt(x**2 + y**2)
-        q = current_data.q
-        h = q[0,:,:]
-        p = 1000.*9.81*h
-        return r,p
-
-    plotitem = plotaxes.new_plotitem(plot_type='1d_from_2d_data')
-    plotitem.map_2d_to_1d = hydrostatic_vs_r
-    #plotitem.plot_var = 0
-    plotitem.plotstyle = '.'
-    plotitem.color = 'b'
-    plotitem.kwargs = {'markersize':1}
-    plotitem.show = True       # show on plot?
 
     # -----------------------
     # Figure for scatter plot of speed
@@ -477,7 +408,7 @@ def setplot(plotdata=None):
     plotaxes.title = 'speed'
     plotaxes.grid = True
 
-    
+
     def s_vs_r(current_data):
         # Return radius of each grid cell and p value in the cell
         from pylab import sqrt,nan,where
@@ -485,6 +416,7 @@ def setplot(plotdata=None):
         y = current_data.y
         r = np.sqrt(x**2 + y**2)
         q = current_data.q
+        s = sqrt(q[1,:,:]**2 + q[2,:,:]**2)
         s = sqrt(q[1,:,:]**2 + q[2,:,:]**2)
         h = where(q[0,:,:]>1e-2, q[0,:,:], nan)
         s = s/h
@@ -499,6 +431,7 @@ def setplot(plotdata=None):
     plotitem.show = True       # show on plot?
 
     #-------------------------------------
+
     # Plots of timing (CPU and wall time):
 
     def make_timing_plots(plotdata):

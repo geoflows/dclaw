@@ -283,7 +283,8 @@
                      q(2,i,j)=0.d0
                      q(3,i,j)=0.d0
                   else
-                     beta = 1.d0-m
+                     !beta = 1.d0-m  ! reduced friction led to high velocities
+                     beta = 1.d0     ! use full Manning friction
                      gamma= beta*dsqrt(hu**2 + hv**2)*(gmod*coeff**2)/(h**(7.0d0/3.0d0))
                      dgamma=1.d0 + dt*gamma
                      q(2,i,j)= q(2,i,j)/dgamma
