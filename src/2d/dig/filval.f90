@@ -28,7 +28,7 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
     use qinit_module, only: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry
     use qinit_module, only: dx_fdry, dy_fdry
     use qinit_module, only: tend_force_dry
-    
+
     implicit none
 
     ! Input
@@ -97,7 +97,7 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
         else
             call intcopy(valc,mic,mjc,nvar,iclo,ichi,jclo,jchi,level-1,1,1)
         endif
-    else  
+    else
         ! intersect grids and copy all (soln and aux)
         if ((xperdom .and. sticksoutxcrse) .or. (yperdom.and. sticksoutycrse) .or. spheredom) then
             call preicall(valc,auxc,mic,mjc,nvar,naux,iclo,ichi,jclo,jchi, &
@@ -133,21 +133,21 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
        nx = mitot - 2*nghost
        ny = mjtot - 2*nghost
 
-       if (naux .gt. 0) then 
+       if (naux .gt. 0) then
              aux(1,:,:) = NEEDS_TO_BE_SET  ! will indicate fine cells not yet set
              if ((xperdom .and. sticksoutxfine)  .or. (yperdom.and.sticksoutyfine)) then
                 call preicall(val,aux,mitot,mjtot,nvar,naux,ilo-nghost,ihi+nghost,  &
-                              jlo-nghost,jhi+nghost,level,fliparray)  
+                              jlo-nghost,jhi+nghost,level,fliparray)
              else
                 call icall(val,aux,mitot,mjtot,nvar,naux,ilo-nghost,ihi+nghost,  &
-                           jlo-nghost,jhi+nghost,level,1,1)   
+                           jlo-nghost,jhi+nghost,level,1,1)
              endif
              setflags = aux(1,:,:)   ! save since will overwrite in setaux when setting all aux vals
              ! need this so we know where to use coarse grid to set fine solution w/o overwriting
              if (aux_finalized .lt. 2) aux(1,:,:) = NEEDS_TO_BE_SET  ! reset entire aux array since topo moving
                !set remaining aux vals not set by copying from prev existing grids
                call setaux(nghost,nx,ny,xleft,ybot,dx,dy,naux,aux)
-       else ! either no aux exists, or cant reuse yet  
+       else ! either no aux exists, or cant reuse yet
           ! if topo not final, then setaux called in gfixup before this routine
           ! so only call intcopy (which copies soln) and not icall.
           if ((xperdom .and. sticksoutxfine)  .or. (yperdom.and.sticksoutyfine)) then
@@ -155,10 +155,10 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
                        jlo-nghost,jhi+nghost,level,fliparray)
           else
              call intcopy(val,mitot,mjtot,nvar,ilo-nghost,ihi+nghost,  &
-                          jlo-nghost,jhi+nghost,level,1,1)   
+                          jlo-nghost,jhi+nghost,level,1,1)
           endif
        endif
-  
+
     !-----------------------------
     ! For shallow water over topography, in coarse cells convert from h to eta,
     ! before interpolating:
@@ -170,24 +170,24 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
         vetac = sea_level  ! same value everywhere
       endif
 
-    
+
     use_force_dry_this_level = use_force_dry
     if (use_force_dry) then
         ! check if force_dry resolution the same as this level:
         ddxy = max(abs(dx-dx_fdry), abs(dy-dy_fdry))
         use_force_dry_this_level = (ddxy < 0.01d0*min(dx_fdry,dy_fdry))
         endif
-        
+
     !if (use_force_dry_this_level .and. (time <= tend_force_dry)) then
     !    write(6,*) '+++ using force_dry in filval, t = ',time
     !    endif
-    
+
     ! Prepare slopes - use min-mod limiters
     do j=2, mjc-1
         do i=2, mic-1
             fineflag(1) = .false.
             ! interpolate eta to find depth
-            
+
             !!DIG: orig sets etalevel based on max over surrounding cells
 
             do ii=-1,1
@@ -227,7 +227,7 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
                                                           + yoff * slopey)
                        val(1,ifine,jfine) = max(0.d0, val(1,ifine,jfine)  &
                                                - aux(1,ifine,jfine))
-                                               
+
                        x = xleft + (ifine-0.5d0)*dx - nghost*dx
                        y = ybot + (jfine-0.5d0)*dy - nghost*dy
 
@@ -248,10 +248,10 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
                                    val(1,ifine,jfine) = 0.d0
                                    endif
                                endif
-                                                              
+
                            endif
 
-                                                    
+
                        finemass = finemass + val(1,ifine,jfine)
                        if (val(1,ifine,jfine) <= dry_tolerance) then
                           fineflag(1) = .true.
@@ -259,7 +259,7 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
                               val(ivar,ifine,jfine) = 0.d0
                           enddo
                        endif
-                       
+
                     endif ! NEEDS_TO_BE_SET
                 end do
             end do
@@ -276,7 +276,7 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
                     slopex = min(abs(s1p), abs(s1m)) &
                      * sign(1.d0,(valc(ivar,i+1,j) - valc(ivar,i-1,j)))
                     if (s1m*s1p.le.0.d0) slopex=0.d0
-                
+
                     s1p = (valc(ivar,i,j+1) - valc(ivar,i,j))
                     s1m = (valc(ivar,i,j) - valc(ivar,i,j-1))
                     slopey = min(abs(s1p), abs(s1m)) &
@@ -292,15 +292,16 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
                         !!DIG: verify that these are correct...
                         if (ivar == 4) then
                             ! solid volume fraction
-                            velmax = m0
-                            velmin = m0
+                            ! set to zero as pure water, see notes in filpatch.f90
+                            velmax = 0.d0
+                            velmin = 0.d0
                          elseif (ivar == 5) then
                             ! pore pressure
                             velmax = rho_f*grav
                             velmin = rho_f*grav
                          endif
                     endif
-               
+
                     do ii = -1,1,2
                         if (valc(1,i+ii,j) > dry_tolerance) then
                             vel = valc(ivar,i+ii,j) / valc(1,i+ii,j)
@@ -383,7 +384,7 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic, &
 !      write(*,*)" maxauxdif = ",maxauxdif," with mitot,mjtot ",mitot,mjtot, &
 !                " on grid ",mptr," level ",level
 !   endif
-    
+
 
     if (varRefTime) then   ! keep consistent with setgrd_geo and qinit_geo
         sp_over_h = get_max_speed(val,mitot,mjtot,nvar,aux,naux,nghost,dx,dy)
@@ -400,8 +401,8 @@ subroutine dumpaux(aux,naux,mitot,mjtot)
    real(kind=8) :: aux(naux,mitot,mjtot)
    integer :: naux,mitot,mjtot,i,j,iaux
 
-   do j = 1, mjtot 
-   do i = 1, mitot 
+   do j = 1, mjtot
+   do i = 1, mitot
       write(*,444) i,j,(aux(iaux,i,j),iaux=1,naux)
  444  format(2i4,5e12.5)
    end do
