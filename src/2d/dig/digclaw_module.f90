@@ -352,7 +352,7 @@ contains
 
       tanphi = dtan(phi_bed + datan(tanpsi))
 
-      tau = dmax1(0.d0,sigbed*tanphi)
+      tau = dmax1(0.d0,sigbed*tanphi) *((tanh(100.0*(m-0.05))+1.0)*0.5)
 
       !kappa: earth pressure coefficient
       kappa = 1.d0
