@@ -19,7 +19,7 @@ from clawpack.amrclaw.data import FlagRegion
 
 
 #------------------------------
-def setrun(claw_pkg='dclaw'):
+def setrun(claw_pkg='geoclaw'):
 #------------------------------
 
     """
@@ -34,7 +34,7 @@ def setrun(claw_pkg='dclaw'):
     """
 
     from clawpack.clawutil import data
-    assert claw_pkg.lower() == 'dclaw',  "Expected claw_pkg = 'dclaw'"
+    assert claw_pkg.lower() == 'geoclaw',  "Expected claw_pkg = 'geoclaw'"
 
     num_dim = 2
     rundata = data.ClawRunData(claw_pkg, num_dim)
@@ -87,10 +87,10 @@ def setrun(claw_pkg='dclaw'):
     # ---------------
 
     # Number of equations in the system:
-    clawdata.num_eqn = 7
+    clawdata.num_eqn = 3
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
-    clawdata.num_aux = 10
+    clawdata.num_aux = 1
 
     # Index of aux array corresponding to capacity function, if there is one:
     clawdata.capa_index = 0
@@ -135,7 +135,7 @@ def setrun(claw_pkg='dclaw'):
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
         clawdata.output_step_interval = 1
-        clawdata.total_steps = 1
+        clawdata.total_steps = 10
         clawdata.output_t0 = True
         
 
@@ -202,7 +202,7 @@ def setrun(claw_pkg='dclaw'):
     clawdata.transverse_waves = 1
 
     # Number of waves in the Riemann solution:
-    clawdata.num_waves = 5
+    clawdata.num_waves = 3
     
     # List of limiters to use for each wave family:  
     # Required:  len(limiter) == num_waves
@@ -212,7 +212,7 @@ def setrun(claw_pkg='dclaw'):
     #   2 or 'superbee' ==> superbee
     #   3 or 'mc'       ==> MC limiter
     #   4 or 'vanleer'  ==> van Leer
-    clawdata.limiter = [4, 4, 4, 4, 4] # TODO VERIFY THAT 4 in old and new are the same
+    clawdata.limiter = [4, 4, 4] # TODO VERIFY THAT 4 in old and new are the same
 
     clawdata.use_fwaves = True    # True ==> use f-wave version of algorithms
     # TODO This is not in old setrun.py
@@ -297,17 +297,7 @@ def setrun(claw_pkg='dclaw'):
     #   'center',  'capacity', 'xleft', or 'yleft'  (see documentation).
 
     amrdata.aux_type = [
-        "center",
-        "center",
-        "yleft",
-        "center",
-        "center",
-        "center",
-        "center",
-        "center",
-        "center",
-        "center",
-    ]
+        "center"]
 
 
     # Flag using refinement routine flag2refine rather than richardson error
@@ -390,78 +380,79 @@ def setrun(claw_pkg='dclaw'):
     # == setdtopo.data values ==
     dtopo_data = rundata.dtopo_data
 
-    # == setqinit.data values ==
-    qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
+    rundata.qinit_data.variable_eta_init = True
 
-    etafile = 'surface_topo.tt3'
-    qinitdclaw_data.qinitfiles.append([3, 8, 1, 2, etafile])
-
-    #mfile = 'mass_frac.tt3' 
-    mfile = 'mass_frac0.tt3' # with m0 = 0 below
-    qinitdclaw_data.qinitfiles.append([3, 4, 1, 2, mfile])
+    if 0:
+        # == setqinit.data values ==
+        qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
     
-    #hfile = 'landslide_depth.tt3'
-    #qinitdclaw_data.qinitfiles.append([3, 1, 1, 2, hfile])
-
-    # == setauxinit.data values ==
-    #auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
+        etafile = 'surface_topo.tt3'
+        qinitdclaw_data.qinitfiles.append([3, 8, 1, 2, etafile])
     
-    # == fgmax.data values ==
-    #fgmax_files = rundata.fgmax_data.fgmax_files
-    # for fixed grids append to this list names of any fgmax input files
-
-    # == setdclaw.data values ==
-    dclaw_data = rundata.dclaw_data  # initialized when rundata instantiated
-
-    dclaw_data.c1 = 1.0 # do we want to remove this?
-    dclaw_data.rho_f = 1000.0
-    dclaw_data.rho_s = 2700.0
-    dclaw_data.phi_bed = 32.0
-    dclaw_data.theta_input = 0.0
-    dclaw_data.mu = 0.005
-    #dclaw_data.m0 = 0.63
-    dclaw_data.m0 = 0. # pure water
-    dclaw_data.m_crit = 0.64
-    dclaw_data.kappita = 1.e-8
-    #dclaw_data.kappita_diff = 1
-    #dclaw_data.chi_init_val=0.5 # not currently used.
-    dclaw_data.alpha_c = 0.05
-    dclaw_data.alpha_seg = 0.0
-    #dclaw_data.phi_seg_coeff = 0.0
-    dclaw_data.delta = 0.001
-    dclaw_data.bed_normal = 0
-    dclaw_data.entrainment = 0
-    dclaw_data.entrainment_rate = 0.0
-    dclaw_data.sigma_0 = 1.0e3
-    #dclaw_data.mom_autostop = True
-    #dclaw_data.momlevel = 1
-    #dclaw_data.mom_perc = 0.0
-
-    # == pinitdclaw.data values ==
-    pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
-
-    pinitdclaw_data.init_ptype = 0 # hydrostatic (-1 ==> zero everywhere)
-    pinitdclaw_data.init_pmax_ratio = 0.00e0
-    pinitdclaw_data.init_ptf = 0.0
-    pinitdclaw_data.init_ptf2 = 0.0
+        mfile = 'mass_frac.tt3'
+        qinitdclaw_data.qinitfiles.append([3, 4, 1, 2, mfile])
+        
+        #hfile = 'landslide_depth.tt3'
+        #qinitdclaw_data.qinitfiles.append([3, 1, 1, 2, hfile])
     
-    # == flowgrades.data values ==
-    flowgrades_data = rundata.flowgrades_data  # initialized when rundata instantiated
-
-    flowgrades_data.flowgrades = []
-    # for using flowgrades for refinement append lines of the form
-    # [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
-    # where:
-    # flowgradevalue: floating point relevant flowgrade value for following measure:
-    # flowgradevariable: 1=depth, 2= momentum, 3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
-    # flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
-    # flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
-
+        # == setauxinit.data values ==
+        #auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
+        
+        # == fgmax.data values ==
+        #fgmax_files = rundata.fgmax_data.fgmax_files
+        # for fixed grids append to this list names of any fgmax input files
     
-    #flowgrades_data.keep_fine = True
-    #flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 1])
-    #flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 1])
-
+        # == setdclaw.data values ==
+        dclaw_data = rundata.dclaw_data  # initialized when rundata instantiated
+    
+        dclaw_data.c1 = 1.0 # do we want to remove this?
+        dclaw_data.rho_f = 1000.0
+        dclaw_data.rho_s = 2700.0
+        dclaw_data.phi_bed = 32.0
+        dclaw_data.theta_input = 0.0
+        dclaw_data.mu = 0.005
+        dclaw_data.m0 = 0.63
+        dclaw_data.m_crit = 0.64
+        dclaw_data.kappita = 1.e-8
+        #dclaw_data.kappita_diff = 1
+        #dclaw_data.chi_init_val=0.5 # not currently used.
+        dclaw_data.alpha_c = 0.05
+        dclaw_data.alpha_seg = 0.0
+        #dclaw_data.phi_seg_coeff = 0.0
+        dclaw_data.delta = 0.001
+        dclaw_data.bed_normal = 0
+        dclaw_data.entrainment = 0
+        dclaw_data.entrainment_rate = 0.0
+        dclaw_data.sigma_0 = 1.0e3
+        #dclaw_data.mom_autostop = True
+        #dclaw_data.momlevel = 1
+        #dclaw_data.mom_perc = 0.0
+    
+        # == pinitdclaw.data values ==
+        pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
+    
+        pinitdclaw_data.init_ptype = 0 # hydrostatic (-1 ==> zero everywhere)
+        pinitdclaw_data.init_pmax_ratio = 0.00e0
+        pinitdclaw_data.init_ptf = 0.0
+        pinitdclaw_data.init_ptf2 = 0.0
+        
+        # == flowgrades.data values ==
+        flowgrades_data = rundata.flowgrades_data  # initialized when rundata instantiated
+    
+        flowgrades_data.flowgrades = []
+        # for using flowgrades for refinement append lines of the form
+        # [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
+        # where:
+        # flowgradevalue: floating point relevant flowgrade value for following measure:
+        # flowgradevariable: 1=depth, 2= momentum, 3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
+        # flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
+        # flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
+    
+        
+        #flowgrades_data.keep_fine = True
+        #flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 1])
+        #flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 1])
+    
     #  ----- For developers ----- 
     # Toggle debugging print statements:
     amrdata.dprint = False      # print domain flags

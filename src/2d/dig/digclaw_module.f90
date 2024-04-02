@@ -261,20 +261,16 @@ contains
 
       rho = rho_s*m + (1.d0-m)*rho_f
       pmax = rho*gmod*h
-      plo = rho_f*dry_tol*gmod*dry_tol
-      phi = pmax - plo
-      ! DIG : at a later time, with some testing, change this to
-      ! plo = 0d0 and phi = pmax (KRB and DLG, 1/30/2024)
-      if (p.lt.plo) then
-         if ((u**2+v**2)>0.d0) then
-            p = dmax1(0.d0,p)
-            ! DIG: why is this not enforced when static as well.
-            ! This should also probably change along with the prior
-            ! lines (KRB and DLG, 1/30/2024)
-         endif
-      elseif (p.gt.phi) then
-         p = dmin1(pmax,p)
+      p = dmin1(pmax,p)
+      p = dmax1(0.d0,p)
+
+      if (m < 1d-5) then
+         ! reset p to hydrostatic pressure in pure water
+         ! (need to figure out proper tolerance in test)
+         ! (better way? E.g. relaxation toward hydrostatic in src2?)
+         p = h*gmod*rho_f
       endif
+
       return
 
    end subroutine admissibleq
@@ -356,7 +352,7 @@ contains
 
       tanphi = dtan(phi_bed + datan(tanpsi))
 
-      tau = dmax1(0.d0,sigbed*tanphi)
+      tau = dmax1(0.d0,sigbed*tanphi) *((tanh(100.0*(m-0.05))+1.0)*0.5)
 
       !kappa: earth pressure coefficient
       kappa = 1.d0

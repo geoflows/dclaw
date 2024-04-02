@@ -35,16 +35,16 @@ c-----------------------------------------------------------------------
       double precision psi(4)
 
 *     !local
-      integer m,mw,ks,mp
+      integer m,mw,ks,mp,k
       double precision h,u,v,mbar
-      double precision det1,det2,det3,detR
+      double precision det1,det2,det3,detR,determinant
       double precision R(0:2,1:3),A(3,3),del(0:4)
       double precision beta(3)
       double precision rho,rhoL,rhoR,tauL,tauR,tau
       double precision kappa,kperm,compress,tanpsi,D,SN,sigbed,pmL,pmR
       double precision theta,gamma,eps,pm
       double precision sL,sR,sRoe1,sRoe2,sE1,sE2,uhat,chat
-      double precision delb,s1m,s2m,hm,heL,heR,criticaltol
+      double precision delb,s1m,s2m,hm,heL,heR,criticaltol,criticaltol_2
       double precision s1s2bar,s1s2tilde,hbar,source2dx,veltol1,veltol2
       double precision hstarHLL,deldelh,drytol,gmod,geps,tausource
       double precision raremin,raremax,rare1st,rare2st,sdelta,rho_fp,seg
@@ -54,8 +54,10 @@ c-----------------------------------------------------------------------
 
       veltol1=1.d-6
       veltol2=0.d0
-      criticaltol=1.d-6
+      !criticaltol=1.d-6
       drytol = dry_tolerance
+      criticaltol = max(drytol*grav, 1d-6)
+      criticaltol_2 = sqrt(criticaltol)
 
       do m=1,4
          psi(m) = 0.d0
@@ -143,7 +145,7 @@ c-----------------------------------------------------------------------
 
       hstarHLL = max((huL-huR+sE2*hR-sE1*hL)/(sE2-sE1),0.d0) ! middle state in an HLL solve
 c     !determine the middle entropy corrector wave------------------------
-      rarecorrectortest = .true.
+      rarecorrectortest = .false.
       rarecorrector=.false.
       if (rarecorrectortest) then
          sdelta=sw(3)-sw(1)
@@ -179,15 +181,24 @@ c     !determine the middle entropy corrector wave------------------------
 
 c     !find if sonic problem
       sonic=.false.
-      if (dabs(s1s2bar).le.criticaltol) sonic=.true.
-      if (s1s2bar*s1s2tilde.le.criticaltol) sonic=.true.
-      if (s1s2bar*sE1*sE2.le.criticaltol) sonic = .true.
-      if (min(dabs(sE1),dabs(sE2)).lt.criticaltol) sonic=.true.
-      if (sE1.lt.0.d0.and.s1m.gt.0.d0) sonic = .true.
-      if (sE2.gt.0.d0.and.s2m.lt.0.d0) sonic = .true.
-      if ((uL+dsqrt(geps*hL))*(uR+dsqrt(geps*hR)).lt.0.d0) sonic=.true.
-      if ((uL-dsqrt(geps*hL))*(uR-dsqrt(geps*hR)).lt.0.d0) sonic=.true.
-
+      if (dabs(s1s2bar).le.criticaltol) then
+         sonic=.true.
+      elseif (s1s2bar*s1s2tilde.le.criticaltol**2) then
+         sonic=.true.
+      elseif (s1s2bar*sE1*sE2.le.criticaltol**2) then
+         sonic = .true.
+      elseif (min(dabs(sE1),dabs(sE2)).lt.criticaltol_2) then
+         sonic=.true.
+      elseif (sE1.lt.criticaltol_2.and.s1m.gt.-criticaltol_2) then
+         sonic = .true.
+      elseif (sE2.gt.-criticaltol_2.and.s2m.lt.criticaltol_2) then
+         sonic = .true.
+      elseif ((uL+dsqrt(geps*hL))*(uR+dsqrt(geps*hR)).lt.0.d0) then
+         sonic=.true.
+      elseif ((uL-dsqrt(geps*hL))*(uR-dsqrt(geps*hR)).lt.0.d0) then
+         sonic=.true.
+      endif
+      
       if (sonic) then
          source2dx = -gmod*hbar*delb
       else
@@ -320,7 +331,27 @@ c     !find bounds in case of critical state resonance, or negative states
          enddo
       enddo
 
-      call gaussj(A,3,3,beta,1,1)
+c     !Determine determinant of eigenvector matrix========
+      det1=A(1,1)*(A(2,2)*A(3,3)-A(2,3)*A(3,2))
+      det2=A(1,2)*(A(2,1)*A(3,3)-A(2,3)*A(3,1))
+      det3=A(1,3)*(A(2,1)*A(3,2)-A(2,2)*A(3,1))
+      determinant=det1-det2+det3
+c     !solve for beta(k) using Cramers Rule=================
+      do k=1,3
+         do mw=1,3
+               A(1,mw)=R(0,mw)
+               A(2,mw)=R(1,mw)
+               A(3,mw)=R(2,mw)
+         enddo
+         A(1,k)=del(0)
+         A(2,k)=del(1)
+         A(3,k)=del(2)
+         det1=A(1,1)*(A(2,2)*A(3,3)-A(2,3)*A(3,2))
+         det2=A(1,2)*(A(2,1)*A(3,3)-A(2,3)*A(3,1))
+         det3=A(1,3)*(A(2,1)*A(3,2)-A(2,2)*A(3,1))
+         beta(k)=(det1-det2+det3)/determinant
+      enddo
+      !call gaussj(A,3,3,beta,1,1)
 
       do mw=1,3
          do m=1,2

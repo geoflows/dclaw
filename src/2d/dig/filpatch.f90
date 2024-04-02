@@ -51,7 +51,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
     integer :: unset_indices(4), coarse_indices(4)
     integer :: refinement_ratio_x, refinement_ratio_y
     real(kind=8) :: dx_fine, dy_fine, dx_coarse, dy_coarse
-    real(kind=8) :: xlow_coarse,ylow_coarse, xlow_fine, ylow_fine, xhi_fine,yhi_fine   
+    real(kind=8) :: xlow_coarse,ylow_coarse, xlow_fine, ylow_fine, xhi_fine,yhi_fine
     real(kind=8) :: h, b, eta_fine, eta1, eta2, up_slope, down_slope
     real(kind=8) :: hv_fine, v_fine, v_new, divide_mass
     real(kind=8) :: h_fine_average, h_fine, h_count, h_coarse
@@ -91,18 +91,18 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
     !  when pass it in to subroutines they treat it as having di_fineerent
     !  dimensions than the max size need to allocate here
     ! the +2 is to expand on coarse grid to enclose fine
-    real(kind=8) :: valcrse((ihi-ilo+3) * (jhi-jlo+3) * nvar)   ! NB this is a 1D array 
-    real(kind=8) :: auxcrse((ihi-ilo+3) * (jhi-jlo+3) * naux)  
+    real(kind=8) :: valcrse((ihi-ilo+3) * (jhi-jlo+3) * nvar)   ! NB this is a 1D array
+    real(kind=8) :: auxcrse((ihi-ilo+3) * (jhi-jlo+3) * naux)
     real(kind=8) :: vetac((ihi-ilo+3) * (jhi-jlo+3))
- 
+
     yes_do_aux_copy = .true.
 
     mx_patch = ihi-ilo + 1 ! nrowp
-    my_patch = jhi-jlo + 1 
+    my_patch = jhi-jlo + 1
 
     dx_fine     = hxposs(level)
     dy_fine     = hyposs(level)
-    
+
     use_force_dry_this_level = use_force_dry
     if (use_force_dry) then
         ! check if force_dry resolution the same as this level:
@@ -113,7 +113,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
     !if (use_force_dry_this_level .and. (t <= tend_force_dry)) then
     !    write(6,*) '+++ using force_dry in filval, t = ',t
     !    endif
-            
+
     ! Coordinates of edges of patch (xlp,xrp,ybp,ytp)
     xlow_fine = xlower + ilo * dx_fine
     ylow_fine = ylower + jlo * dy_fine
@@ -180,7 +180,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
         jplo = (unset_indices(3) - refinement_ratio_y + nghost * refinement_ratio_y) &
                                                 / refinement_ratio_y - nghost
         jphi = (unset_indices(4) + refinement_ratio_y) / refinement_ratio_y
-                                                
+
 
         xlow_coarse = xlower + iplo * dx_coarse
         ylow_coarse = ylower + jplo * dy_coarse
@@ -203,7 +203,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
         ! Set the aux array values for the coarse grid, this could be done
         ! instead in intfil using possibly already available bathy data from the
         ! grids
-        
+
         if (naux > 0) then
             nghost_patch = 0
             lencrse = (ihi-ilo+3)*(jhi-jlo+3)*naux ! set 1 component, not all naux
@@ -213,9 +213,9 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
             ! into the branches that need it (topo_finalized dand periodic
             ! but out of the most used filrecur pathway
             do k = 1, lencrse, naux
-              auxcrse(k) = NEEDS_TO_BE_SET  
+              auxcrse(k) = NEEDS_TO_BE_SET
             end do
-  
+
             ! update topography if needed
             !if ((num_dtopo>0).and.(topo_finalized.eqv..false.)) then
             !   if ((minval(topotime)<maxval(tfdtopo)).and.(t>=minval(t0dtopo))) then
@@ -258,7 +258,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
             call set_eta_init(nghost_patch, mx_coarse, my_coarse,  &
                  xlow_coarse, ylow_coarse,dx_coarse,dy_coarse,t,vetac)
           endif
-          
+
         ! Calculate surface elevation eta using dry limiting
         veta_init_c = sea_level  ! if not variable_eta_init
         do j_coarse = 1, my_coarse
@@ -275,8 +275,10 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
                 endif
             enddo
         enddo
-        
+
         !!DIG: Something left out here that sets valcrse for sea level changes
+        !! KRB: I think this is handled above by veta_init_c (L272) unless you
+        !! think it should be set to sea level in this case if h>drytol.
 
         ! Calculate limited gradients of coarse grid eta
         do j_coarse = 2, my_coarse - 1
@@ -346,7 +348,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
                         if ((ii>=1) .and. (ii<=mx_fdry) .and. &
                             (jj>=1) .and. (jj<=my_fdry)) then
                             ! grid cell lies in region covered by force_dry,
-                            ! check if this cell is forced to be dry      
+                            ! check if this cell is forced to be dry
                             ! Otherwise don't change value set above:
                             if (force_dry(ii,jj) == 1) then
                                 h_fine = 0.d0
@@ -399,14 +401,29 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
                         vel_min(i_coarse,j_coarse) = valcrse(ivalc(n,i_coarse,j_coarse)) /    &
                                                      valcrse(ivalc(1,i_coarse,j_coarse))
                     else
+                        ! refinement has made mass in a fine cell that was in a
+                        ! previously dry coarse cell. This should only happen for
+                        ! sea level refinement.
+
+                        ! for landslide material, refinement should result in a dry fine cell.
+                        ! if this is not the case, there may be something wrong
+                        ! with how the refinement is specified.
+
+                        ! the case for which this approach is insufficient is if one
+                        ! had a sediment laden lake that we want to have unrefined
+                        ! at the beginning of the simulation and want to refine to a
+                        ! flat surface and retain the m value when velocity arrives.
+
                         vel_min(i_coarse,j_coarse) = 0.d0
                         vel_max(i_coarse,j_coarse) = 0.d0
-                        
+
                         !!DIG: verify that these are correct...
+                        !! initial values only set here if h<drytol.
                         if (ivar == 4) then
                             ! solid volume fraction
-                            vel_max(i_coarse,j_coarse) = m0
-                            vel_min(i_coarse,j_coarse) = m0
+                            vel_max(i_coarse,j_coarse) = 0.d0 ! if refinement makes new mass in a dry cell, assume it is water.
+                            vel_min(i_coarse,j_coarse) = 0.d0 ! KRB and DLG changed this from m0 to 0.d0 4/2/2024
+
                          elseif (ivar == 5) then
                             ! pore pressure
                             vel_max(i_coarse,j_coarse) = rho_f*grav
@@ -476,13 +493,13 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
             ! Reset momentum to conserve momentum in the cases where we may have
             ! gained momentum or if velocity bounds were violated
             if (reloop) then
-              
+
                 do j_fine  = 1, my_patch
                   j_coarse     = floor((j_fine + jlo - 1) / ratio_y) - jplo + 1
                   ycent_coarse = ylow_coarse + (j_coarse-.5d0)*dy_coarse
                   ycent_fine   =  ylower + (j_fine-1+jlo + .5d0)*dy_fine
                   eta2         = (ycent_fine-ycent_coarse)/dy_coarse
- 
+
                     do i_fine = 1, mx_patch
                        i_coarse     = floor((i_fine+ilo-1) / ratio_x) - iplo + 1
                        xcent_coarse = xlow_coarse + (i_coarse-.5d0)*dx_coarse
