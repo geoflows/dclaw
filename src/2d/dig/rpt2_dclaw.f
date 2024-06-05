@@ -3,7 +3,7 @@
      &                ql,qr,aux1,aux2,aux3,asdq,bmasdq,bpasdq)
 ! =====================================================
 !
-!     Riemann solver in the transverse direction using 
+!     Riemann solver in the transverse direction using
 !     Jacobian matrix from left cell (if imp==1) or right cell (if imp==2).
 !
 !     Note this has been modified from the version used in v5.7.x and
@@ -12,7 +12,7 @@
 !      - a bug in the second component of the eigenvectors was fixed.
 !      - when s(2) is close to zero this component of flux difference
 !        is split equally between bmasdq and bpasdq to improve symmetry.
-!   
+!
 !     Further modified to clean up and avoid a lot of work in dry cells.
 
 !-----------------------last modified October 2020 ----------------------
@@ -42,7 +42,7 @@
       real(kind=8) ::  dxdcm,dxdcp,topo1,topo3,eta
 
       integer :: i,mw,mu,mv
-      
+
 
       if (ixy == 1) then
          ! normal solve was in x-direction
@@ -60,7 +60,7 @@
 
       g = grav
       do i=2-mbc,mx+mbc
-         
+
          if (bed_normal.eq.1) then
             g = grav*cos(0.5d0*(aux2(i_theta,i-1)+aux2(i_theta,i)))
          endif
@@ -74,7 +74,7 @@
          if (h <= dry_tolerance) then
              ! fluctuation going into a dry cell, don't know how to split,
              ! so leave bmadsq(:,i)=bpasdq(:,i)=0 and go on to next i:
-             cycle  
+             cycle
          endif
 
          ! compute velocities in relevant cell, and other quantities:
@@ -100,7 +100,7 @@
          endif
 
          rho = m*rho_s + (1.d0-m)*rho_f
-         gamma = 0.25d0*(rho_f + 3.0*rho)/rho
+         gamma = 0.25d0*(rho_f + 3.d0*rho)/rho
 
          ! check if cell that transverse waves go into are both too high:
          ! Note: prior to v5.8.0 this checked against max rather than min
@@ -130,7 +130,7 @@
          endif
 
 c        Determine some speeds necessary for the Jacobian
-            
+
          ! In v5.7.x and prior versions,
          ! we used left right states to define Roe averages,
          ! which is consistent with those used in rpn2.
@@ -168,14 +168,14 @@ c        Set-up eigenvectors
          r(3,1) = s(1)
          r(4,1) = m
          r(5,1) = gamma*rho*g
-         r(6,1) = 0.0
+         r(6,1) = 0.0d0
 
          r(1,3) = 1.d0
          r(2,3) = u    ! v5.8.0: fixed bug, u not s(2)=v
          r(3,3) = s(3)
          r(4,3) = m
          r(5,3) = gamma*rho*g
-         r(6,3) = 0.0
+         r(6,3) = 0.0d0
 
          r(1,2) = 0.d0
          r(2,2) = 1.d0

@@ -204,14 +204,15 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                                  (alloc(iadd(ivar,i,j)), ivar=1,num_eqn), eta
 
 
-                            ! approximate local momentum as sqrt((hu**2)+(hv**2))
+                            ! approximate local momentum as ((hu**2+ hv**2)/h)
+                            ! no density
                             ! stopping criteria is whether this value is equivalent to zero,
                             ! summed across all grids at level==momlevel
                             if (mom_autostop .eqv. .TRUE.) then
                             if (level .eq. momlevel ) then
                                 ! calculate and add to momentum to get a momlevel momentum sum.
                                 if (h .gt. dry_tolerance) then ! if substantial thickness.
-                                    locmom = locmom + ((hu/h)**2+ (hv/h)**2)**0.5
+                                    locmom = locmom + ((hu**2+ hv**2)/h)
                                 endif
                             endif
                             endif
@@ -241,6 +242,24 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                         do m = 1, num_eqn
                             qeta(iaddqeta(m, i, j)) = alloc(iadd(m, i, j))
                         end do
+
+                        ! momentum autostop for binary output.
+                        ! we are double counting ghost cells (this should not
+                        ! be a big deal as the goal is to identify if we are
+                        ! close to zero or not. ) 
+                        if (mom_autostop .eqv. .TRUE.) then
+                        if (level .eq. momlevel ) then
+                            ! Extract depth and momenta
+                            h = alloc(iadd(1, i, j))
+                            hu = alloc(iadd(2, i, j))
+                            hv = alloc(iadd(3, i, j))
+                            ! calculate and add to momentum to get a momlevel momentum sum.
+                            if (h .gt. dry_tolerance) then ! if substantial thickness.
+                                locmom = locmom + ((hu**2+ hv**2)/h)
+                            endif
+                        endif
+                        endif
+
                         eta = alloc(iadd(1, i, j)) + alloc(iaddaux(1, i ,j))
                         eta = eta - alloc(iadd(7,i,j))  ! Adjust eta based on entrainment
                         qeta(iaddqeta(num_eqn + 1, i, j)) = eta
