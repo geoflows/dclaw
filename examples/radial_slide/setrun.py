@@ -16,6 +16,8 @@ except:
     raise Exception("*** Must first set CLAW environment variable")
 
 from clawpack.amrclaw.data import FlagRegion
+from clawpack.geoclaw import fgout_tools
+
 
 
 #------------------------------
@@ -124,8 +126,8 @@ def setrun(claw_pkg='dclaw'):
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 30 #240
-        clawdata.tfinal = 120. #240.
+        clawdata.num_output_times = 40 #240
+        clawdata.tfinal = 160. #240.
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -176,8 +178,8 @@ def setrun(claw_pkg='dclaw'):
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
     # D-Claw requires CFL<0.5
-    clawdata.cfl_desired = 0.45 
-    clawdata.cfl_max = 0.5
+    clawdata.cfl_desired = 0.85 
+    clawdata.cfl_max = 1.0
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -282,7 +284,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 1
+    amrdata.amr_levels_max = 2
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
@@ -396,8 +398,8 @@ def setrun(claw_pkg='dclaw'):
     etafile = 'surface_topo.tt3'
     qinitdclaw_data.qinitfiles.append([3, 8, 1, 2, etafile])
 
-    #mfile = 'mass_frac.tt3' 
-    mfile = 'mass_frac0.tt3' # with m0 = 0 below
+    mfile = 'mass_frac.tt3' 
+    #mfile = 'mass_frac0.tt3' # with m0 = 0 below
     qinitdclaw_data.qinitfiles.append([3, 4, 1, 2, mfile])
     
     #hfile = 'landslide_depth.tt3'
@@ -419,8 +421,8 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.phi_bed = 32.0
     dclaw_data.theta_input = 0.0
     dclaw_data.mu = 0.005
-    #dclaw_data.m0 = 0.63
-    dclaw_data.m0 = 0. # pure water
+    dclaw_data.m0 = 0.63
+    #dclaw_data.m0 = 0. # pure water
     dclaw_data.m_crit = 0.64
     dclaw_data.kappita = 1.e-8
     #dclaw_data.kappita_diff = 1
@@ -461,6 +463,29 @@ def setrun(claw_pkg='dclaw'):
     #flowgrades_data.keep_fine = True
     #flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 1])
     #flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 1])
+
+
+    # == fgout_grids.data values ==
+    # NEW IN v5.9.0
+    # Set rundata.fgout_data.fgout_grids to be a list of
+    # objects of class clawpack.geoclaw.fgout_tools.FGoutGrid:
+    fgout_grids = rundata.fgout_data.fgout_grids  # empty list initially
+
+    fgout = fgout_tools.FGoutGrid()
+    fgout.fgno = 1
+    fgout.point_style = 2       # will specify a 2d grid of points
+    fgout.output_format = 'binary32'  # 4-byte, float32
+    fgout.nx = 300
+    fgout.ny = 300
+    fgout.x1 = 0.  # specify edges (fgout pts will be cell centers)
+    fgout.x2 = 3e3
+    fgout.y1 = 0.
+    fgout.y2 = 3e3
+    fgout.tstart = 0.
+    fgout.tend = 100.
+    fgout.nout = 101
+    fgout_grids.append(fgout)    # written to fgout_grids.data
+
 
     #  ----- For developers ----- 
     # Toggle debugging print statements:
