@@ -20,6 +20,7 @@
       use geoclaw_module, only: grav, dry_tolerance
       use geoclaw_module, only: coordinate_system,earth_radius,deg2rad
       use digclaw_module, only: rho_f,rho_s,bed_normal,i_theta
+      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
 
       implicit none
 
@@ -46,12 +47,12 @@
 
       if (ixy == 1) then
          ! normal solve was in x-direction
-         mu = 2
-         mv = 3
+         mu = i_hu
+         mv = i_hv
       else
          ! normal solve was in y-direction
-         mu = 3
-         mv = 2
+         mu = i_hv
+         mv = i_hu
       endif
 
       ! initialize all components of result to 0:
@@ -66,9 +67,9 @@
          endif
 
          if (imp==1) then
-            h = qr(1,i-1)
+            h = qr(i_h,i-1)
          else
-            h = ql(1,i)
+            h = ql(i_h,i)
          endif
 
          if (h <= dry_tolerance) then
@@ -83,18 +84,18 @@
               ! fluctuation being split is left-going
               u = qr(mu,i-1)/h
               v = qr(mv,i-1)/h
-              m = qr(4,i-1)/h
-              p = qr(5,i-1)
-              eta = h + aux2(1,i-1)
+              m = qr(i_hm,i-1)/h
+              p = qr(i_pb,i-1)
+              eta = h + aux2(1,i-1) - qr(i_bdif,i-1)
               topo1 = aux1(1,i-1)
               topo3 = aux3(1,i-1)
          else
               ! fluctuation being split is right-going
               u = ql(mu,i)/h
               v = ql(mv,i)/h
-              m = ql(4,i)/h
-              p = ql(5,i)
-              eta = h + aux2(1,i)
+              m = ql(i_hm,i)/h
+              p = ql(i_pb,i)
+              eta = h + aux2(1,i) - ql(i_bdif, i)
               topo1 = aux1(1,i)
               topo3 = aux3(1,i)
          endif
@@ -150,12 +151,12 @@ c        Determine some speeds necessary for the Jacobian
 
 c        Determine asdq decomposition (beta)
 
-         delf1 = asdq(1,i)
+         delf1 = asdq(i_h,i)
          delf2 = asdq(mu,i)
          delf3 = asdq(mv, i)
-         delf4 = asdq(4,i)
-         delf5 = asdq(5,i)
-         delf6 = asdq(6,i)
+         delf4 = asdq(i_hm,i)
+         delf5 = asdq(i_pb,i)
+         delf6 = asdq(i_hchi,i)
 
          ! v5.8.0: fixed bug in beta(2): u in place of s(2)=v
          beta(1) = (s(3)*delf1 - delf3) / (s(3) - s(1))

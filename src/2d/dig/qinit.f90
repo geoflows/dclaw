@@ -18,6 +18,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     use digclaw_module, only: admissibleq,calc_pmin,calc_taudir
     use digclaw_module, only: bed_normal,chi_init_val,init_ptype
     use digclaw_module, only: i_theta,m0,rho_f,rho_s,init_pmin_ratio
+    use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi
 
     implicit none
 
@@ -57,7 +58,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     ! 1/30/24: Confirmed with DLG that this is the behavior we want.
 
     forall(i=1-mbc:mx+mbc, j=1-mbc:my+mbc)
-        q(1,i,j) = max(0.d0, veta(i,j) - aux(1,i,j))
+        q(i_h,i,j) = max(0.d0, veta(i,j) - aux(1,i,j))
     end forall
 
     if (use_force_dry .and. (t0 <= tend_force_dry)) then
@@ -78,7 +79,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   ! check if this cell is forced to be dry
                   ! Otherwise don't change value set above:
                   if (force_dry(ii,jj) == 1) then
-                      q(1,i,j) = 0.d0
+                      q(i_h,i,j) = 0.d0
                       endif
                   endif
           enddo ! loop on j
@@ -173,7 +174,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                         ! if eta is provided as less than topo, then
                         ! h will be zero.
                         if (dq-aux(1,i,j).gt.0.d0) then
-                          q(1,i,j) = dmax1(q(1,i,j),dq-aux(1,i,j))
+                          q(i_h,i,j) = dmax1(q(i_h,i,j),dq-aux(1,i,j))
                         endif
                      endif
 
@@ -196,35 +197,35 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       enddo
 
 
-      do j=1-mbc,my+mbc 
+      do j=1-mbc,my+mbc
          do i=1-mbc,mx+mbc
                if (initm.eq.0) then
-                  if (dabs((q(1,i,j) + aux(1,i,j))-veta(i,j)).lt.1d-6) then
-                    q(4,i,j) = 0.d0 ! If eta is sea level (stored in veta), assume m is zero
+                  if (dabs((q(i_h,i,j) + aux(1,i,j))-veta(i,j)).lt.1d-6) then
+                    q(i_hm,i,j) = 0.d0 ! If eta is sea level (stored in veta), assume m is zero
                     ! DIG: This may need to change if treatment of sea level does not use veta.
                     ! potentially have a m0fill and m0perm
                   else
-                    q(4,i,j) = m0*q(1,i,j)
+                    q(i_hm,i,j) = m0*q(i_h,i,j)
                   endif
                else
-                  q(4,i,j) = q(1,i,j)*q(4,i,j)
+                  q(i_hm,i,j) = q(i_h,i,j)*q(i_hm,i,j)
                endif
                if (initchi.eq.0) then
-                  q(6,i,j) = chi_init_val*q(1,i,j)
+                  q(i_hchi,i,j) = chi_init_val*q(i_h,i,j)
                else
-                  q(6,i,j) = q(1,i,j)*q(6,i,j)
+                  q(i_hchi,i,j) = q(i_h,i,j)*q(i_hchi,i,j)
                endif
                if (initu.eq.1) then
-                  q(2,i,j) = q(1,i,j)*q(2,i,j)
+                  q(i_hu,i,j) = q(i_h,i,j)*q(i_hu,i,j)
                endif
                if (initv.eq.1) then
-                  q(3,i,j) = q(1,i,j)*q(3,i,j)
+                  q(i_hv,i,j) = q(i_h,i,j)*q(i_hv,i,j)
                endif
                if (initpv.eq.1) then
-                  q(5,i,j) = q(1,i,j)*q(5,i,j)
+                  q(i_pb,i,j) = q(i_h,i,j)*q(i_pb,i,j)
                endif
 
-               if (q(1,i,j).le.dry_tolerance) then
+               if (q(i_h,i,j).le.dry_tolerance) then
                   do m = 1,meqn
                      q(m,i,j) = 0.d0
                   enddo
@@ -249,7 +250,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                  else
                      gmod=grav
                  endif
-                 q(5,i,j) = rho_f*gmod*q(1,i,j)
+                 q(i_pb,i,j) = rho_f*gmod*q(i_h,i,j)
                enddo
             enddo
          case(1:2) ! DIG: Not yet tested
@@ -257,21 +258,21 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
                   p_ratioij = init_pmin_ratio
-                  if (q(1,i,j).le.dry_tolerance) then
-                     q(5,i,j) = init_pmin_ratio*rho_f*gmod*q(1,i,j)
+                  if (q(i_h,i,j).le.dry_tolerance) then
+                     q(i_pb,i,j) = init_pmin_ratio*rho_f*gmod*q(i_h,i,j)
                      cycle
                   endif
-                  call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j), &
-                             q(4,i,j),q(5,i,j),u,v,sv,aux(i_theta,i,j))
+                  call admissibleq(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j), &
+                             q(i_hm,i,j),q(i_pb,i,j),u,v,sv,aux(i_theta,i,j))
                   if (bed_normal.eq.1) then
                      gmod = grav*cos(aux(i_theta,i,j))
                      p_ratioij = init_pmin_ratio &
-                         + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(1,i,j)
+                         + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(i_h,i,j)
                   endif
 
                   rho = sv*rho_s + (1.d0-sv)*rho_f
 
-                  q(5,i,j) = p_ratioij*rho*gmod*q(1,i,j)
+                  q(i_pb,i,j) = p_ratioij*rho*gmod*q(i_h,i,j)
                enddo
             enddo
 

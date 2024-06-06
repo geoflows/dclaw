@@ -27,9 +27,9 @@ COMMON_MODULES += \
 
 #list of common modules needed for dclaw codes
 COMMON_MODULES += \
+ $(DIGLIB)/digclaw_module.f90 \
  $(DIGLIB)/qinit_module.f90 \
  $(DIGLIB)/auxinit_module.f90 \
- $(DIGLIB)/digclaw_module.f90 \
  $(DIGLIB)/fgout_module.f90 \
 
 

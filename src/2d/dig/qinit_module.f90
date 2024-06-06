@@ -4,6 +4,7 @@ module qinit_module
     ! which reads data from setqinit_dclaw.data
 
     use amr_module, only: rinfinity
+    use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi
 
     implicit none
     save
@@ -186,7 +187,7 @@ contains
                                 q(qinit_type,i,j) = q(qinit_type,i,j) + dq
                             endif
                         else if (qinit_type == 4) then
-                            q(1,i,j) = max(dq-aux(1,i,j),0.d0)
+                            q(i_h,i,j) = max(dq-aux(1,i,j),0.d0)
                         endif
                     endif
                 enddo
@@ -388,8 +389,8 @@ contains
     !
     ! Associated with each file is a initialization type, iqinit(file):
     !     as follows:
-    !     1,2,3: perturbation to q(1,2,3)
-    !     4:     file defines eta, and h =q(i,j,1)= max(eta-b,0)
+    !     m: perturbation to q(m) for m=equation_number
+    !     m+1:     file defines eta, and h =q(i_h,i,j)= max(eta-b,0)
     ! ========================================================================
 
    subroutine set_qinit_dig(fname)
