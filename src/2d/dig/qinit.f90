@@ -189,11 +189,11 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       initm = 0
       initchi = 0
       do mf =1,mqinitfiles
-         if (iqinit(mf).eq.2) initu=1
-         if (iqinit(mf).eq.3) initv = 1
-         if (iqinit(mf).eq.4) initm = 1
-         if (iqinit(mf).eq.5) initpv = 1
-         if (iqinit(mf).eq.6) initchi = 1
+         if (iqinit(mf).eq.i_hu) initu=1
+         if (iqinit(mf).eq.i_hv) initv = 1
+         if (iqinit(mf).eq.i_hm) initm = 1
+         if (iqinit(mf).eq.i_pb) initpv = 1
+         if (iqinit(mf).eq.i_hchi) initchi = 1
       enddo
 
 
