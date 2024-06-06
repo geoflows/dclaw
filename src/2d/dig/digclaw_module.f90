@@ -78,7 +78,7 @@ contains
          i_hu=2
          i_hv=3
          i_hm=4
-         i_pb=6
+         i_pb=5
          i_hchi=6
          i_bdif=7
 
