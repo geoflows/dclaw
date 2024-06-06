@@ -5,9 +5,9 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
 ! # called before each call to step
 ! # use to set time-dependent aux arrays or perform other tasks.
 !
-! This particular routine sets negative values of q(1,i,j) to zero,
+! This particular routine sets negative values of q(i_h,i,j) to zero,
 ! as well as the corresponding q(m,i,j) for m=1,meqn.
-! This is for problems where q(1,i,j) is a depth.
+! This is for problems where q(i_h,i,j) is a depth.
 ! This should occur only because of rounding error.
 !
 ! Also calls movetopo if topography might be moving.
@@ -25,6 +25,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     use amr_module, only: xperdom,yperdom,spheredom,NEEDS_TO_BE_SET
 
     use digclaw_module, only: i_theta,bed_normal,admissibleq,calc_taudir
+    use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
 
     implicit none
 
@@ -51,10 +52,10 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
         do i=1-mbc,mx+mbc
             theta = 0.d0
             if (bed_normal.eq.1) theta=aux(i_theta,i,j)
-            call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j),q(4,i,j),q(5,i,j),u,v,sv,theta)
-            q(6,i,j) = min(q(6,i,j),q(1,i,j))
-            q(6,i,j) = max(q(6,i,j),0.0d0)
-            q(7,i,j) = max(q(7,i,j),0.0d0)
+            call admissibleq(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),u,v,sv,theta)
+            q(i_hchi,i,j) = min(q(i_hchi,i,j),q(i_h,i,j))
+            q(i_hchi,i,j) = max(q(i_hchi,i,j),0.0d0)
+            q(i_bdif,i,j) = max(q(i_bdif,i,j),0.0d0) ! DIG: if we store deposition in i_bdif, remove.
         enddo
     enddo
 

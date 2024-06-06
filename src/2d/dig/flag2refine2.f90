@@ -31,6 +31,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
     use geoclaw_module, only:dry_tolerance, sea_level
     use geoclaw_module, only: spherical_distance, coordinate_system
 
+    use digclaw_module, only: i_h,i_hu,i_hv
 
     use storm_module, only: storm_specification_type, wind_refine, R_refine
     use storm_module, only: storm_location, wind_forcing, wind_index, wind_refine
@@ -66,7 +67,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
     real(kind=8) :: xlow,xhi,ylow,yhi,xxlow,xxhi,yylow,yyhi
     real(kind=8) :: flowgrademeasure, h,hu,hv
     integer :: nx,ny,loc,locaux,mitot,mjtot,mptr,iflow,ii,jj
-    
+
 
     ! Loop over interior points on this grid
     ! (i,j) grid cell is [x_low,x_hi] x [y_low,y_hi], cell center at (x_c,y_c)
@@ -79,7 +80,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
             x_low = xlower + (i - 1) * dx
             x_c = xlower + (i - 0.5d0) * dx
             x_hi = xlower + i * dx
-            
+
             if (amrflags(i,j) .ne. UNSET) then
                 ! do not consider this cell further
                 cycle x_loop
@@ -89,9 +90,9 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
 
             ! determine if flowgrades are used
             if (mflowgrades > 0) then
-                depth= q(1,i,j)
-                momentum = sqrt(q(2,i,j)**2 + q(3,i,j)**2)
-                surface = q(1,i,j) + aux(1,i,j)
+                depth= q(i_h,i,j)
+                momentum = sqrt(q(i_hu,i,j)**2 + q(i_hv,i,j)**2)
+                surface = q(i_h,i,j) + aux(1,i,j)
                 do iflow=1,mflowgrades
                       if (iflowgradevariable(iflow).eq.1) then
                         flowgradenorm=depth
@@ -127,7 +128,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                       endif
                 enddo
             endif ! mflowgrades > 0
-            
+
             ! keep fine added by KRB 2022/12/28
             if (keep_fine.and.mflowgrades.gt.0) then
               ! if level is lower than lfine a grid exists here on lfine,
@@ -238,7 +239,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
 
             ! ********* criteria applied only to wet cells:
 
-            if (q(1,i,j) > dry_tolerance) then
+            if (q(i_h,i,j) > dry_tolerance) then
 
 ! DIG: D-claw not yet compatible with adjoint
 !                if(adjoint_flagging) then
@@ -249,7 +250,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
 !                else
 
                 ! Check wave criteria
-                eta = q(1,i,j) + aux(1,i,j)
+                eta = q(i_h,i,j) + aux(1,i,j)
                 if (abs(eta - sea_level) > wave_tolerance) then
                     amrflags(i,j) = DOFLAG
                     cycle x_loop
@@ -259,7 +260,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
                 ! Check speed criteria (distinct values for each level), note that it might be useful to
                 ! also have a per layer criteria since this is not
                 ! gradient based
-                speed = sqrt(q(2,i,j)**2 + q(3,i,j)**2) / q(1,i,j)
+                speed = sqrt(q(i_hu,i,j)**2 + q(i_hv,i,j)**2) / q(i_h,i,j)
                 do m=1,min(size(speed_tolerance),mxnest)
                     if (speed > speed_tolerance(m) .and. level <= m) then
                         amrflags(i,j) = DOFLAG
@@ -272,7 +273,7 @@ subroutine flag2refine2(mx,my,mbc,mbuff,meqn,maux,xlower,ylower,dx,dy,t,level, &
 
         enddo x_loop
     enddo y_loop
-    
+
 contains
 
     ! Index into q array
@@ -288,5 +289,5 @@ contains
         integer, intent(in) :: m, i, j
         iaddaux = locaux + m - 1 + maux * (i - 1) + maux * (mitot + 2 * mbc) * (j - 1)
     end function iaddaux
-    
+
 end subroutine flag2refine2

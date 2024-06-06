@@ -43,7 +43,7 @@ def setrun(claw_pkg='dclaw'):
     #------------------------------------------------------------------
     # Problem-specific parameters to be written to setprob.data:
     #------------------------------------------------------------------
-    
+
     #probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
     #probdata.add_param('variable_eta_init', True)  # now in qinit info
 
@@ -95,8 +95,8 @@ def setrun(claw_pkg='dclaw'):
     # Index of aux array corresponding to capacity function, if there is one:
     clawdata.capa_index = 0
 
-    
-    
+
+
     # -------------
     # Initial time:
     # -------------
@@ -106,7 +106,7 @@ def setrun(claw_pkg='dclaw'):
 
     # Restart from checkpoint file of a previous run?
     # If restarting, t0 above should be from original run, and the
-    # restart_file 'fort.chkNNNNN' specified below should be in 
+    # restart_file 'fort.chkNNNNN' specified below should be in
     # the OUTDIR indicated in Makefile.
 
     clawdata.restart = False   # True to restart from prior results
@@ -135,9 +135,9 @@ def setrun(claw_pkg='dclaw'):
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
         clawdata.output_step_interval = 1
-        clawdata.total_steps = 1
+        clawdata.total_steps = 3
         clawdata.output_t0 = True
-        
+
 
     clawdata.output_format = 'ascii'
 
@@ -176,13 +176,11 @@ def setrun(claw_pkg='dclaw'):
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
     # D-Claw requires CFL<0.5
-    clawdata.cfl_desired = 0.45 
-    clawdata.cfl_max = 0.5
+    clawdata.cfl_desired = 0.75
+    clawdata.cfl_max = 0.85
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
-
-
 
 
     # ------------------
@@ -191,20 +189,20 @@ def setrun(claw_pkg='dclaw'):
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
     clawdata.order = 2
-    
+
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
-    
-    # For unsplit method, transverse_waves can be 
+
+    # For unsplit method, transverse_waves can be
     #  0 or 'none'      ==> donor cell (only normal solver used)
     #  1 or 'increment' ==> corner transport of waves
     #  2 or 'all'       ==> corner transport of 2nd order corrections too
-    clawdata.transverse_waves = 1
+    clawdata.transverse_waves = 2
 
     # Number of waves in the Riemann solution:
     clawdata.num_waves = 5
-    
-    # List of limiters to use for each wave family:  
+
+    # List of limiters to use for each wave family:
     # Required:  len(limiter) == num_waves
     # Some options:
     #   0 or 'none'     ==> no limiter (Lax-Wendroff)
@@ -219,7 +217,7 @@ def setrun(claw_pkg='dclaw'):
 
     # Source terms splitting:
     #   src_split == 0 or 'none'    ==> no source term (src routine never called)
-    #   src_split == 1 or 'godunov' ==> Godunov (1st order) splitting used, 
+    #   src_split == 1 or 'godunov' ==> Godunov (1st order) splitting used,
     #   src_split == 2 or 'strang'  ==> Strang (2nd order) splitting used,  not recommended.
     clawdata.source_split = 'godunov'
 
@@ -267,7 +265,7 @@ def setrun(claw_pkg='dclaw'):
         pass
 
     elif abs(clawdata.checkpt_style) == 2:
-        # Specify a list of checkpoint times.  
+        # Specify a list of checkpoint times.
         clawdata.checkpt_times = 3600.*np.arange(1,16,1)
 
     elif abs(clawdata.checkpt_style) == 3:
@@ -326,7 +324,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata.clustering_cutoff = 0.700000
 
     # print info about each regridding up to this level:
-    amrdata.verbosity_regrid = 1  
+    amrdata.verbosity_regrid = 1
 
 
     # ---------------
@@ -360,7 +358,7 @@ def setrun(claw_pkg='dclaw'):
     except:
         print("*** Error, this rundata has no geo_data attribute")
         raise AttributeError("Missing geo_data attribute")
-       
+
     # == Physics ==
     geo_data.gravity = 9.81
     geo_data.coordinate_system = 1
@@ -396,16 +394,16 @@ def setrun(claw_pkg='dclaw'):
     etafile = 'surface_topo.tt3'
     qinitdclaw_data.qinitfiles.append([3, 8, 1, 2, etafile])
 
-    #mfile = 'mass_frac.tt3' 
-    mfile = 'mass_frac0.tt3' # with m0 = 0 below
+    #mfile = 'mass_frac.tt3'
+    mfile = 'mass_frac.tt3' # with m0 = 0 below
     qinitdclaw_data.qinitfiles.append([3, 4, 1, 2, mfile])
-    
+
     #hfile = 'landslide_depth.tt3'
     #qinitdclaw_data.qinitfiles.append([3, 1, 1, 2, hfile])
 
     # == setauxinit.data values ==
     #auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
-    
+
     # == fgmax.data values ==
     #fgmax_files = rundata.fgmax_data.fgmax_files
     # for fixed grids append to this list names of any fgmax input files
@@ -419,10 +417,10 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.phi_bed = 32.0
     dclaw_data.theta_input = 0.0
     dclaw_data.mu = 0.005
-    #dclaw_data.m0 = 0.63
-    dclaw_data.m0 = 0. # pure water
+    dclaw_data.m0 = 0.63
+    #dclaw_data.m0 = 0. # pure water
     dclaw_data.m_crit = 0.64
-    dclaw_data.kappita = 1.e-8
+    dclaw_data.kappita = 1.e-10
     #dclaw_data.kappita_diff = 1
     #dclaw_data.chi_init_val=0.5 # not currently used.
     dclaw_data.alpha_c = 0.05
@@ -444,7 +442,7 @@ def setrun(claw_pkg='dclaw'):
     pinitdclaw_data.init_pmax_ratio = 0.00e0
     pinitdclaw_data.init_ptf = 0.0
     pinitdclaw_data.init_ptf2 = 0.0
-    
+
     # == flowgrades.data values ==
     flowgrades_data = rundata.flowgrades_data  # initialized when rundata instantiated
 
@@ -457,12 +455,12 @@ def setrun(claw_pkg='dclaw'):
     # flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
     # flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
 
-    
+
     #flowgrades_data.keep_fine = True
     #flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 1])
     #flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 1])
 
-    #  ----- For developers ----- 
+    #  ----- For developers -----
     # Toggle debugging print statements:
     amrdata.dprint = False      # print domain flags
     amrdata.eprint = False      # print err est flags
@@ -474,7 +472,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata.sprint = False      # space/memory output
     amrdata.tprint = False      # time step reporting each level
     amrdata.uprint = False      # update/upbnd reporting
-    
+
     amrdata.max1d = 300
     # More AMR parameters can be set -- see the defaults in pyclaw/data.py
 
@@ -493,4 +491,3 @@ if __name__ == '__main__':
     import sys
     rundata = setrun(*sys.argv[1:])
     rundata.write()
-    
