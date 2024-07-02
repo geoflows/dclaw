@@ -32,7 +32,7 @@
       real(kind=8) :: b_xx,b_yy,b_xy,chi,beta
       real(kind=8) :: t1bot,t2top,beta2,dh,rho2,prat,b_x,b_y,dbdv
       real(kind=8) :: vlow,m2,vreg,slopebound
-      real(kind=8) :: b_eroded,b_remaining,dtcoeff
+      real(kind=8) :: b_eroded,b_remaining
       real(kind=8) :: gamma,zeta,krate,p_eq,dgamma
 
       integer :: i,j,ii,jj,icount
@@ -213,20 +213,17 @@
                      beta2 = 0.66d0
 
                      ! calculate top and bottom shear stress.
-                     t1bot = beta2*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d0-2.d0))
+                     t1bot = beta2*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d-2))
                      beta = 1.d0-m
+                     gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d-2)**(1.0d0/3.0d0))
 
+                     t1bot = t1bot + gamma
                      t1bot = t1bot + tau
 
                      t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
 
                      ! calculate pressure ratio
                      prat = p/(rho*h)
-
-                     ! regularize v
-                     vreg = ((vnorm-vlow)**2/((vnorm-vlow)**2+1.d0))
-
-                     dtcoeff = entrainment_rate*dt*vreg/(beta2*(vnorm+vlow)*rho2)
 
                      ! calculate dh
                      dh = entrainment_rate*dt*(t1bot-t2top)/(rho2*beta2*vnorm)
@@ -244,6 +241,8 @@
 
                      ! update pressure based on prior pressure ratio.
                      p = prat*rho*h
+
+                     ! DIG: should hchi (pm) be updated here, just as there is a m2, should there be a pm2?
 
                      call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                   endif
