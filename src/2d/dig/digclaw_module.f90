@@ -21,6 +21,16 @@ module digclaw_module
     integer :: momlevel
     logical :: amidoneyet = .FALSE.
 
+    ! indicies of q
+    integer ::  i_h
+    integer ::  i_hu
+    integer ::  i_hv
+    integer ::  i_hm
+    integer ::  i_pb
+    integer ::  i_hchi
+    integer ::  i_bdif
+
+    ! indicies of aux
     integer ::  i_dig
     integer ::  i_phi
     integer ::  i_theta
@@ -28,6 +38,7 @@ module digclaw_module
     integer ::  i_taudir_x
     integer ::  i_taudir_y
     integer ::  i_ent
+
     integer, parameter ::  DIG_PARM_UNIT = 78
 
 
@@ -61,6 +72,15 @@ contains
          else
             i_dig = 2
          endif
+
+         ! hard code q indicies.
+         i_h=1
+         i_hu=2
+         i_hv=3
+         i_hm=4
+         i_pb=5
+         i_hchi=6
+         i_bdif=7
 
          ! set aux index values based on coordinate system
          i_phi    = i_dig
@@ -291,12 +311,11 @@ contains
       double precision, intent(out) :: sigbed,kperm,compress
 
       !local
-      double precision :: m_eqn,vnorm,gmod,sigbedc,hbounded,shear,tanphi,rho_fp
+      double precision :: m_eqn,vnorm,gmod,sigbedc,shear,tanphi,rho_fp
       double precision :: seg,pmtanh01,m_crit_m,m_crit_pm
 
       if (h.lt.dry_tolerance) return
 
-      hbounded = h!max(h,0.1)
       gmod=grav
       pm = max(0.0d0,pm)
       pm = min(1.0d0,pm)
@@ -313,7 +332,7 @@ contains
       if (bed_normal.eq.1) gmod=grav*dcos(theta)
       vnorm = dsqrt(u**2 + v**2)
       rho = rho_s*m + rho_fp*(1.d0-m)
-      shear = 2.0d0*vnorm/hbounded
+      shear = 2.0d0*vnorm/h
       sigbed = dmax1(0.d0,rho*gmod*h - p)
       sigbedc = rho_s*(shear*delta)**2 + sigbed
       if (sigbedc.gt.0.0d0) then
@@ -352,7 +371,7 @@ contains
 
       tanphi = dtan(phi_bed + datan(tanpsi))
 
-      tau = dmax1(0.d0,sigbed*tanphi) *((tanh(100.0*(m-0.05))+1.0)*0.5)
+      tau = dmax1(0.d0,sigbed*tanphi)*((tanh(100.0*(m-0.05))+1.0)*0.5)
 
       !kappa: earth pressure coefficient
       kappa = 1.d0
@@ -414,59 +433,59 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
               thetaB = 0.d0
             endif
 
-            h = q(1,i,j)
-            hu = q(2,i,j)
-            hv = q(3,i,j)
-            hm = q(4,i,j)
-            p  = q(5,i,j)
+            h = q(i_h,i,j)
+            hu = q(i_hu,i,j)
+            hv = q(i_hv,i,j)
+            hm = q(i_hm,i,j)
+            p  = q(i_pb,i,j)
             call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            b = aux(1,i,j)
+            b = aux(1,i,j)-q(i_bdif,i,j)
             eta = h+b
             phi = aux(i_phi,i,j)
 
-            hL = q(1,i-1,j)
-            huL= q(2,i-1,j)
-            hvL= q(3,i-1,j)
-            hmL = q(4,i-1,j)
-            pL  = q(5,i-1,j)
+            hL = q(i_h,i-1,j)
+            huL= q(i_hu,i-1,j)
+            hvL= q(i_hv,i-1,j)
+            hmL = q(i_hm,i-1,j)
+            pL  = q(i_pb,i-1,j)
             call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
-            bL = aux(1,i-1,j)
+            bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
             etaL= hL+bL
             if (hL<dry_tol) then
                etaL = min(etaL,eta)
             endif
 
-            hR = q(1,i+1,j)
-            huR= q(2,i+1,j)
-            hvR= q(3,i+1,j)
-            hmR = q(4,i+1,j)
-            pR  = q(5,i+1,j)
+            hR = q(i_h,i+1,j)
+            huR= q(i_hu,i+1,j)
+            hvR= q(i_hv,i+1,j)
+            hmR = q(i_hm,i+1,j)
+            pR  = q(i_pb,i+1,j)
             call admissibleq(hR,huR,hvR,hmR,pR,uR,vR,mR,theta)
-            bR = aux(1,i+1,j)
+            bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
             etaR= hR+bR
             if (hR<dry_tol) then
                etaR = min(etaR,eta)
             endif
 
-            hB = q(1,i,j-1)
-            huB= q(2,i,j-1)
-            hvB= q(3,i,j-1)
-            hmB = q(4,i,j-1)
-            pB  = q(5,i,j-1)
+            hB = q(i_h,i,j-1)
+            huB= q(i_hu,i,j-1)
+            hvB= q(i_hv,i,j-1)
+            hmB = q(i_hm,i,j-1)
+            pB  = q(i_pb,i,j-1)
             call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
-            bB = aux(1,i,j-1)
+            bB = aux(1,i,j-1)-q(i_bdif,i,j-1)
             etaB= hB+bB
             if (hB<dry_tol) then
                etaB = min(etaB,eta)
             endif
 
-            hT = q(1,i,j+1)
-            huT= q(2,i,j+1)
-            hvT= q(3,i,j+1)
-            hmT = q(4,i,j+1)
-            pT  = q(5,i,j+1)
+            hT = q(i_h,i,j+1)
+            huT= q(i_hu,i,j+1)
+            hvT= q(i_hv,i,j+1)
+            hmT = q(i_hm,i,j+1)
+            pT  = q(i_pb,i,j+1)
             call admissibleq(hT,huT,hvT,hmT,pT,uT,vT,mT,theta)
-            bT = aux(1,i,j+1)
+            bT = aux(1,i,j+1)-q(i_bdif,i,j+1)
             etaT= hT+bT
             if (hT<dry_tol) then
                etaT = min(etaT,eta)
@@ -609,15 +628,15 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       do j=1,my
          do i=1,mx
 
-            h = q(1,i,j)
-            hL = q(1,i-1,j)
-            hR = q(1,i+1,j)
+            h = q(i_h,i,j)
+            hL = q(i_h,i-1,j)
+            hR = q(i_h,i+1,j)
             if (h<dry_tol) then
                cycle
             endif
 
-            hu = q(2,i,j)
-            hv = q(3,i,j)
+            hu = q(i_hu,i,j)
+            hv = q(i_hv,i,j)
 
             if ((hu**2+hv**2)>0.d0) then
                cycle
@@ -633,9 +652,9 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                cycle
             endif
 
-            hT = q(1,i,j+1)
+            hT = q(i_h,i,j+1)
             bT = aux(1,i,j+1)
-            hB = q(1,i,j-1)
+            hB = q(i_h,i,j-1)
             bB = aux(1,i,j-1)
 
             if (bed_normal.eq.1) then

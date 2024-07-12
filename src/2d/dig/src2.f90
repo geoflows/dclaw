@@ -12,6 +12,7 @@
       use digclaw_module, only: mu,rho_f,sigma_0
       use digclaw_module, only: admissibleq,auxeval
       use digclaw_module, only: calc_pmtanh
+      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
 
       implicit none
 
@@ -78,14 +79,14 @@
             endif
 
             ! Get state variable
-            h = q(1,i,j)
+            h = q(i_h,i,j)
             if (h<=dry_tolerance) cycle
-            hu = q(2,i,j)
-            hv = q(3,i,j)
-            hm = q(4,i,j)
-            p =  q(5,i,j)
+            hu = q(i_hu,i,j)
+            hv = q(i_hv,i,j)
+            hm = q(i_hm,i,j)
+            p =  q(i_pb,i,j)
             phi = aux(i_phi,i,j)
-            pm = q(6,i,j)/h
+            pm = q(i_hchi,i,j)/h
             pm = max(0.0d0,pm)
             pm = min(1.0d0,pm)
             fsphi = aux(i_fsphi,i,j)
@@ -181,21 +182,31 @@
 
             if (ent.and.vnorm.gt.vlow) then
                if (aux(i_ent,i,j)>0.d0) then
-                  b_x = (aux(1,i+1,j)+q(7,i+1,j)-aux(1,i-1,j)-q(7,i-1,j))/(2.d0*dx)
-                  b_y = (aux(1,i,j+1)+q(7,i,j+1)-aux(1,i,j-1)-q(7,i,j-1))/(2.d0*dy)
+
+                  ! calculate the basal surface (aux(1)-q(i_bdif)) gradients in x and y
+                  ! to determine dbdv, the slope in the direction of flow by taking the dot
+                  ! product of the slope vector and the unit vector in the direction of flow.
+
+                  b_x = (aux(1,i+1,j)-q(i_bdif,i+1,j)-aux(1,i-1,j)+q(i_bdif,i-1,j))/(2.d0*dx)
+                  b_y = (aux(1,i,j+1)-q(i_bdif,i,j+1)-aux(1,i,j-1)+q(i_bdif,i,j-1))/(2.d0*dy)
                   dbdv = (u*b_x+v*b_y)/vnorm
                   slopebound = 1.d10
-                  b_eroded = q(7,i,j)
+                  b_eroded = q(i_bdif,i,j)
+
+                  ! erode if material to erode is still available and the slope is
+                  ! less than a critical slope value. !DIG: Improve critical slope value.
 
                   if (dbdv<slopebound.and.b_eroded<aux(i_ent,i,j)) then
+
+                     ! calculate remaining material that may be eroded.
                      b_remaining = aux(i_ent,i,j)-b_eroded
 
                      ! value for m for entrained material
                      m2 = 0.6d0
-                     ! eventually make this a user defined variable or an aux value.
-                     ! should there also be a substrate value for chi?
+                     ! DIG: eventually make this a user defined variable or an aux value.
+                     ! DIG: should there also be a substrate value for chi?
 
-                     ! calculate entrained material density, using default values
+                     ! calculate entrained material density, using hard coded values
                      ! for rho_f and rho_s
                      rho2 = m2*2700.d0 + (1.d0-m2)*1000.d0
 
@@ -226,7 +237,7 @@
                      hm = hm + dh*m2
 
                      ! store amount eroded in q7
-                     q(7,i,j) = q(7,i,j) + dh
+                     q(i_bdif,i,j) = q(i_bdif,i,j) + dh
 
                      call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                      call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
@@ -242,12 +253,12 @@
             !===================================================================
             ! end of entrainment, put state variables back in q.
 
-            q(1,i,j) = h
-            q(2,i,j) = hu
-            q(3,i,j) = hv
-            q(4,i,j) = hm
-            q(5,i,j) = p
-            q(6,i,j) = pm*h
+            q(i_h,i,j) = h
+            q(i_hu,i,j) = hu
+            q(i_hv,i,j) = hv
+            q(i_hm,i,j) = hm
+            q(i_pb,i,j) = p
+            q(i_hchi,i,j) = pm*h
 
          enddo
       enddo
@@ -262,33 +273,33 @@
             do i=1,mx
 
                if (bed_normal==1) gmod = grav*cos(aux(i_theta,i,j))
-                  h=q(1, i,j)
+                  h=q(i_h, i,j)
                if (h<=friction_depth) then
                  !# apply friction source term only in shallower water
-                  hu=q(2,i,j)
-                  hv=q(3,i,j)
-                  hm = q(4,i,j)
-                  p =  q(5,i,j)
+                  hu=q(i_hu,i,j)
+                  hv=q(i_hv,i,j)
+                  hm = q(i_hm,i,j)
+                  p =  q(i_pb,i,j)
                   phi = aux(i_phi,i,j)
                   theta = aux(i_theta,i,j)
                   call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                   if (h<dry_tolerance) cycle
-                  pm = q(6,i,j)/h
+                  pm = q(i_hchi,i,j)/h
                   pm = max(0.0d0,pm)
                   pm = min(1.0d0,pm)
                   call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
 
                   if (h.lt.dry_tolerance) then
-                     q(1,i,j)=0.d0
-                     q(2,i,j)=0.d0
-                     q(3,i,j)=0.d0
+                     q(i_h,i,j)=0.d0
+                     q(i_hu,i,j)=0.d0
+                     q(i_hv,i,j)=0.d0
                   else
                      !beta = 1.d0-m  ! reduced friction led to high velocities
                      beta = 1.d0     ! use full Manning friction
                      gamma= beta*dsqrt(hu**2 + hv**2)*(gmod*coeff**2)/(h**(7.0d0/3.0d0))
                      dgamma=1.d0 + dt*gamma
-                     q(2,i,j)= q(2,i,j)/dgamma
-                     q(3,i,j)= q(3,i,j)/dgamma
+                     q(i_hu,i,j)= q(i_hu,i,j)/dgamma
+                     q(i_hv,i,j)= q(i_hv,i,j)/dgamma
                   endif
                endif
             enddo

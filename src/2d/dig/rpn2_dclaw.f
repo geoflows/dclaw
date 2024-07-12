@@ -33,6 +33,7 @@ c
 
       use digclaw_module, only: bed_normal,i_theta,admissibleq
       use digclaw_module, only: i_fsphi,i_phi,i_taudir_x,i_taudir_y
+      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
 
       implicit none
 
@@ -78,10 +79,10 @@ c
 
       !-----------------------Initializing-----------------------------------
          !inform of a bad Riemann problem from the start
-         !if((qr(1,i-1).lt.0.d0).or.(ql(1,i) .lt. 0.d0)) then
+         !if((qr(i_h,i-1).lt.0.d0).or.(ql(i_h,i) .lt. 0.d0)) then
          !   write(*,*) 'Negative input: hl,hr,i=',qr(i-1,1),ql(i,1),i
-         !   call admissibleq(ql(1,i),ql(mhu,i),ql(nhv,i),ql(4,i),ql(5,i),uR,vR,mR,thetaR)
-         !   call admissibleq(qr(1,i-1),qr(mhu,i-1),qr(nhv,i-1),qr(4,i-1),qr(5,i-1),uL,vL,mL,thetaL)
+         !   call admissibleq(ql(i_h,i),ql(mhu,i),ql(nhv,i),ql(i_hm,i),ql(i_pb,i),uR,vR,mR,thetaR)
+         !   call admissibleq(qr(i_h,i-1),qr(mhu,i-1),qr(nhv,i-1),qr(i_hm,i-1),qr(i_pb,i-1),uL,vL,mL,thetaL)
          !endif
 
          !Initialize Riemann problem for grid interface
@@ -102,20 +103,20 @@ c
          enddo
 
          !skip problem if in a completely dry area
-         if (qr(1,i-1).le.drytol.and.ql(1,i).le.drytol) then
+         if (qr(i_h,i-1).le.drytol.and.ql(i_h,i).le.drytol) then
             go to 30
          endif
 
 c        !set normal direction
          if (ixy.eq.1) then
-            mhu=2
-            nhv=3
+            mhu=i_hu
+            nhv=i_hv
             !dx = dxcom
             taudirR = auxl(i_taudir_x,i)
             taudirL = auxr(i_taudir_x,i-1)
          else
-            mhu=3
-            nhv=2
+            mhu=i_hv
+            nhv=i_hu
             !dx = dycom
             taudirR = auxl(i_taudir_y,i)
             taudirL = auxr(i_taudir_y,i-1)
@@ -136,30 +137,30 @@ c        !set normal direction
          endif
 
          !zero (small) negative values if they exist and set velocities
-         call admissibleq(ql(1,i),ql(mhu,i),ql(nhv,i),
-     &            ql(4,i),ql(5,i),uR,vR,mR,thetaR)
+         call admissibleq(ql(i_h,i),ql(mhu,i),ql(nhv,i),
+     &            ql(i_hm,i),ql(i_pb,i),uR,vR,mR,thetaR)
 
-         call admissibleq(qr(1,i-1),qr(mhu,i-1),qr(nhv,i-1),
-     &            qr(4,i-1),qr(5,i-1),uL,vL,mL,thetaL)
+         call admissibleq(qr(i_h,i-1),qr(mhu,i-1),qr(nhv,i-1),
+     &            qr(i_hm,i-1),qr(i_pb,i-1),uL,vL,mL,thetaL)
 
 
          !Riemann problem variables
-         hL = qr(1,i-1)
-         hR = ql(1,i)
+         hL = qr(i_h,i-1)
+         hR = ql(i_h,i)
          huL = qr(mhu,i-1)
          huR = ql(mhu,i)
          hvL=qr(nhv,i-1)
          hvR=ql(nhv,i)
-         hmL = qr(4,i-1)
-         hmR = ql(4,i)
-         pL = qr(5,i-1)
-         pR = ql(5,i)
-         bL = auxr(1,i-1)  - qr(7,i-1)
-         bR = auxl(1,i) - ql(7,i)
+         hmL = qr(i_hm,i-1)
+         hmR = ql(i_hm,i)
+         pL = qr(i_pb,i-1)
+         pR = ql(i_pb,i)
+         bL = auxr(1,i-1)  - qr(i_bdif,i-1)
+         bR = auxl(1,i) - ql(i_bdif,i)
          phi_bedL = auxr(i_phi,i-1)
          phi_bedR = auxl(i_phi,i)
-         chiHL = qr(6,i-1)
-         chiHR = ql(6,i)
+         chiHL = qr(i_hchi,i-1)
+         chiHR = ql(i_hchi,i)
 
          if (hL.ge.drytol) then
             chiL = chiHL/hL
