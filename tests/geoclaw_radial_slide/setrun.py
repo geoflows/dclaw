@@ -199,7 +199,7 @@ def setrun(claw_pkg='geoclaw'):
     #  0 or 'none'      ==> donor cell (only normal solver used)
     #  1 or 'increment' ==> corner transport of waves
     #  2 or 'all'       ==> corner transport of 2nd order corrections too
-    clawdata.transverse_waves = 1
+    clawdata.transverse_waves = 2
 
     # Number of waves in the Riemann solution:
     clawdata.num_waves = 3
@@ -360,7 +360,7 @@ def setrun(claw_pkg='geoclaw'):
     geo_data.coriolis_forcing = False
 
     # == Algorithm and Initial Conditions ==
-    geo_data.sea_level = 50.0
+    geo_data.sea_level = 200.0
     geo_data.dry_tolerance = 1.e-3
     geo_data.friction_forcing = True # TODO change?
     geo_data.manning_coefficient =.025

@@ -19,7 +19,7 @@ from clawpack.visclaw import gridtools
 
 import os,sys
 
-sea_level = 50.
+sea_level = 200.
 
 #--------------------------
 def setplot(plotdata=None):
