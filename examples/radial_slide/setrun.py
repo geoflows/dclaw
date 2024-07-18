@@ -126,8 +126,8 @@ def setrun(claw_pkg='dclaw'):
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 40 #240
-        clawdata.tfinal = 160. #240.
+        clawdata.num_output_times = 10 #240
+        clawdata.tfinal = 100. #240.
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -472,7 +472,8 @@ def setrun(claw_pkg='dclaw'):
     fgout = fgout_tools.FGoutGrid()
     fgout.fgno = 1
     fgout.point_style = 2       # will specify a 2d grid of points
-    fgout.output_format = 'binary32'  # 4-byte, float32
+    #fgout.output_format = 'binary32'  # 4-byte, float32
+    fgout.output_format = 'ascii'  # 4-byte, float32
     fgout.nx = 300
     fgout.ny = 300
     fgout.x1 = 0.  # specify edges (fgout pts will be cell centers)
@@ -482,6 +483,7 @@ def setrun(claw_pkg='dclaw'):
     fgout.tstart = 0.
     fgout.tend = 100.
     fgout.nout = 101
+    fgout.q_out_vars = [1,4,8]
     fgout_grids.append(fgout)    # written to fgout_grids.data
 
 
