@@ -491,7 +491,7 @@ program amr2
         call read_dtopo_settings()        ! specifies file with dtopo from earthquake
         call read_topo_settings(rest)     ! specifies topography (bathymetry) files
         call set_auxinit()            ! specifies file(s) for auxiliary variables
-        call set_fgout(rest)            ! Fixed grid settings
+        call set_fgout(rest,nvar)            ! Fixed grid settings
         call set_regions()                ! Set refinement regions
         call set_dig(naux)
         call set_pinit()
@@ -526,7 +526,7 @@ program amr2
         call read_dtopo_settings()        ! specifies file with dtopo from earthquake
         call read_topo_settings(rest)     ! specifies topography (bathymetry) files
         call set_auxinit()            ! specifies file(s) for auxiliary variables
-        call set_fgout(rest)            ! Fixed grid settings
+        call set_fgout(rest,nvar)            ! Fixed grid settings
         call set_regions()                ! Set refinement regions
         call set_gauges(rest, nvar, naux) ! Set gauge output
         call set_fgmax()
