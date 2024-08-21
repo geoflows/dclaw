@@ -156,10 +156,9 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
         depth * chi, the fraction of species 1
         If specified this way, provide chi rather than h*chi
         TODO: should be chi_init_val rather than 0.5 by default
-
-    - q7, b_eroded: depth of material removed by
-      entrainment (cannot be set in this way as it
-      must start as zero).
+    - q7, bdif: depth of material removed by
+        entrainment (cannot be set in this way as it
+        must start as zero).
     - q8, eta: h+b
 
 
