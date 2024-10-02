@@ -494,6 +494,7 @@ contains
     subroutine read_qinit_dig(mx,my,filetype,fname,qinit)
 
         !use geoclaw_module
+        use utility_module, only: parse_values, to_lower
 
         implicit none
 
@@ -506,8 +507,10 @@ contains
         integer, parameter :: iunit = 19, miss_unit = 17
         double precision, parameter :: qinit_missing = -150.d0
         logical, parameter :: maketype2 = .false.
-        integer :: i,j,num_points,missing,status,qinit_start
+        integer :: i,j,num_points,missing,status,qinit_start,n
         double precision :: no_data_value,x,y,z
+        real(kind=8) :: values(10)
+        character(len=80) :: str
 
         print *, ' '
         print *, 'Reading qinit file  ', fname
@@ -537,7 +540,10 @@ contains
                 do i=1,5
                     read(iunit,*)
                 enddo
-                read(iunit,*) no_data_value
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                no_data_value = values(1)
 
                 ! Read in data
                 missing = 0
