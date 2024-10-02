@@ -1,4 +1,14 @@
-!! Geoclaw specific output - adds eta to q array before writing out
+!! D-Claw notes: 
+!! This file is a lightly modified version of 
+!! clawpack/geoclaw/src/2d/shallow/valout.f90 
+!! This file differs in that it includes the implementation
+!! of a momentum autostop condition. It also adjustes eta
+!! based on entrainment
+!! 
+!! The D-Claw specific elements of code are
+!!  identified by comments.
+!!
+!! D-Claw specific output - adds eta to q array before writing out
 !!
 !! Write the results to the file fort.q<iframe>
 !! Use format required by matlab script  plotclaw2.m or Python tools
@@ -17,9 +27,10 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
     use storm_module, only: storm_specification_type, output_storm_location
     use storm_module, only: output_storm_location
     use storm_module, only: landfall, display_landfall_time
+!!   Start of D-Claw specific code: get variables needed for momentum autostop
     use geoclaw_module, only: dry_tolerance
     use digclaw_module, only: mom_autostop, momlevel, amidoneyet
-
+!!   End of D-Claw specific code: 
 
 #ifdef HDF5
     use hdf5
@@ -44,7 +55,9 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
     real(kind=8) :: h, hu, hv, eta
     real(kind=8), allocatable :: qeta(:)
     real(kind=4), allocatable :: qeta4(:), aux4(:)
-    integer :: lenaux4, ivar
+    integer :: lenaux4
+    !!   Start of D-Claw specific code: 
+    integer :: ivar
 
     ! momentum calculation
     real(kind=8) :: locmom
@@ -81,7 +94,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                                            "i6,'                 ndim'/,"   // &
                                            "i6,'                 nghost'/," // &
                                            "a10,'             format'/,/)"
-
+!!   Start of D-Claw specific code: 
     if (mom_autostop .eqv. .TRUE.) locmom = 0.
     ! initialize local momentum as zero. if using mom_autostop
 
@@ -192,14 +205,16 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
 
                             ! Calculate sufaces
                             eta = h + alloc(iaddaux(1,i,j))
+
+			     !!   Start of D-Claw specific code: 
                             eta = eta - alloc(iadd(7,i,j))   ! Adjust eta based on entrainment
+			     !! End of D-Claw specific code
                             if (abs(eta) < 1d-99) then
                                 eta = 0.d0
                             end if
 
-                            !write(out_unit, "(2i5, 50e26.16)") i, j, h, eta
 
-                            !write(out_unit, "(50e26.16)") h, hu, hv, eta
+
                             write(out_unit, "(50e26.16)") &
                                  (alloc(iadd(ivar,i,j)), ivar=1,num_eqn), eta
 
@@ -217,7 +232,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                             endif
                             endif
 
-
+!! End of D-Claw specific code
                         end do
                         write(out_unit, *) ' '
                     end do
@@ -243,6 +258,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                             qeta(iaddqeta(m, i, j)) = alloc(iadd(m, i, j))
                         end do
 
+			 !!   Start of D-Claw specific code: 
                         ! momentum autostop for binary output.
                         ! we are double counting ghost cells (this should not
                         ! be a big deal as the goal is to identify if we are
@@ -262,6 +278,8 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
 
                         eta = alloc(iadd(1, i, j)) + alloc(iaddaux(1, i ,j))
                         eta = eta - alloc(iadd(7,i,j))  ! Adjust eta based on entrainment
+
+			!!   End of D-Claw specific code: 
                         qeta(iaddqeta(num_eqn + 1, i, j)) = eta
                     end do
                 end do
@@ -321,7 +339,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
         call h5gclose_f(q_group, hdf_error)
 #endif
     end if
-
+!!   Start of D-Claw specific code: 
     if (time .gt. 1.0d0) then
         if (mom_autostop) then
             ! if absolute value of local momentum is very close to zero, then stop.
@@ -330,6 +348,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
             endif
         endif
     endif
+!!   End of D-Claw specific code: 
 
     ! ==========================================================================
     ! Write out fort.a file
