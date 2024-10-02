@@ -155,6 +155,7 @@ contains
     subroutine read_auxinit(mx,my,filetype,fname,auxinit)
 
         use geoclaw_module ! DIG specify only
+        use utility_module, only: parse_values, to_lower
 
         implicit none
 
@@ -167,8 +168,10 @@ contains
         integer, parameter :: iunit = 19, miss_unit = 17
         double precision, parameter :: auxinit_missing = -150.d0
         logical, parameter :: maketype2 = .false.
-        integer :: i,j,num_points,missing,status,auxinit_start
+        integer :: i,j,num_points,missing,status,auxinit_start,n
         double precision :: no_data_value,x,y,z
+        real(kind=8) :: values(10)
+        character(len=80) :: str
 
         print *, ' '
         print *, 'Reading auxinit file  ', fname
@@ -198,7 +201,11 @@ contains
                 do i=1,5
                     read(iunit,*)
                 enddo
-                read(iunit,*) no_data_value
+
+                read(iunit,'(a)') str
+                call parse_values(str, n, values)
+                no_data_value = values(1)
+                
 
                 ! Read in data
                 missing = 0
@@ -255,7 +262,7 @@ contains
     subroutine read_auxinit_header(fname,auxinit_type,mx,my,xll,yll,xhi,yhi,dx,dy)
 
         use geoclaw_module
-        use utility_module, only: parse_values
+        use utility_module, only: parse_values, to_lower
 
         implicit none
 
@@ -272,7 +279,8 @@ contains
         logical :: found_file
         real(kind=8) :: values(10)
         character(len=80) :: str
-
+        logical :: xll_registered, yll_registered
+        
         inquire(file=fname,exist=found_file)
         if (.not. found_file) then
             print *, 'Missing auxinit file:'
@@ -336,14 +344,14 @@ contains
                 read(iunit,'(a)') str
                 call parse_values(str, n, values)
                 xll = values(1)
-                !str = to_lower(str)  ! convert to lower case
-                !xll_registered = (index(str, 'xllcorner') > 0) DIG: from newgeoclaw
+                str = to_lower(str)  ! convert to lower case
+                xll_registered = (index(str, 'xllcorner') > 0) !DIG: from newgeoclaw
 
                 read(iunit,'(a)') str
                 call parse_values(str, n, values)
                 yll = values(1)
-                !str = to_lower(str)  ! convert to lower case
-                !yll_registered = (index(str, 'yllcorner') > 0) DIG: from newgeoclaw
+                str = to_lower(str)  ! convert to lower case
+                yll_registered = (index(str, 'yllcorner') > 0) !DIG: from newgeoclaw
 
                 read(iunit,'(a)') str
                 call parse_values(str, n, values)
