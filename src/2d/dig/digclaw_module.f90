@@ -412,11 +412,19 @@ contains
       kperm = kappita*exp(-(m-m0)/(0.04d0))
 
       !determine vars related to m_eq and compressibility
+      sig_eff = max(0.d0,rho*gz*h - p)
+
+      select case (alphainvmethod) 
+      case(0:1)
+
+      case(2)
+         sig_0 = alpha*(rho_s-rho_f)*gz*h
+         alphainv = m*(sig_eff + sig_0)/alpha
+      end select
+
       vnorm = sqrt(u**2 + v**2)
       shear = 2.d0*vnorm/h
-      sig_eff = max(0.d0,rho*gz*h - p)
-      sig_0 = alpha*(rho_s-rho_f)*gz*h
-      alphainv = m*(sig_eff + sig_0)/alpha
+      
 
       !determine m_eq
       !m_eq = m_crit* 1/(1 + sqrt(Nnum/Nden))
