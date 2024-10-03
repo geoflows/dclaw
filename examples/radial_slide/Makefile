@@ -66,12 +66,13 @@ SOURCES = \
 # Include Makefile containing standard definitions and make options:
 include $(CLAWMAKE)
 
-# Construct the topography data
-.PHONY: topo all
-topo:
-	$(CLAW_PYTHON) maketopo_radial.py
+#-------------------------------------------------------------------
+# Common D-Claw make definitions
 
-all:
-	$(MAKE) topo
-	$(MAKE) .plots
-	$(MAKE) .htmls
+# Construct input data
+input:
+	$(CLAW_PYTHON) setinput.py
+
+# Postprocess results
+postprocess:
+	$(CLAW_PYTHON) setpostprocess.py
