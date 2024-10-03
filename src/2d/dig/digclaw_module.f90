@@ -230,6 +230,97 @@ contains
 
    end subroutine set_pinit
 
+   !====================================================================
+   !subroutine qfix
+   !accept solution q, return admissible q and primitive vars, u,v,m,rho
+   !====================================================================
+
+   subroutine qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
+
+      implicit none
+
+      !i/o
+      double precision, intent(in) :: gz
+      double precision, intent(inout) :: h,hu,hv,hm,p
+      double precision, intent(inout) :: u,v,m,rho
+
+      !Locals
+      double precision :: mmin,mmax,pmax,pmin
+
+      if (h.le.drytolerance) then
+         h =  0.d0
+         hu = 0.d0
+         hv = 0.d0
+         hm = 0.d0
+         p  = 0.d0 
+         u = 0.d0
+         v = 0.d0
+         m = 0.d0
+         rho = 0.d0
+         return
+      endif
+
+      u = hu/h
+      v = hv/h
+      m = hm/h
+
+      !mlo = 1.d-3
+      mmin = 0.0d0
+      mmax = 1.d0 
+
+      m = max(m,mmin)
+      m = min(m,mmax)
+      hm = h*m
+
+      rho = rho_s*m + (1.d0-m)*rho_f
+      pmax = rho*gz*h
+      pmin = 0.d0
+      p = max(0.d0,p)
+      p = min(pmax,p)
+
+      return
+
+   end subroutine qfix
+
+   !====================================================================
+   !subroutine qfix_cmass
+   !find physically admissible values of h,m,p,rho while holding rhoh,u,v const.
+   !====================================================================
+
+   subroutine qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
+
+      implicit none
+
+      !i/o
+      double precision, intent(in) :: gz
+      double precision, intent(in) :: u,v,rhoh
+      double precision, intent(inout) :: h,m,rho,p_exc,p
+      double precision, intent(out):: hu,hv,hm
+      !Locals
+      double precision :: mmin,mmax,p_exc_max,p_exc_min
+
+      mmin = 0.0d0
+      mmax = 1.d0 
+      m = max(m,mmin)
+      m = min(m,mmax)
+      
+      rho = m*(rho_s - rho_f) + rho_f
+      h = rhoh/rho
+
+      p_exc_max = rhoh*gz-rho_f*h*gz
+      p_exc_min = 0.d0-rho_f*h*gz
+      p_exc = max(p_exc_min,p_exc)
+      p_exc = min(p_exc_max,p_exc)
+
+      p = rho_f*gz*h + p_exc
+
+      hu = h*u
+      hv = h*v
+      hm = h*m
+
+      return
+
+   end subroutine qfix_cmass
 
    !====================================================================
    !subroutine admissibleq
@@ -295,6 +386,69 @@ contains
 
    end subroutine admissibleq
 
+   !====================================================================
+   ! subroutine setvars: evaluates needed variable parameters that are
+   !                     functions of the solution vector q
+   !====================================================================
+
+   subroutine setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+
+      implicit none
+
+      !i/o
+      real(kind=8), intent(inout) :: rho
+      real(kind=8), intent(in)  :: h,u,v,m,p,gz
+      real(kind=8), intent(out) :: alphainv,sig_0,sig_eff
+      real(kind=8), intent(out) :: tau,m_eq,tanpsi,kperm
+
+      !local
+      real(kind=8) :: vnorm,shear,Nden,Nnum,psi
+
+
+      !check rho
+      rho = m*(rho_s-rho_f) + rho_f
+
+      !determine kperm
+      kperm = kappita*exp(-(m-m0)/(0.04d0))
+
+      !determine vars related to m_eq and compressibility
+      vnorm = sqrt(u**2 + v**2)
+      shear = 2.d0*vnorm/h
+      sig_eff = max(0.d0,rho*gz*h - p)
+      sig_0 = alpha*(rho_s-rho_f)*gz*h
+      alphainv = m*(sig_eff + sig_0)/alpha
+
+      !determine m_eq
+      !m_eq = m_crit* 1/(1 + sqrt(Nnum/Nden))
+      !m_eq = m_crit* sqrt(Nden)/(sqrt(Nden)+sqrt(Nnum))
+      Nden = rho_s*(shear*delta)**2 + sig_eff
+      Nnum = mu*shear
+      if (Nnum<=0.d0) then
+         m_eq = m_crit
+      else
+         m_eq = m_crit*(sqrt(Nden)/(sqrt(Nden)+ sqrt(Nnum)))
+      endif
+      !Note: c1 is an adjustable parameter that we have traditionally set to 1.0.
+      !For problems where one wants to avoid the complications of dilatancy and use
+      !     a simpler rheological model, can be set to 0 or a small value.
+      tanpsi = c1*(m-m_eq)
+      psi = atan(c1*(m-m_eq)) !does atan return the correct angle always?
+
+      !calculate coulomb friction tau
+      ! Note: for v=0, bounds on tau for static friction are determined in Riemann solver
+      !        because the bounds are due to gradients in q. This routine determines vars
+      !        from pointwise cell-centered value q(i).
+      tau = sig_eff*tan(phi_bed + 0.d0*psi)
+      ! Note:  for water (m=0) sig_eff=0.0 and so tau=0.         
+      !        However, for dilute suspensions, 
+      !        we make o(m) not O(m))
+      !if (m<0.55d0) then
+      tau = tau*0.5d0*(1.d0 + tanh(50.d0*(m-0.40d0))) !+ 100.d0*shear))
+      !endif
+
+      return
+
+      end subroutine setvars
    !====================================================================
    ! subroutine auxeval: evaluates the auxiliary variables as functions
    !                     of the solution vector q
