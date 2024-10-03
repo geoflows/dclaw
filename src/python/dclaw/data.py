@@ -74,7 +74,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
 
 
 
-    def write(self,out_file='setdclaw.data',data_source='setrun.py'):
+    def write(self,out_file='dclaw.data',data_source='setrun.py'):
         self.open_data_file(out_file,data_source)
 
         if self.bed_normal == 1:
@@ -168,7 +168,7 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
         self.add_attribute('qinitfiles',[])
         self.add_attribute('nqinits',None)
 
-    def write(self,data_source='setrun.py', out_file='setqinit_dclaw.data'):
+    def write(self,data_source='setrun.py', out_file='qinit_dclaw.data'):
 
         self.open_data_file(out_file, data_source)
         self.nqinits = len(self.qinitfiles)
@@ -263,7 +263,7 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
         self.add_attribute('auxinitfiles',[])
         self.add_attribute('nauxinits',None)
 
-    def write(self,data_source='setrun.py', out_file='setauxinit_dclaw.data'):
+    def write(self,data_source='setrun.py', out_file='auxinit_dclaw.data'):
 
         # test that the number of aux variables
 
@@ -308,7 +308,7 @@ class PInitDClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("init_ptf", 1.0)
         self.add_attribute("init_ptf2", 0.0)
 
-    def write(self,out_file='setpinit_dclaw.data',data_source='setrun.py'):
+    def write(self,out_file='pinit_dclaw.data',data_source='setrun.py'):
         self.open_data_file(out_file,data_source)
 
         # open file and write a warning header:
@@ -360,7 +360,7 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
         self.add_attribute('nflowgrades',None)
 
 
-    def write(self,out_file='setflowgrades.data',data_source='setrun.py'):
+    def write(self,out_file='flowgrades.data',data_source='setrun.py'):
         self.nflowgrades = len(self.flowgrades)
         self.open_data_file(out_file,data_source)
         self.data_write("nflowgrades", description="nflowgrades")

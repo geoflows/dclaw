@@ -94,7 +94,7 @@ contains
          if (present(fname)) then
             file_name = fname
          else
-            file_name = 'setdclaw.data'
+            file_name = 'dclaw.data'
          endif
          inquire(file=file_name,exist=found_file)
          if (.not. found_file) then
@@ -197,7 +197,7 @@ contains
          if (present(fname)) then
             file_name = fname
          else
-            file_name = 'setpinit_dclaw.data'
+            file_name = 'pinit_dclaw.data'
          endif
          inquire(file=file_name,exist=found_file)
          if (.not. found_file) then
