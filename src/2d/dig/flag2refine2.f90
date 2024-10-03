@@ -2,10 +2,10 @@
 !
 ! User routine to control flagging of points for refinement.
 !
-! Specific for D-Claw: This routine uses flowgrades and if specified 
-! conditions are met, a cell will be flagged for refinement. If 
-! keep_fine = True, conditions will be evaluated at both this level and 
-! the finest level (level = mxnest, not the finest level at this 
+! Specific for D-Claw: This routine uses flowgrades and if specified
+! conditions are met, a cell will be flagged for refinement. If
+! keep_fine = True, conditions will be evaluated at both this level and
+! the finest level (level = mxnest, not the finest level at this
 ! location)
 ! D-Claw refinement does not consider wave or speed tolerances as these
 ! can be specified by flowgrades.
@@ -241,7 +241,7 @@ subroutine check_flowgrades(meqn, maux, level, &
    use refinement_module, only: flowgradevalue, iflowgradevariable, &
                                 iflowgradetype, iflowgrademinlevel, mflowgrades
    use geoclaw_module, only: dry_tolerance, sea_level
-   use digclaw_module, only: i_h, i_hu, i_hv, i_ent
+   use digclaw_module, only: i_h, i_hu, i_hv, i_bdif
 
    ! Subroutine arguments
    integer, intent(in) :: meqn, maux
@@ -330,7 +330,7 @@ subroutine check_flowgrades(meqn, maux, level, &
 
             ! only calculate surface perturbation if center cell is wet.
             if (qcen(i_h) .gt. dry_tolerance) then
-               flowgrademeasure = dabs(qcen(i_h) + auxcen(1) - qcen(i_ent) - sea_level)
+               flowgrademeasure = dabs(qcen(i_h) + auxcen(1) - qcen(i_bdif) - sea_level)
             else
                flowgrademeasure = 0.d0
             end if
@@ -343,10 +343,10 @@ subroutine check_flowgrades(meqn, maux, level, &
                 (qlef(i_h) .gt. dry_tolerance) .and. &
                 (qrig(i_h) .gt. dry_tolerance)) then ! only consider if all stencil cells are wet.
 
-               bot = qbot(i_h) + auxbot(1) - qbot(i_ent)
-               top = qtop(i_h) + auxtop(1) - qtop(i_ent)
-               lef = qlef(i_h) + auxlef(1) - qlef(i_ent)
-               rig = qrig(i_h) + auxrig(1) - qrig(i_ent)
+               bot = qbot(i_h) + auxbot(1) - qbot(i_bdif)
+               top = qtop(i_h) + auxtop(1) - qtop(i_bdif)
+               lef = qlef(i_h) + auxlef(1) - qlef(i_bdif)
+               rig = qrig(i_h) + auxrig(1) - qrig(i_bdif)
 
                flowgrademeasure = sqrt(((rig - lef)/(2.0d0*dx))**2 + ((top - bot)/(2.0d0*dy))**2)
             else
