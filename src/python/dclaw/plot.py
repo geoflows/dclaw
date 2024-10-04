@@ -221,6 +221,7 @@ def velocity_v(current_data):
         v = ma.masked_where(h <= drytol, hv / h)
     return v
 
+
 def velocity_unorm(current_data):
     """
     Return a masked array containing velocity u in wet cells.
@@ -236,7 +237,7 @@ def velocity_unorm(current_data):
     hu = q[i_hu, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         u = ma.masked_where(h <= drytol, hu / h)
-    return u/velocity_magnitude(current_data)
+    return u / velocity_magnitude(current_data)
 
 
 def velocity_vnorm(current_data):
@@ -255,7 +256,7 @@ def velocity_vnorm(current_data):
     hv = q[i_hv, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         v = ma.masked_where(h <= drytol, hv / h)
-    return v/velocity_magnitude(current_data)
+    return v / velocity_magnitude(current_data)
 
 
 def velocity(current_data):
@@ -374,8 +375,8 @@ def b_eroded(current_data):
     # eroded depth
     q = current_data.q
     b_eroded = q[i_beroded, :, :]
-    #if np.any(b_eroded>0):
-#        print(f'b_eroded gt zero, {np.sum(b_eroded>0)}')
+    # if np.any(b_eroded>0):
+    #        print(f'b_eroded gt zero, {np.sum(b_eroded>0)}')
     return b_eroded
 
 

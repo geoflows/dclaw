@@ -46,10 +46,9 @@ import copy
 import os
 import string
 
-import numpy as np
-
-import clawpack.dclaw.topotools as gt
 import clawpack.dclaw.netcdf_tools as gn
+import clawpack.dclaw.topotools as gt
+import numpy as np
 
 
 # ================================================================================

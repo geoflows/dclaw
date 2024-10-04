@@ -1,49 +1,138 @@
-#!/usr/bin/env python
+from __future__ import absolute_import, print_function
 
-"""
-
-Classes representing parameters for D-Claw runs
-
-:Classes:
-
- - DClawInputData
- - QinitDClawData
- - AuxInitDClawData
- - PInitDClawInputData
- - FlowGradesData
-
-
-:Constants:
-
- - Rearth - Radius of earth in meters
- - DEG2RAD factor to convert degrees to radians
- - RAD2DEG factor to convert radians to degrees
- - LAT2METER factor to convert degrees in latitude to meters
-"""
-
-from __future__ import absolute_import
-from __future__ import print_function
 import os
-import numpy
+
 import clawpack.clawutil.data
-import warnings
-
-
-# Radius of earth in meters.
-# For consistency, should always use this value when needed, e.g.
-# in setrun.py or topotools:
-Rearth = 6367.5e3  # average of polar and equatorial radii
-
-DEG2RAD = numpy.pi / 180.0
-RAD2DEG = 180.0 / numpy.pi
-LAT2METER = Rearth * DEG2RAD
 
 
 class DClawInputData(clawpack.clawutil.data.ClawData):
-    r"""
-    D-Claw data object
+    r"""Data object describing D-Claw parameters
 
-    See description text for explaination.
+    Within the ``setrun.py`` this object is initialized and values
+    are assigned. If a value is not assigned, the default value is
+    used.
+
+    .. code-block::
+
+        # First, the rundata object is initialized.
+        from clawpack.clawutil import data
+        assert claw_pkg.lower() == 'dclaw',  "Expected claw_pkg = 'dclaw'"
+        num_dim = 2
+        rundata = data.ClawRunData(claw_pkg, num_dim)
+
+        # For a D-Claw model, rundata will have an attribute
+        # dclaw_data.
+        dclaw_data = rundata.dclaw_data
+
+        # Assign values to dclaw_data attributes to select
+        # not-default values.
+        dclaw_data.rho_f = 1000.0 # for example, for fluid
+        dclaw_data.rho_s = 2700.0 # and solid densities.
+
+    All attributes and defaults are as follows:
+
+    .. list-table::
+       :widths: 10 5 10 30 10
+       :header-rows: 1
+
+       * - Attribute Name
+         - Symbol
+         - Description
+         - Default Value
+         - Type
+         - Typical Range
+         - Units
+       * - ``rho_s``
+         - :math:``rho_s``
+         - Solid density
+         - 2700.0
+         -
+         - float
+         - kilograms per cubic meter
+       * - ``rho_f``
+         - :math:``rho_s``
+         - Fluid density
+         - 1000.0
+         -
+         - float
+         - kilograms per cubic meter
+       * - ``m_crit``
+         -
+         - Critical solid volume fraction
+         - 0.62
+         -
+         - float
+         - unitless
+       * - ``m0``
+         -
+         - Initial solid volume fraction
+         - 0.52
+         -
+         - float
+         - unitless
+       * - ``mr``
+         - :math:``m_r``
+         - Reference solid volume fraction
+         - 0.60
+         -
+         - float
+         - unitless
+       * - ``kr``
+         - :math:``k_r``
+         - Reference permeability
+         - 0.0001
+         -
+         - float
+         - square meters
+       * - ``phi``
+         - :math:``\phi``
+         - Friction angle
+         - 40.0
+         -
+         - float
+         - degrees
+       * - ``delta``
+         - :math:`\delta`
+         - Characteristic length scale associated with grain collisions
+         - 0.01
+         -
+         - float
+         - meters
+       * - ``mu``
+         - :math:`\mu`
+         - Effective shear viscosity of the pore-fluid
+         - 0.001
+         -
+         - float
+         - Pa-s
+       * - ``a`` 0.01
+         - :math:`a`
+         - Compressibility coefficient
+         - 0.01
+         - 0.01-0.3
+         - float
+         - unitless
+
+
+       * - ``sigma_0`` 1.0e3
+       * - ``c1`` 1.0
+
+
+       * - ``bed_normal`` 0
+       * - ``theta_input`` 0.0
+
+       * - ``entrainment`` 0
+       * - ``entrainment_rate`` 0.2
+
+
+       * - ``alpha_seg`` 0.0
+       * - ``chi_init_val`` 0.5
+
+       * - ``mom_autostop`` False
+       * - ``momlevel`` 1
+
+
+       * - ``curvature`` 0
     """
 
     def __init__(self):
@@ -57,7 +146,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("delta", 0.01)
         self.add_attribute("kappita", 0.0001)
         self.add_attribute("mu", 0.001)
-        self.add_attribute("alpha_c", 1.0) # DIG: is this the right default value?
+        self.add_attribute("alpha_c", 0.01)
         self.add_attribute("m_crit", 0.62)
         self.add_attribute("c1", 1.0)
         self.add_attribute("m0", 0.52)
@@ -71,37 +160,64 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("momlevel", 1)
         self.add_attribute("curvature", 0)
 
-
-
-
-    def write(self,out_file='dclaw.data',data_source='setrun.py'):
-        self.open_data_file(out_file,data_source)
+    def write(self, out_file="dclaw.data", data_source="setrun.py"):
+        self.open_data_file(out_file, data_source)
 
         if self.bed_normal == 1:
-            raise ValueError('bed_normal=1 not currently supported because of dx dy not accessible in riemann solver')
+            raise ValueError(
+                "bed_normal=1 not currently supported because of dx dy not accessible in riemann solver"
+            )
 
         self.data_write("rho_s", description="solid grain density (kg/m^3)")
         self.data_write("rho_f", description="pore-fluid density  (kg/m^3)")
-        self.data_write("phi_bed", description="basal friction angle (degrees)")
-        self.data_write("theta_input", description="slope angle (degrees)")
-        self.data_write("delta", description= "characteristic grain diameter (m)")
-        self.data_write("kappita", description="permeability at m=setdig.m0 (m^2), k0 in G&I eq 2.7 if m0 is 0.6")
+        self.data_write("phi", description="basal friction angle (degrees)")
+        self.data_write("delta", description="characteristic grain diameter (m)")
+        self.data_write("kr", description=" reference permeability",
+        )
         self.data_write("mu", description="viscosity of pore-fluid (Pa-s)")
         self.data_write("alpha_c", description="debris compressibility constant (#)")
         self.data_write("m_crit", description="critical state value of m (#)")
-        self.data_write("c1", description="dilation regularization coefficient 1 (#)")
         self.data_write("m0", description="initial solid volume fraction (#)")
-        self.data_write("sigma_0", description="baseline stress for definition of compressibility")
-        self.data_write("alpha_seg", description="coefficient of segregation velocity profile. When alpha_seg = 0, no segregation occurs")
-        self.data_write("bed_normal", description="use of bed normal coordinates (0=false, 1=true). bed_normal = 1 requires theta in aux for slope in one direction")
-        self.data_write("entrainment", description="flag for entrainment, 0 = no entrainment")
-        self.data_write("entrainment_rate", description="rate of entrainment parameter 0-1")
-        self.data_write("chi_init_val", description="initial fraction of species 1, (#). Between 0-1.")
-        self.data_write("mom_autostop", description= "flag for momentum autostop False = no autostop, True = autostop") # currently only works with ascii output
-        self.data_write("momlevel", description="level to do momentum calculation IF mom_autostop==True")
-        self.data_write("curvature", description="flag for curvature correction 0 = not used, 1 = used")
+        self.data_write(
+            "sigma_0", description="baseline stress for definition of compressibility"
+        )
+
+        self.data_write(
+            "bed_normal",
+            description="use of bed normal coordinates (0=false, 1=true). bed_normal = 1 requires theta in aux for slope in one direction",
+        )
+        self.data_write("theta_input", description="slope angle (degrees)")
+
+        self.data_write(
+            "entrainment", description="flag for entrainment, 0 = no entrainment"
+        )
+        self.data_write(
+            "entrainment_rate", description="rate of entrainment parameter 0-1"
+        )
+
+        self.data_write(
+            "beta_seg",
+            description="coefficient of segregation velocity profile. When alpha_seg = 0, no segregation occurs",
+        )
+        self.data_write(
+            "chi_init_val",
+            description="initial fraction of species A, (#). Between 0-1.",
+        )
+        self.data_write(
+            "mom_autostop",
+            description="flag for momentum autostop False = no autostop, True = autostop",
+        )  # currently only works with ascii output
+        self.data_write(
+            "momlevel",
+            description="level to do momentum calculation IF mom_autostop==True",
+        )
+        self.data_write(
+            "curvature",
+            description="flag for curvature correction 0 = not used, 1 = used",
+        )
 
         self.close_data_file()
+
 
 class QinitDClawData(clawpack.clawutil.data.ClawData):
     r"""
@@ -163,12 +279,13 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
 
 
     """
-    def __init__(self):
-        super(QinitDClawData,self).__init__()
-        self.add_attribute('qinitfiles',[])
-        self.add_attribute('nqinits',None)
 
-    def write(self,data_source='setrun.py', out_file='qinit_dclaw.data'):
+    def __init__(self):
+        super(QinitDClawData, self).__init__()
+        self.add_attribute("qinitfiles", [])
+        self.add_attribute("nqinits", None)
+
+    def write(self, data_source="setrun.py", out_file="qinit_dclaw.data"):
 
         self.open_data_file(out_file, data_source)
         self.nqinits = len(self.qinitfiles)
@@ -183,7 +300,9 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
                 raise ValueError(f"*** Error: file not valid string {tfile[-1]}")
 
             if len(fname) > 150:
-                raise ValueError(f"*** Error: file name too long (must be <150)  {tfile[-1]}")
+                raise ValueError(
+                    f"*** Error: file name too long (must be <150)  {tfile[-1]}"
+                )
 
             if not os.path.exists(tfile[-1]):
                 raise ValueError(f"*** Error: file not found: {tfile[-1]}")
@@ -192,6 +311,7 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
             self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
 
         self.close_data_file()
+
 
 class AuxInitDClawData(clawpack.clawutil.data.ClawData):
     r"""
@@ -258,16 +378,15 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
     as all other elements of the aux arrays are calculated internally.
 
     """
-    def __init__(self):
-        super(AuxInitDClawData,self).__init__()
-        self.add_attribute('auxinitfiles',[])
-        self.add_attribute('nauxinits',None)
 
-    def write(self,data_source='setrun.py', out_file='auxinit_dclaw.data'):
+    def __init__(self):
+        super(AuxInitDClawData, self).__init__()
+        self.add_attribute("auxinitfiles", [])
+        self.add_attribute("nauxinits", None)
+
+    def write(self, data_source="setrun.py", out_file="auxinit_dclaw.data"):
 
         # test that the number of aux variables
-
-
 
         self.open_data_file(out_file, data_source)
         self.nauxinits = len(self.auxinitfiles)
@@ -282,7 +401,9 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
                 raise ValueError(f"*** Error: file not valid string {tfile[-1]}")
 
             if len(fname) > 150:
-                raise ValueError(f"*** Error: file name too long (must be <150)  {tfile[-1]}")
+                raise ValueError(
+                    f"*** Error: file name too long (must be <150)  {tfile[-1]}"
+                )
 
             if not os.path.exists(tfile[-1]):
                 raise ValueError(f"*** Error: file not found: {tfile[-1]}")
@@ -291,7 +412,6 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
             self._out_file.write("%3i %3i %3i %3i \n" % tuple(tfile[:-1]))
 
         self.close_data_file()
-
 
 
 class PInitDClawInputData(clawpack.clawutil.data.ClawData):
@@ -308,16 +428,29 @@ class PInitDClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("init_ptf", 1.0)
         self.add_attribute("init_ptf2", 0.0)
 
-    def write(self,out_file='pinit_dclaw.data',data_source='setrun.py'):
-        self.open_data_file(out_file,data_source)
+    def write(self, out_file="pinit_dclaw.data", data_source="setrun.py"):
+        self.open_data_file(out_file, data_source)
 
         # open file and write a warning header:
-        self.data_write("init_ptype", description="-1 = zero pressure or user defined files in qinit, 0 = hydrostatic, 1,2 = failure pressure (1=min, 2=avg), 3,4 = rising pressure (3=min, 4=avg)")
-        self.data_write("init_pmax_ratio", description="p(init_ptf2)= hydro*init_pmax_ratio: pressure will rise to hydrostatic *init_pmax_ratio")
-        self.data_write("init_ptf", description="p(init_ptf) = failure, pressure will rise until t = init_ptf without dilatancy")
-        self.data_write("init_ptf2", description="p(init_ptf2)= hydro*init_pmax_ratio, pressure will rise until t = init_ptf2")
+        self.data_write(
+            "init_ptype",
+            description="-1 = zero pressure or user defined files in qinit, 0 = hydrostatic, 1,2 = failure pressure (1=min, 2=avg), 3,4 = rising pressure (3=min, 4=avg)",
+        )
+        self.data_write(
+            "init_pmax_ratio",
+            description="p(init_ptf2)= hydro*init_pmax_ratio: pressure will rise to hydrostatic *init_pmax_ratio",
+        )
+        self.data_write(
+            "init_ptf",
+            description="p(init_ptf) = failure, pressure will rise until t = init_ptf without dilatancy",
+        )
+        self.data_write(
+            "init_ptf2",
+            description="p(init_ptf2)= hydro*init_pmax_ratio, pressure will rise until t = init_ptf2",
+        )
 
         self.close_data_file()
+
 
 class FlowGradesData(clawpack.clawutil.data.ClawData):
     r"""
@@ -353,16 +486,16 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
     criteria will stay refined.
 
     """
+
     def __init__(self):
-        super(FlowGradesData,self).__init__()
+        super(FlowGradesData, self).__init__()
         self.add_attribute("flowgrades", [])
         self.add_attribute("keep_fine", False)
-        self.add_attribute('nflowgrades',None)
+        self.add_attribute("nflowgrades", None)
 
-
-    def write(self,out_file='flowgrades.data',data_source='setrun.py'):
+    def write(self, out_file="flowgrades.data", data_source="setrun.py"):
         self.nflowgrades = len(self.flowgrades)
-        self.open_data_file(out_file,data_source)
+        self.open_data_file(out_file, data_source)
         self.data_write("nflowgrades", description="nflowgrades")
         self._out_file.write("\n")
         for flowgrade in self.flowgrades:
