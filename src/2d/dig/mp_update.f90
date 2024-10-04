@@ -1,9 +1,20 @@
-    !file contains routines for integrating part of source term for m and p
+    !file contains routines for integrating part of source term for m, p and h
+    !does not affect u,v, but note hu,hv changed due to change in h.
     !single contained routine should be called from src2 with timestep dtk. 
     !
     !integrates:
     ! dm/dt = f_1(p,m)
     ! dp/dt = f_2(p,m)
+    ! invariant (rho h)_N+1 = (rho h)_N is exactly or approximately maintained
+    ! depending on routine.
+    ! Note that as m is updated, h is updated meaning that all variables (h,hu,hv,hm,p) are affected.
+    !
+    !three basic alternatives: 1. stay on rho h = constant manfifold, integrate difficult stiff terms for m and p.
+    !                        2. relax rho h constraint, more easily integrate m,p, then approximately return to rho h manifold (new h(m))
+    !                        3. relax rho h constraint, more easily integrate m,p, then exactly return to rho h manifold (new h(m))
+    !
+    ! why 2 vs. 3? Note that if m is poorly integrated, h(m) is poorly updated. So maintaining rho h = constant may lead to bad depth approx
+    ! or possibly poorer volume conservation, even though mass conservation is exact. method 2 gives a somewhat balanced approach perhaps.
     
 
 subroutine mp_update_FE_4quad(dt,h,u,v,m,p,rhoh,gz,dtk)
@@ -412,3 +423,69 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,rhoh,gz,dtk)
        
        return
        end subroutine mp_update_FE_4quad
+
+      !========================================================================
+subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,rhoh,gz)
+   !====================================================================
+   !subroutine mp_update_relax_Dclaw4: D-Claw 4.x method
+   !integrate p, relaxing rho h constant (leave manifold)
+   !for less easier integration of p.
+   !update m,h based on new value of D. rho h not exact/approx.
+
+      use digclaw_module, only: rho_f,rho_s,sigma_0,mu,alpha,setvars,qfix,qfix_cmass,phi_bed,m_crit,delta
+      use digclaw_module, only: src2method
+      use geoclaw_module, only: grav,drytolerance
+
+      implicit none
+ 
+      !i/o
+      real(kind=8), intent(inout) :: h,m,p
+      real(kind=8), intent(in)  :: u,v,rhoh,dt
+      real(kind=8), intent(in)  :: gz
+
+      !local
+      real(kind=8) :: m_0,p_eq,p_exc,sig_eff,sig_0,vnorm,m_eq
+      real(kind=8) :: rho,tanpsi,D,tau,kperm,phi,alphainv
+      real(kind=8) :: krate,zeta,D
+
+      call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+
+      ! integrate pressure response to dilation/contraction
+      vnorm = sqrt(hu**2 + hv**2)/h
+      p = p - dt*3.d0*vnorm*tanpsi*alphainv/h
+
+      ! integrate pressure relaxation to hydrostatic
+      zeta = 3.d0*alphainv/(h*2.d0)  + (rho-rho_f)*rho_f*gz/(4.d0*rho)
+      krate=-zeta*2.d0*kperm/(h*max(mu,1.d-16))
+      p_eq = rho_f*h*gz
+      p = p_eq + (p-p_eq)*exp(krate*dt)
+
+      !integrate changes in hm
+      p_exc = p - rho_f*gz*h
+      !define conservative variabls: (note u,v,m passed in, no hu,hv,hm yet).
+      qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
+      D = -2.0d0*(kperm/(mu*h))*p_exc
+      krate = D*(rho-rho_f)/rhoh
+      hm = hm*exp(-dt*D*rho_f/(rhoh)) 
+
+      select case (src2method)
+      !NOTE: at this point hm has changed. 
+      ! can redefine h by constant rho h and hm, or update h directly
+      case(0)
+         ! integrate hu, hv, hm, and h.
+         ! rationale is if hm is poor, not to base h,hu,hv on it
+         ! even if rho h is varied
+         h = h + h*krate*dt
+         hu = hu*exp(dt*krate)
+         hv = hv*exp(dt*krate)    
+         qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
+      case(1)
+         ! redefine h by hm, rhoh, set hu,hv by new h
+         ! rationale is to maintain rhoh = constant
+         h = (rhoh - hm*(rho_s-rho_f))/rho_f
+         hu = h*u
+         hv = h*v
+         qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
+      end select
+
+      end subroutine mp_update_relax_Dclaw4

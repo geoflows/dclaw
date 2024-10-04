@@ -11,7 +11,7 @@ module digclaw_module
     double precision :: rho_s,rho_f,phi_bed,theta_input,delta,kappita
     double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,entrainment_rate
 
-    integer :: init_ptype,bed_normal,entrainment,curvature
+    integer :: init_ptype,bed_normal,entrainment,curvature,alphamethod,src2method 
     double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
     double precision :: chi_init_val
@@ -307,6 +307,7 @@ contains
       rho = m*(rho_s - rho_f) + rho_f
       h = rhoh/rho
 
+      !p_exc = p - rho_f*gz*h
       p_exc_max = rhoh*gz-rho_f*h*gz
       p_exc_min = 0.d0-rho_f*h*gz
       p_exc = max(p_exc_min,p_exc)
@@ -414,11 +415,13 @@ contains
       !determine vars related to m_eq and compressibility
       sig_eff = max(0.d0,rho*gz*h - p)
 
-      select case (alphainvmethod) 
+      alphamethod = 2
+      select case (alphamethod) 
       case(0:1)
-
+         sig_0 = sigma_0
       case(2)
-         sig_0 = alpha*(rho_s-rho_f)*gz*h
+         !sig_0 = alpha*(rho_s-rho_f)*gz*h
+         sig_0 = 0.5d0*alpha*(rho_s-rho_f)*gz*h/rho
          alphainv = m*(sig_eff + sig_0)/alpha
       end select
 

@@ -123,10 +123,10 @@
             endif
 
 c-----------!integrate momentum source term------------------------
-c-----------! changes only hu,hv,u,v ------------------------------
             ! need tau:
             call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
            
+c-----------! changes only hu,hv,u,v ------------------------------
             !integrate momentum source term
             hvnorm0 = sqrt(hu**2 + hv**2)
             vnorm = hvnorm0/h
@@ -145,16 +145,16 @@ c-----------! changes only hu,hv,u,v ------------------------------
                ! velocity now constant for remainder of src2. hu,hv adjusted due to change in h
             endif
 c-------------------------------------------------------------------------
-
+            call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
 c----------- ! integrate p  & m-------------------------------------------
+            
             select case (src2method)
 
-            case(0)
-               call mp_update_Dclaw4()
-
-            case(1)
-               call mp_update_relax()
-
+            case(0:1)
+               call mp_update_relax_Dclaw4(dt,h,u,v,m,p,rhoh,gz)
+               hu = h*u
+               hv = h*v
+               hm = h*m
             case(2)
             ! changes only p,m,hm,& h. hrho constant
             ! takes in general multiple interior timesteps, dtk
@@ -187,28 +187,9 @@ c----------- ! integrate p  & m-------------------------------------------
                   cycle
                endif
 
-            case(2)
-
             end select
-            
-c------------------------------------------------------------------------
-
-c
-            ! call admissible q and auxeval before moving on to shear induced
-            ! dilatancy.
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
-
-            ! calculate velocity
-            vnorm = sqrt(u**2 + v**2)
-
-            !integrate shear-induced dilatancy
-            shear = 2.d0*vnorm/h
-            krate = 1.5d0*shear*m*tanpsi/alpha
-            if (compress<1.d15) then !elasticity is = 0.0 but compress is given 1d16 in auxeval
-               p = p - dt*3.d0*vnorm*tanpsi/(h*compress)
-            endif
-
+            call setvars
+            !======================mass entrainment===========================
             ! update pmtanh01 and rho_fp for segregation
             ! DIG: if segregation is compartmentalized
             if (dabs(alpha_seg-1.d0)<1.d-6) then
@@ -220,25 +201,6 @@ c
                call calc_pmtanh(chi,seg,pmtanh01)
                rho_fp = max(0.d0,(1.d0-pmtanh01))*rho_f
       		endif
-
-            ! integrate pressure relaxation
-            zeta = ((m*(sigbed +  sigma_0))/alpha)*3.d0/(h*2.d0)  + (rho-rho_fp)*rho_fp*gmod/(4.d0*rho)
-            krate=-zeta*2.d0*kperm/(h*max(mu,1.d-16))
-            p_eq = h*rho_fp*gmod
-            p = p_eq + (p-p_eq)*exp(krate*dt)
-
-            ! call admissible q and auxeval before moving on to dilatancy.
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
-
-            ! calculate rate of change
-            krate = D*(rho-rho_fp)/rho
-
-            ! integrate hu, hv, hm, and h.
-            hu = hu*exp(dt*krate/h)
-            hv = hv*exp(dt*krate/h)
-            hm = hm*exp(-dt*D*rho_fp/(h*rho))
-            h = h + krate*dt
 
 
             !======================mass entrainment===========================
