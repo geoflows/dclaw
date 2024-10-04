@@ -196,7 +196,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("phi", 40.0)
         self.add_attribute("delta", 0.01)
         self.add_attribute("mu", 0.001)
-        self.add_attribute("alpha_c", 0.01)
+        self.add_attribute("a", 0.01)
 
         self.add_attribute("sigma_0", 1.0e3)
 
@@ -234,7 +234,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write("phi", description="basal friction angle (degrees)")
         self.data_write("delta", description="characteristic grain diameter (m)")
         self.data_write("mu", description="viscosity of pore-fluid (Pa-s)")
-        self.data_write("alpha_c", description="debris compressibility constant (#)")
+        self.data_write("a", description="debris compressibility constant (#)")
 
         self.data_write(
             "sigma_0", description="baseline stress for definition of compressibility"

@@ -1,5 +1,12 @@
 """
-Useful things for plotting D-Claw results.
+Functions used for plotting D-Claw results using `visclaw <https://www.clawpack.org/plotting.html>`__
+
+When using `visclaw <https://www.clawpack.org/plotting.html>`__
+it is common to provide a function to the attribute ``plot_var`` of a
+`ClawPlotItem <https://www.clawpack.org/ClawPlotItem.html#attributes>`__
+to specify what variable is plotted.
+
+These functions provide the most commonly used functions for D-Claw.
 """
 
 import numpy as np
@@ -8,28 +15,28 @@ from numpy import ma as ma
 # Indices to elements of q and aux
 
 # q indices
-i_h = 0
-i_hu = 1
-i_hv = 2
-i_hm = 3
-i_pb = 4
-i_hchi = 5
-i_beroded = 6
-i_eta = 7
+_i_h = 0
+_i_hu = 1
+_i_hv = 2
+_i_hm = 3
+_i_pb = 4
+_i_hchi = 5
+_i_beroded = 6
+_i_eta = 7
 
 # aux indices
-i_topo = 0
-i_capax = 1
-i_capay = 2
+_i_topo = 0
+_i_capax = 1
+_i_capay = 2
 
-# if coordinate_system == 1 i_dig = 1
-# else i_dig = 3
+# if coordinate_system == 1 _i_dig = 1
+# else _i_dig = 3
 
-i_dig = 1
-i_phi = i_dig
-i_theta = i_dig + 1
-i_taudir_x = i_dig + 4
-i_taudir_y = i_dig + 5
+_i_dig = 1
+_i_phi = _i_dig
+_i_theta = _i_dig + 1
+_i_taudir_x = _i_dig + 4
+_i_taudir_y = _i_dig + 5
 
 _grav = 9.81
 _rho_f = 1000
@@ -42,12 +49,12 @@ _m0 = 0.6
 _c1 = 1.0
 _bed_normal = 0
 _drytol = 0.001
-_phi_bed = 40
+_ph_i_bed = 40
 
 
 # Gravity, adjusted for bed normal.
 def gmod(current_data):
-
+    """Gravity, adjusted for bed normal"""
     if hasattr(current_data.plotdata, "geoclaw_data"):
         grav = current_data.plotdata.geoclaw_data.gravity
     else:
@@ -60,7 +67,7 @@ def gmod(current_data):
 
     if bed_normal == 1:
         aux = current_data.aux
-        theta = aux[i_theta, :, :]
+        theta = aux[_i_theta, :, :]
         gmod = grav * np.cos(theta)
     else:
         gmod = grav
@@ -71,10 +78,10 @@ def gmod(current_data):
 # Upper surface and topo
 def eta(current_data):
     """
-    Return eta
+    Return eta = h + b
     """
     q = current_data.q
-    eta = q[i_eta, :, :]
+    eta = q[_i_eta, :, :]
     return eta
 
 
@@ -83,8 +90,8 @@ def topo(current_data):
     Return topography = eta - h.
     """
     q = current_data.q
-    h = q[i_h, :, :]
-    eta = q[i_eta, :, :]
+    h = q[_i_h, :, :]
+    eta = q[_i_eta, :, :]
     topo = eta - h
     return topo
 
@@ -99,8 +106,8 @@ def land(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    eta = q[i_eta, :, :]
+    h = q[_i_h, :, :]
+    eta = q[_i_eta, :, :]
     land = ma.masked_where(h > drytol, eta)
     return land
 
@@ -117,8 +124,8 @@ def surface(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    eta = q[i_eta, :, :]
+    h = q[_i_h, :, :]
+    eta = q[_i_eta, :, :]
     water = ma.masked_where(h <= drytol, eta)
     return water
 
@@ -135,9 +142,9 @@ def surface_solid_frac_lt03(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    eta = q[i_eta, :, :]
-    hm = q[i_hm, :, :]
+    h = q[_i_h, :, :]
+    eta = q[_i_eta, :, :]
+    hm = q[_i_hm, :, :]
 
     with np.errstate(divide="ignore", invalid="ignore"):
         m = hm / h
@@ -159,7 +166,7 @@ def depth(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
+    h = q[_i_h, :, :]
     depth = ma.masked_where(h <= drytol, h)
     return depth
 
@@ -178,8 +185,8 @@ def surface_or_depth(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    eta = q[i_eta, :, :]
+    h = q[_i_h, :, :]
+    eta = q[_i_eta, :, :]
     topo = eta - h
     surface = ma.masked_where(h <= drytol, eta)
     depth = ma.masked_where(h <= drytol, h)
@@ -198,8 +205,8 @@ def velocity_u(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    hu = q[i_hu, :, :]
+    h = q[_i_h, :, :]
+    hu = q[_i_hu, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         u = ma.masked_where(h <= drytol, hu / h)
     return u
@@ -215,8 +222,8 @@ def velocity_v(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    hv = q[i_hv, :, :]
+    h = q[_i_h, :, :]
+    hv = q[_i_hv, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         v = ma.masked_where(h <= drytol, hv / h)
     return v
@@ -233,8 +240,8 @@ def velocity_unorm(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    hu = q[i_hu, :, :]
+    h = q[_i_h, :, :]
+    hu = q[_i_hu, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         u = ma.masked_where(h <= drytol, hu / h)
     return u / velocity_magnitude(current_data)
@@ -252,8 +259,8 @@ def velocity_vnorm(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    hv = q[i_hv, :, :]
+    h = q[_i_h, :, :]
+    hv = q[_i_hv, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         v = ma.masked_where(h <= drytol, hv / h)
     return v / velocity_magnitude(current_data)
@@ -272,9 +279,9 @@ def velocity(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    hu = q[i_hu, :, :]
-    hv = q[i_hv, :, :]
+    h = q[_i_h, :, :]
+    hu = q[_i_hu, :, :]
+    hv = q[_i_hv, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         u = ma.masked_where(h <= drytol, hu / h)
         v = ma.masked_where(h <= drytol, hv / h)
@@ -293,9 +300,9 @@ def velocity_magnitude(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    hu = q[i_hu, :, :]
-    hv = q[i_hv, :, :]
+    h = q[_i_h, :, :]
+    hu = q[_i_hu, :, :]
+    hv = q[_i_hv, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         u = hu / h
         v = hv / h
@@ -313,8 +320,8 @@ def solid_frac(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    hm = q[i_hm, :, :]
+    h = q[_i_h, :, :]
+    hm = q[_i_hm, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         m = ma.masked_where(h < drytol, hm / h)
     return m
@@ -333,7 +340,7 @@ def basalP(current_data):
         drytol = _drytol
 
     q = current_data.q
-    basalP = ma.masked_where(q[i_h, :, :] < drytol, q[i_pb, :, :])
+    basalP = ma.masked_where(q[_i_h, :, :] < drytol, q[_i_pb, :, :])
     return basalP
 
 
@@ -347,8 +354,8 @@ def species1_fraction(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    hchi = q[i_hchi, :, :]
+    h = q[_i_h, :, :]
+    hchi = q[_i_hchi, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         chi1 = ma.masked_where(h <= drytol, hchi / h)
     return chi1
@@ -364,8 +371,8 @@ def species2_fraction(current_data):
         drytol = _drytol
 
     q = current_data.q
-    h = q[i_h, :, :]
-    hchi = q[i_hchi, :, :]
+    h = q[_i_h, :, :]
+    hchi = q[_i_hchi, :, :]
     with np.errstate(divide="ignore", invalid="ignore"):
         chi2 = ma.masked_where(h <= drytol, 1.0 - (hchi / h))
     return chi2
@@ -374,7 +381,7 @@ def species2_fraction(current_data):
 def b_eroded(current_data):
     # eroded depth
     q = current_data.q
-    b_eroded = q[i_beroded, :, :]
+    b_eroded = q[_i_beroded, :, :]
     # if np.any(b_eroded>0):
     #        print(f'b_eroded gt zero, {np.sum(b_eroded>0)}')
     return b_eroded
@@ -560,9 +567,9 @@ def liquefaction_ratio(current_data):
         drytol = _drytol
 
     q = current_data.q
-    p = ma.masked_where(q[i_h, :, :] < drytol, q[i_pb, :, :])
+    p = ma.masked_where(q[_i_h, :, :] < drytol, q[_i_pb, :, :])
     litho = lithostaticP(current_data)
-    ratio = ma.masked_where(q[i_h, :, :] < drytol, p / litho)
+    ratio = ma.masked_where(q[_i_h, :, :] < drytol, p / litho)
     return ratio
 
 
@@ -591,7 +598,7 @@ def nondimentional_c(current_data):
     c = np.array((rho_f * g * kappita) / (mu * U), dtype=float)
 
     q = current_data.q
-    h = q[i_h, :, :]
+    h = q[_i_h, :, :]
 
     # set to zero if nan or inf
     c[np.isnan(c)] = 0
@@ -667,7 +674,7 @@ def local_slope(current_data):
 
     if bed_normal == 1:
         q = current_data.q
-        theta = q[i_theta, :, :]
+        theta = q[_i_theta, :, :]
         sintheta = np.sin(theta)
     else:
         sintheta = 0.0
@@ -686,10 +693,10 @@ def local_slope(current_data):
 
     row, col = eta.shape
     detadx = np.zeros((row, col, 4))
-    detadx[i_h, :, :] = np.abs((eta - etaL) / (dx))
-    detadx[i_hu, :, :] = np.abs((eta - etaB) / (dy))
-    detadx[i_hu, :, :] = np.abs((etaR - eta) / (dx))
-    detadx[i_hm, :, :] = np.abs((etaT - eta) / (dy))
+    detadx[_i_h, :, :] = np.abs((eta - etaL) / (dx))
+    detadx[_i_hu, :, :] = np.abs((eta - etaB) / (dy))
+    detadx[_i_hu, :, :] = np.abs((etaR - eta) / (dx))
+    detadx[_i_hm, :, :] = np.abs((etaT - eta) / (dy))
 
     maxdetadx = np.max(detadx, axis=-1)
     slope = np.rad2deg(np.arctan(maxdetadx))
@@ -711,7 +718,7 @@ def Fgravitational(current_data):
 
     if bed_normal == 1:
         q = current_data.q
-        theta = q[i_theta, :, :]
+        theta = q[_i_theta, :, :]
         sintheta = np.sin(theta)
     else:
         sintheta = 0.0
@@ -819,18 +826,18 @@ def Ffluid(current_data):  # units of force per unit area
 def phi(current_data):
     # angle of internal friction (radians)
     if hasattr(current_data.plotdata, "dclaw_data"):
-        phi_bed = current_data.plotdata.dclaw_data.phi_bed
+        ph_i_bed = current_data.plotdata.dclaw_data.ph_i_bed
     else:
-        phi_bed = _phi_bed
+        ph_i_bed = _ph_i_bed
     # results are returned in radians.
-    return np.deg2rad(phi_bed)
+    return np.deg2rad(ph_i_bed)
 
 
 def Fsolid(current_data):  # units of force per unit area
     # resisting force due to solid.
-    phi_bed = phi(current_data)
+    ph_i_bed = phi(current_data)
 
-    tau_s = sigma_e(current_data) * np.tan(phi_bed + psi(current_data))
+    tau_s = sigma_e(current_data) * np.tan(ph_i_bed + psi(current_data))
     # tau = dmax1(0.d0,mreg*sigbed*tan(atan(mu_bf)+atan(tanpsi)))
     tau_s[tau_s < 0] = 0
     # units
