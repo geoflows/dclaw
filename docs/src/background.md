@@ -20,7 +20,7 @@ The D-Claw model is the combination of
 - Software implementations
 
 
-Any indivudual simulation run with the D-claw model requires the
+Any individual simulation run with the D-claw model requires the
 specification of parameter values (physical and numerical), and
 initial and boundary conditions.
 

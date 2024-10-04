@@ -2,7 +2,7 @@
 
 This page describes the equations solved by D-Claw. A user interested in the details of the equation derivation is referred to Iverson and George (2014). Those interested in an explanation of the numerical implementation are referred to George and Iverson (2014).
 
-## State variables and auxillary variables
+## State variables and auxiliary variables
 
 D-Claw considers the flow of material under gravity ({math}`\vec{g} = (g_x,g_y,g_z)^\mathrm{T}`) with thickness {math}`h`, x- and y- directed velocities {math}`u` and {math}`v`, solid volume fraction {math}`m`, and basal pore pressure {math}`p_b` over an arbitrary surface {math}`b`. Optionally, entrainment and segregation are implemented. The depth of entrained material is given by {math}`\Delta b` (positive indicating entrainment has occurred). Segregation considers two species fractions {math}`A` and {math}`B` with {math}`\chi` representing the fraction of species {math}`A`.
 
