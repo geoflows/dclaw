@@ -394,14 +394,11 @@ def setrun(claw_pkg='dclaw'):
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
     etafile = 'surface_topo.tt3'
-    qinitdclaw_data.qinitfiles.append([3, 8, 1, 2, etafile])
+    qinitdclaw_data.qinitfiles.append([3, 8, etafile])
 
-    mfile = 'mass_frac.tt3' 
+    mfile = 'mass_frac.tt3'
     #mfile = 'mass_frac0.tt3' # with m0 = 0 below
-    qinitdclaw_data.qinitfiles.append([3, 4, 1, 2, mfile])
-
-    #hfile = 'landslide_depth.tt3'
-    #qinitdclaw_data.qinitfiles.append([3, 1, 1, 2, hfile])
+    qinitdclaw_data.qinitfiles.append([3, 4, mfile])
 
     # == setauxinit.data values ==
     #auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
@@ -487,7 +484,7 @@ def setrun(claw_pkg='dclaw'):
     fgout_grids.append(fgout)    # written to fgout_grids.data
 
 
-    #  ----- For developers ----- 
+    #  ----- For developers -----
     # Toggle debugging print statements:
     amrdata.dprint = False      # print domain flags
     amrdata.eprint = False      # print err est flags

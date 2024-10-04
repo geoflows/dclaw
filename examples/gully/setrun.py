@@ -394,11 +394,11 @@ def setrun(claw_pkg='dclaw'):
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
     etafile = 'surface_topo.tt3'
-    qinitdclaw_data.qinitfiles.append([3, 8, 1, 2, etafile])
+    qinitdclaw_data.qinitfiles.append([3, 8, etafile])
 
     mfile = 'mass_frac.tt3'
     #mfile = 'mass_frac0.tt3' # with m0 = 0 below
-    qinitdclaw_data.qinitfiles.append([3, 4, 1, 2, mfile])
+    qinitdclaw_data.qinitfiles.append([3, 4, mfile])
 
     #hfile = 'landslide_depth.tt3'
     #qinitdclaw_data.qinitfiles.append([3, 1, 1, 2, hfile])
