@@ -77,6 +77,7 @@
             hm = q(i_hm,i,j)
             p =  q(i_pb,i,j)
             hchi = q(i_hchi,i,j)
+            chi = hchi/chi
             rhoh = hm*rho_s + (h-hm)*rho_f
             call qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
             ! DIG: 10/3/24: DLG: not sure need chi check below...should be checked somewhere
@@ -155,6 +156,7 @@ c----------- ! integrate p  & m-------------------------------------------
                hu = h*u
                hv = h*v
                hm = h*m
+               hchi = h*chi
             case(2)
             ! changes only p,m,hm,& h. hrho constant
             ! takes in general multiple interior timesteps, dtk
@@ -182,13 +184,15 @@ c----------- ! integrate p  & m-------------------------------------------
                hu = h*u
                hv = h*v
                hm = h*m
+               hchi = h*chi
                call qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
                if (h<=drytolerance) then
                   cycle
                endif
 
             end select
-            call setvars
+            call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+            
             !======================mass entrainment===========================
             ! update pmtanh01 and rho_fp for segregation
             ! DIG: if segregation is compartmentalized
@@ -290,55 +294,10 @@ c----------- ! integrate p  & m-------------------------------------------
             q(i_hv,i,j) = hv
             q(i_hm,i,j) = hm
             q(i_pb,i,j) = p
-            q(i_hchi,i,j) = chi*h
+            q(i_hchi,i,j) = hchi
 
          enddo
       enddo
-
-
-
-      ! Manning friction------------------------------------------------
-      if (friction_forcing) then
-      if (coeff>0.d0.and.friction_depth>0.d0) then
-
-         do j=1,my
-            do i=1,mx
-
-               if (bed_normal==1) gmod = grav*cos(aux(i_theta,i,j))
-                  h=q(i_h, i,j)
-               if (h<=friction_depth) then
-                 !# apply friction source term only in shallower water
-                  hu=q(i_hu,i,j)
-                  hv=q(i_hv,i,j)
-                  hm = q(i_hm,i,j)
-                  p =  q(i_pb,i,j)
-                  phi = aux(i_phi,i,j)
-                  theta = aux(i_theta,i,j)
-                  call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                  if (h<dry_tolerance) cycle
-                  pm = q(i_hchi,i,j)/h
-                  pm = max(0.0d0,pm)
-                  pm = min(1.0d0,pm)
-                  call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-
-                  if (h.lt.dry_tolerance) then
-                     q(i_h,i,j)=0.d0
-                     q(i_hu,i,j)=0.d0
-                     q(i_hv,i,j)=0.d0
-                  else
-                     !beta = 1.d0-m  ! reduced friction led to high velocities
-                     beta = 1.d0     ! use full Manning friction
-                     gamma= beta*dsqrt(hu**2 + hv**2)*(gmod*coeff**2)/(h**(7.0d0/3.0d0))
-                     dgamma=1.d0 + dt*gamma
-                     q(i_hu,i,j)= q(i_hu,i,j)/dgamma
-                     q(i_hv,i,j)= q(i_hv,i,j)/dgamma
-                  endif
-               endif
-            enddo
-         enddo
-         endif
-      endif
-     ! ----------------------------------------------------------------
 
       return
       end
