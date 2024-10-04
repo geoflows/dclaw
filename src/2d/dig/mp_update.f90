@@ -17,7 +17,7 @@
     ! or possibly poorer volume conservation, even though mass conservation is exact. method 2 gives a somewhat balanced approach perhaps.
     
 
-subroutine mp_update_FE_4quad(dt,h,u,v,m,p,rhoh,gz,dtk)
+subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
     !====================================================================
     ! subroutine mp_update_FE_4quad: integrate dp_exc/dt,dm/dt by a hybrid 
     ! explicit integration that depends on the initial quadrant of phase space.
@@ -51,7 +51,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,rhoh,gz,dtk)
  
        !i/o
        real(kind=8), intent(inout) :: h,m,p
-       real(kind=8), intent(in)  :: u,v,rhoh,dt
+       real(kind=8), intent(in)  :: u,v,rhoh,dt,chi
        real(kind=8), intent(in)  :: gz
        real(kind=8), intent(out) :: dtk
 
@@ -74,7 +74,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,rhoh,gz,dtk)
  
        !explicit integration (hybrid FE and explicit exponential solution)---------------------------------------------------
        ! q1 = q0 + dtk*f(q0)
-       call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+       call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
        h0 = h
        m_0 = m
        rho0 = m_0*(rho_s-rho_f)+rho_f
@@ -365,7 +365,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,rhoh,gz,dtk)
        endif
 
        if (debug) then
-          call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff1,m_eq1,tanpsi,tau)
+          call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff1,m_eq1,tanpsi,tau)
           
           if (dtk/dtr<1.d-6.and.quad0==quad1) then
              write(*,*) '---------------SRC WARNING: SMALL TIMESTEP---------->>>>>>'
@@ -425,7 +425,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,rhoh,gz,dtk)
        end subroutine mp_update_FE_4quad
 
       !========================================================================
-subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,rhoh,gz)
+subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
    !====================================================================
    !subroutine mp_update_relax_Dclaw4: D-Claw 4.x method
    !integrate p, relaxing rho h constant (leave manifold)
@@ -440,7 +440,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,rhoh,gz)
  
       !i/o
       real(kind=8), intent(inout) :: h,m,p
-      real(kind=8), intent(in)  :: u,v,rhoh,dt
+      real(kind=8), intent(in)  :: u,v,rhoh,dt,chi
       real(kind=8), intent(in)  :: gz
 
       !local
@@ -448,7 +448,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,rhoh,gz)
       real(kind=8) :: rho,tanpsi,D,tau,kperm,phi,alphainv
       real(kind=8) :: krate,zeta,D
 
-      call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+      call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
 
       ! integrate pressure response to dilation/contraction
       vnorm = sqrt(hu**2 + hv**2)/h
@@ -476,16 +476,18 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,rhoh,gz)
          ! rationale is if hm is poor, not to base h,hu,hv on it
          ! even if rho h is varied
          h = h + h*krate*dt
+         hchi = h*chi
          hu = hu*exp(dt*krate)
          hv = hv*exp(dt*krate)    
-         qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
+         qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
       case(1)
          ! redefine h by hm, rhoh, set hu,hv by new h
          ! rationale is to maintain rhoh = constant
          h = (rhoh - hm*(rho_s-rho_f))/rho_f
          hu = h*u
          hv = h*v
-         qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
+         hchi = h*chi
+         qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
       end select
 
       end subroutine mp_update_relax_Dclaw4

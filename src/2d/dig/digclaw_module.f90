@@ -9,9 +9,10 @@ module digclaw_module
     ! General digclaw parameters
     ! ========================================================================
     double precision :: rho_s,rho_f,phi_bed,theta_input,delta,kappita
-    double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,entrainment_rate
+    double precision :: mu,alpha,m_crit,c1,m0,beta_seg,sigma_0,entrainment_rate
 
     integer :: init_ptype,bed_normal,entrainment,curvature,alphamethod,src2method 
+    integer :: segregation
     double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
     double precision :: chi_init_val
@@ -118,8 +119,7 @@ contains
          read(iunit,*) c1
          read(iunit,*) m0
          read(iunit,*) sigma_0
-         read(iunit,*) alpha_seg
-         alpha_seg = 1.d0 - alpha_seg
+         read(iunit,*) beta_seg
          read(iunit,*) bed_normal
          read(iunit,*) entrainment
          read(iunit,*) entrainment_rate
@@ -164,7 +164,7 @@ contains
          write(DIG_PARM_UNIT,*) '    c1:', c1
          write(DIG_PARM_UNIT,*) '    m0:', m0
          write(DIG_PARM_UNIT,*) '    sigma_0:', sigma_0
-         write(DIG_PARM_UNIT,*) '    alpha_seg:', alpha_seg
+         write(DIG_PARM_UNIT,*) '    beta_seg:', beta_seg
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal
          write(DIG_PARM_UNIT,*) '    entrainment:', entrainment
          write(DIG_PARM_UNIT,*) '    entrainment_rate:', entrainment_rate
@@ -232,20 +232,20 @@ contains
 
    !====================================================================
    !subroutine qfix
-   !accept solution q, return admissible q and primitive vars, u,v,m,rho
+   !accept solution q, return admissible q and primitive vars: u,v,m,rho,chi
    !====================================================================
 
-   subroutine qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
+   subroutine qfix(h,hu,hv,hm,hchi,p,u,v,m,chi,rho,gz)
 
       implicit none
 
       !i/o
       double precision, intent(in) :: gz
-      double precision, intent(inout) :: h,hu,hv,hm,p
-      double precision, intent(inout) :: u,v,m,rho
+      double precision, intent(inout) :: h,hu,hv,hm,p,hchi
+      double precision, intent(inout) :: u,v,m,rho,chi
 
       !Locals
-      double precision :: mmin,mmax,pmax,pmin
+      double precision :: mmin,mmax,chimin,chimax,pmax,pmin
 
       if (h.le.drytolerance) then
          h =  0.d0
@@ -256,6 +256,7 @@ contains
          u = 0.d0
          v = 0.d0
          m = 0.d0
+         chi = 0.d0
          rho = 0.d0
          return
       endif
@@ -263,14 +264,20 @@ contains
       u = hu/h
       v = hv/h
       m = hm/h
+      chi = hchi/h
 
       !mlo = 1.d-3
       mmin = 0.0d0
       mmax = 1.d0 
-
       m = max(m,mmin)
       m = min(m,mmax)
       hm = h*m
+
+      chimin = 0.0d0
+      chimax = 1.d0 
+      chi = max(chi,chimin)
+      chi = min(chi,chimax)
+      hchi = h*chi
 
       rho = rho_s*m + (1.d0-m)*rho_f
       pmax = rho*gz*h
@@ -465,12 +472,12 @@ contains
    !                     of the solution vector q
    !====================================================================
 
-   subroutine auxeval(h,u,v,m,p,phi_bed,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
+   subroutine auxeval(h,u,v,m,p,phi_bed,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
 
       implicit none
 
       !i/o
-      double precision, intent(inout) :: pm
+      double precision, intent(inout) :: chi
       double precision, intent(in)  :: h,u,v,m,p,phi_bed,theta
       double precision, intent(out) :: S,rho,tanpsi,D,tau,kappa
       double precision, intent(out) :: sigbed,kperm,compress
@@ -482,17 +489,8 @@ contains
       if (h.lt.dry_tolerance) return
 
       gmod=grav
-      pm = max(0.0d0,pm)
-      pm = min(1.0d0,pm)
-      if (dabs(alpha_seg-1.0d0)<1.d-6) then
-         seg = 0.0d0
-         rho_fp = rho_f
-         pmtanh01=0.0d0
-      else
-         seg = 1.0d0
-         call calc_pmtanh(pm,seg,pmtanh01)
-         rho_fp = (1.0d0-pmtanh01)*rho_f
-      endif
+      chi = max(0.0d0,chi)
+      chi = min(1.0d0,chi)
 
       if (bed_normal.eq.1) gmod=grav*dcos(theta)
       vnorm = dsqrt(u**2 + v**2)

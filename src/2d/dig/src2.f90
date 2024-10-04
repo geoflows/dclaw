@@ -77,9 +77,8 @@
             hm = q(i_hm,i,j)
             p =  q(i_pb,i,j)
             hchi = q(i_hchi,i,j)
-            chi = hchi/chi
             rhoh = hm*rho_s + (h-hm)*rho_f
-            call qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
+            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
             ! DIG: 10/3/24: DLG: not sure need chi check below...should be checked somewhere
             ! else where hchi or chi is computed. Or in the physical check of q (qfix or admissible q)
             !chi = max(0.0d0,chi)
@@ -118,14 +117,14 @@
                   hu= hu/dgamma
                   hv= hv/dgamma
                   !new u,v below
-                  call qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
+                  call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
                   !call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                endif
             endif
 
 c-----------!integrate momentum source term------------------------
             ! need tau:
-            call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
            
 c-----------! changes only hu,hv,u,v ------------------------------
             !integrate momentum source term
@@ -146,13 +145,13 @@ c-----------! changes only hu,hv,u,v ------------------------------
                ! velocity now constant for remainder of src2. hu,hv adjusted due to change in h
             endif
 c-------------------------------------------------------------------------
-            call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
 c----------- ! integrate p  & m-------------------------------------------
             
             select case (src2method)
 
             case(0:1)
-               call mp_update_relax_Dclaw4(dt,h,u,v,m,p,rhoh,gz)
+               call mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
                hu = h*u
                hv = h*v
                hm = h*m
@@ -167,7 +166,7 @@ c----------- ! integrate p  & m-------------------------------------------
                itercount=0
 
                do while (dtremaining>1.d-99)
-                  call mp_update_FE_4quad(dtremaining,h,u,v,m,p,rhoh,gz,dtk)
+                  call mp_update_FE_4quad(dtremaining,h,u,v,m,p,chi,rhoh,gz,dtk)
                   dtremaining = dtremaining-dtk
                   itercount = itercount + 1
                   if (dtk==0.d0.and.(.not.debug)) exit
@@ -185,26 +184,13 @@ c----------- ! integrate p  & m-------------------------------------------
                hv = h*v
                hm = h*m
                hchi = h*chi
-               call qfix(h,hu,hv,hm,p,u,v,m,rho,gz)
+               call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
                if (h<=drytolerance) then
                   cycle
                endif
 
             end select
-            call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
-            
-            !======================mass entrainment===========================
-            ! update pmtanh01 and rho_fp for segregation
-            ! DIG: if segregation is compartmentalized
-            if (dabs(alpha_seg-1.d0)<1.d-6) then
-         		seg = 0.d0
-               rho_fp = rho_f
-               pmtanh01=0.d0
-      		else
-         		seg = 1.d0
-               call calc_pmtanh(chi,seg,pmtanh01)
-               rho_fp = max(0.d0,(1.d0-pmtanh01))*rho_f
-      		endif
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
 
 
             !======================mass entrainment===========================
