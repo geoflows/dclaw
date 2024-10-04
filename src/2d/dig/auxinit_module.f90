@@ -79,7 +79,7 @@ contains
       if (present(fname)) then
          file_name = fname
       else
-         file_name  = 'setauxinit_dclaw.data'
+         file_name  = 'auxinit_dclaw.data'
       endif
       inquire(file=file_name,exist=found_file)
       if (.not. found_file) then

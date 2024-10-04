@@ -104,7 +104,7 @@ contains
         if (present(fname)) then
             file_name = fname
         else
-            file_name = 'setflowgrades.data'
+            file_name = 'flowgrades.data'
         endif
         inquire(file=file_name,exist=found_file)
         if (.not. found_file) then

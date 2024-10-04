@@ -1,6 +1,19 @@
 c
 c  -------------------------------------------------------------
 c
+c  -------------------------------------------------------------
+c  -------------------------------------------------------------
+c
+c  D-Claw notes:
+c  This file is a lightly modified version of
+c  clawpack/geoclaw/src/2d/shallow/tick.f. The only difference
+c  between this file and that file is the addition of the
+c  momentum autostop condition, indicated by the variable
+c  amidoneyet. The D-Claw specific elements of code are
+c  identified by comments.
+c
+c  -------------------------------------------------------------
+c  -------------------------------------------------------------
       subroutine tick(nvar,cut,nstart,vtime,time,naux,start_time,
      &                rest,dt_max)
 c
@@ -16,7 +29,10 @@ c
       use fgmax_module, only: FG_num_fgrids, FG_fgrids, fgrid
       use fgout_module, only: FGOUT_num_grids, FGOUT_fgrids,
      &                         fgout_write,fgout_grid, FGOUT_ttol
+
+c   Start of D-Claw specific code: use amidoneyet from digclaw_module
       use digclaw_module, only: amidoneyet
+c   End of D-Claw specific code
 
       implicit double precision (a-h,o-z)
 
@@ -30,6 +46,7 @@ c
       real(kind=8) cpu_start,cpu_finish
       type(fgrid), pointer :: fg
       type(fgout_grid), pointer :: fgout
+      logical :: debug
 
 c
 c :::::::::::::::::::::::::::: TICK :::::::::::::::::::::::::::::
@@ -133,7 +150,7 @@ c        write(*,*)" old possk is ", possk(1)
          diffdt = oldposs - possk(1)  ! if positive new step is smaller
 
 
-         if (.false.) then  
+         if (.false.) then
             write(*,122) diffdt,outtime  ! notify of change
  122        format(" Adjusting timestep by ",e10.3,
      .             " to hit output time of ",e13.6)
@@ -185,12 +202,12 @@ c     if this is true by checking if aux_finalized == 2 elsewhere in code.
       if (aux_finalized .eq. 1 .and. num_dtopo > 0) then
 c         # this is only true once, and only if there was moving topo
           deallocate(topo0work)
-          endif 
+          endif
       if (topo_finalized .and. (aux_finalized .lt. 2)) then
           aux_finalized = aux_finalized + 1
           endif
 
-    
+
 c
 c     ------------- regridding  time?  ---------
 c
@@ -226,7 +243,24 @@ c
 
           call system_clock(clock_start,clock_rate)
           call cpu_time(cpu_start)
+          debug = .false.
+          if (debug) then
+              write(*,*)" before regrid lbase ",lbase," time ",
+     &                    tlevel(lbase)
+              !call valout(lbase+1,lfine,time,nvar,naux)
+              call valout(lbase,lfine,time,nvar,naux)
+          endif
           call regrid(nvar,lbase,cut,naux,start_time)
+
+          ! output new grids for debugging:
+          if (debug)
+     .    call valout(lbase+1,lfine,tlevel(lbase+1),nvar,naux)
+
+          if (debug) then
+              write(*,*)" after regrid at time ",tlevel(lbase)
+              !call valout(lbase+1,lfine,time,nvar,naux)
+              call valout(lbase,lfine,time,nvar,naux)
+          endif
           call system_clock(clock_finish,clock_rate)
           call cpu_time(cpu_finish)
           timeRegridding = timeRegridding + clock_finish - clock_start
@@ -241,7 +275,7 @@ c
 c  maybe finest level in existence has changed. reset counters.
 c
           if (rprint .and. lbase .lt. lfine) then
-             call outtre(lstart(lbase+1),.false.,nvar,naux)
+             call outtre(lstart(lbase+1),printout,nvar,naux)
           endif
  70       continue
           do 80  i  = lbase, lfine
@@ -255,7 +289,7 @@ c          MJB: modified to check level where new grids start, which is lbase+1
                  do levnew = lbase+1,lfine
                      write(6,1006) intratx(levnew-1),intraty(levnew-1),
      &                             kratio(levnew-1),levnew
- 1006                format('   Refinement ratios...  in x:', i3, 
+ 1006                format('   Refinement ratios...  in x:', i3,
      &                 '  in y:',i3,'  in t:',i3,' for level ',i4)
                  end do
 
@@ -277,7 +311,7 @@ c
                   fg%min_levelmax_checked = minval(fg%levelmax)
                 endif
                 enddo
-c 
+c
 c         ! time after step:
           timenew = tlevel(level)+possk(level)
 
@@ -285,12 +319,12 @@ c         ! time after step:
           ! if so, set fg%update_now(level) to .true.
           do ifg=1,FG_num_fgrids
               fg => FG_fgrids(ifg)
-              if ((timenew >= fg%tstart_max) .and. 
+              if ((timenew >= fg%tstart_max) .and.
      &            (timenew <= fg%tend_max) .and.
-     &            (timenew >= fg%t_last_updated(level)  
+     &            (timenew >= fg%t_last_updated(level)
      &                         + fg%dt_check) .and.
      &            (level >= fg%min_level_check) .and.
-     &            (level >= fg%min_levelmax_checked)) then 
+     &            (level >= fg%min_levelmax_checked)) then
 
                       fg%update_now(level) = .true.
                       fg%t_last_updated(level) = timenew
@@ -307,16 +341,17 @@ c         ! time after step:
 
 
 c Output time info
+          timenew = tlevel(level)+possk(level)
           time_format = "(' AMRCLAW: level ',i2,'  CFL = ',e8.3," //
      &                  "'  dt = ',e10.4,  '  final t = ',e12.6)"
           if (display_landfall_time) then
-c           Convert time to days            
+c           Convert time to days
             timenew = timenew / (3.6d3 * 24d0)
             time_format = "(' AMRCLAW: level ',i2,'  CFL = ',e8.3," //
      &                  "'  dt = ',e10.4,  '  final t = ', f5.2)"
           end if
           if (tprint) then
-              write(outunit, time_format) level, cfl_level, 
+              write(outunit, time_format) level, cfl_level,
      &                                    possk(level), timenew
           endif
           if (method(4).ge.level) then
@@ -349,8 +384,8 @@ c            #  check if should adjust finer grid time step to start wtih
 
 c         write(6,*) '+++ in tick, done with level',level,
 c    &               ' tlevel = ',tlevel(1:level)
-      
-c         When we reach here, we are done with grid patches at 
+
+c         When we reach here, we are done with grid patches at
 c         the finest level with grids present at this time
 
 c     ---- fgout output ----
@@ -359,14 +394,14 @@ c     after all patches at finest level have been advanced.
 
       tc0 = tlevel(level)  ! current time on finest level present
       !write(6,*) '+++ tick: tc0 = ',tc0
-      
+
       do ng=1,FGOUT_num_grids
         fgout => FGOUT_fgrids(ng)
-        
+
         do ioutfg=1,fgout%num_output
             if (fgout%output_frames(ioutfg) == -1) then
                 ! this time not yet written out
-                if (fgout%output_times(ioutfg) < 
+                if (fgout%output_times(ioutfg) <
      &                 tc0+FGOUT_ttol) then
                      toutfg = fgout%output_times(ioutfg)
 c                     write(6,*) '+++ tick call fgrid_out, frame, t: ',
@@ -392,30 +427,44 @@ c                same level goes again. check for ok time step
                     print *,"    old ntogo dt",ntogo(level),possk(level)
 
 c                   adjust time steps for this and finer levels
-                    ntogo(level) = ntogo(level) + 1
-                    possk(level) = (tlevel(level-1)-tlevel(level))/
-     .                             ntogo(level)
+
+                    ! try computing ntogo properly (worked better in BoussDev)
+                    ! (old way was to repeatedly increment by 1)
+                    new_ntogo = ceiling(((tlevel(level-1)
+     &                              -tlevel(level)) / dtnew(level)))
+                    new_ntogo = min(new_ntogo, ntogo(level)+10)
+                    ntogo(level) = new_ntogo
+                    possk(level) = (tlevel(level-1)-tlevel(level))
+     &                             / ntogo(level)
+                    write(*,*) "    NEW ntogo dt ",ntogo(level),
+     &                         possk(level)
                     if (varRefTime) then
-                       kratio(level-1) = ceiling(possk(level-1) /
-     .                                           possk(level))
+                      kratio(level-1) = ceiling(possk(level-1)
+     &                                  / possk(level))
                     endif
-                    print *,"    new ntogo dt ",ntogo(level),
-     &                      possk(level)
+
                     go to 106
                  endif
+
                  if (ntogo(level) .gt. 100) then
                      write(6,*) "**** Too many dt reductions ****"
                      write(6,*) "**** Stopping calculation   ****"
                      write(6,*) "**** ntogo = ",ntogo(level)
                      write(6,1006) intratx(level-1),intraty(level-1),
      &                             kratio(level-1),level
-                     write(6,*) "Writing checkpoint file at t = ",time
+ 603                 format("**** Writing extra output frames for ",
+     &                      "debugging at level-1 =",i3,
+     &                      " and level =",i3)
+                     write(6,603) level-1, level
                      if (num_gauges .gt. 0) then
                         do ii = 1, num_gauges
                            call print_gauges_and_reset_nextLoc(ii)
                         end do
                      endif
-                     call check(ncycle,time,nvar,naux)
+                     call valout(level-1,level-1,tlevel(level-1),
+     &                           nvar,naux)
+                     call valout(level,level,tlevel(level),nvar,naux)
+                     !call outtre(lstart(level),.true.,nvar,naux)
                      stop
                  endif
 
@@ -473,7 +522,7 @@ c             ! use same alg. as when setting refinement when first make new fin
 
       endif
 
- 201  if ((abs(checkpt_style).eq.3 .and. 
+ 201  if ((abs(checkpt_style).eq.3 .and.
      &      mod(ncycle,checkpt_interval).eq.0) .or. dumpchk) then
                if (num_gauges .gt. 0) then
                   do ii = 1, num_gauges
@@ -499,7 +548,7 @@ c             ! use same alg. as when setting refinement when first make new fin
        endif
 
        ! new STOP feature to do immediate checkpt and exit
-       inquire(FILE="STOP.txt",exist=stopFound) 
+       inquire(FILE="STOP",exist=stopFound)
           if (stopFound) then
           write(*,*)"STOP file found. Checkpointing and Stopping"
           write(*,*)"REMEMBER to remove file before restarting"
@@ -509,7 +558,8 @@ c             ! use same alg. as when setting refinement when first make new fin
           stop
        endif
 
-       ! check whether simulation should be halted based on momentum
+c   Start of D-Claw specific code: check whether simulation should be halted
+c   based on momentum
        if (amidoneyet) then ! if end time based on momentum.
          time = tfinal ! set time as time final.
          write(*,*)"Momentum reached zero. Halting."
@@ -517,6 +567,7 @@ c             ! use same alg. as when setting refinement when first make new fin
          ncycle = nstop  ! set number of cycles as max
          goto 999 ! go to end of time look.
        endif
+c   End of D-Claw specific code
 
       go to 20
 c
@@ -541,7 +592,7 @@ c
               dump_final = (tout(nout).eq.tfinal)
               endif
           endif
-      
+
       if (dump_final) then
            call valout(1,lfine,time,nvar,naux)
            if (printout) call outtre(mstart,.true.,nvar,naux)
@@ -558,14 +609,14 @@ c  # (unless we just did it based on dumpchk)
 c
       call system_clock(tick_clock_finish,tick_clock_rate)
       call cpu_time(tick_cpu_finish)
-      timeTick = timeTick + tick_clock_finish - tick_clock_start 
-      timeTickCPU = timeTickCPU + tick_cpu_finish - tick_cpu_start 
+      timeTick = timeTick + tick_clock_finish - tick_clock_start
+      timeTickCPU = timeTickCPU + tick_cpu_finish - tick_cpu_start
 
 
 c  # checkpoint everything for possible future restart
 c  # (unless we just did it based on dumpchk)
 c
-      ! write gauges first in case lagrangian gauge x,y needed by check         
+      ! write gauges first in case lagrangian gauge x,y needed by check
       if (num_gauges .gt. 0) then
          if (.not. dumpout) then
              ! normally this was done already, unless nout = 0
@@ -574,7 +625,7 @@ c
              end do
          endif
       endif
-      
+
       if (checkpt_style .ne. 0) then  ! want a chckpt
          ! check if just did it so dont do it twice
          if (.not. dumpchk) call check(ncycle,time,nvar,naux)

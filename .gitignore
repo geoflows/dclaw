@@ -15,3 +15,5 @@ xgeoclaw
 .output
 *.tex
 *.kml
+*.q*
+*.t*
