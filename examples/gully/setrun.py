@@ -401,6 +401,9 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.c1 = 1
     dclaw_data.sigma_0 = 1.0e3
 
+    dclaw_data.src2method=0
+    dclaw_data.alphamethod=0
+
     dclaw_data.segregation=1
     dclaw_data.beta_seg = 0.0
     dclaw_data.chi0=0.5

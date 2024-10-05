@@ -66,12 +66,6 @@ c-----------------------------------------------------------------------
          psi(m) = 0.d0
       enddo
 
-!      pmL = chiL
-!      pmR = chiR
-!      pm = 0.5*(chiL + chiR)
-!      pm = min(1.0d0,pm)
-!      pm = max(0.0d0,pm)
-
       gzL=grav*dcos(thetaL)
       gzR=grav*dcos(thetaR)
       theta = 0.5d0*(thetaL + thetaR)
@@ -84,17 +78,9 @@ c-----------------------------------------------------------------------
       alpha_seg=1.0d0-beta_seg
 
       if (hL.ge.drytol.and.hR.ge.drytol) then
-!          call auxeval(hL,uL,vL,mL,pL,phiL,thetaL,
-!      &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmL)
-
 
          call setvars(hL,uL,vL,mL,pL,chiL,gzL,rhoL,kperm,alphainv,m_eq,
      &        tanpsi,tauL)
-
-
-
-!          call auxeval(hR,uR,vR,mR,pR,phiR,thetaR,
-!      &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmR)
 
          call setvars(hR,uR,vR,mR,pR,chiR,gzR,rhoR,kperm,alphainv,m_eq,
      &        tanpsi,tauR)
@@ -104,13 +90,6 @@ c-----------------------------------------------------------------------
          v = 0.5d0*(vL + vR)
          mbar = 0.5d0*(mL + mR)
       elseif (hL.ge.drytol) then
-
-!         call auxeval(hL,uL,vL,mL,pL,phiL,thetaL,
-!     &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmL)
-!
-!         call auxeval(hL,uL,vL,mL,pL,phiL,thetaL,
-!     &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmL)!
-
 
          call setvars(hL,uL,vL,mL,pL,chiL,gzL,rhoL,kperm,alphainv,m_eq,
      &        tanpsi,tauL)
@@ -123,12 +102,6 @@ c-----------------------------------------------------------------------
          v = vL
          mbar = mL
       else
-
-!         call auxeval(hR,uR,vR,mR,pR,phiR,thetaR,
-!     &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmR)
-!         call auxeval(hR,uR,vR,mR,pR,phiR,thetaR,
-!     &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmR)
-!
 
          call setvars(hR,uR,vR,mR,pR,chiR,gzR,rhoL,kperm,alphainv,m_eq,
      &        tanpsi,tauL)

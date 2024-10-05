@@ -13,12 +13,6 @@ module digclaw_module
     double precision :: theta_input,entrainment_rate,me,beta_seg,chi0,chie
     double precision :: alphainv
 
-
-
-    ! remove
-    double precision :: alpha,kappita,phi_bed
-    ! END remove
-
     integer :: src2method,alphamethod,bed_normal,entrainment,entrainment_method
     integer :: segregation,curvature,init_ptype
     double precision :: init_pmin_ratio
@@ -353,69 +347,7 @@ contains
 
    end subroutine qfix_cmass
 
-!!!!!!!!   !====================================================================
-!!!!!!!!   !subroutine admissibleq
-!!!!!!!!   !accept solution q, return q in admissible space
-!!!!!!!!   !====================================================================!!!!!!!!
 
-!!!!!!!!   subroutine admissibleq(h,hu,hv,hm,p,u,v,m,theta)!!!!!!!!
-
-!!!!!!!!      implicit none!!!!!!!!
-
-!!!!!!!!      !i/o
-!!!!!!!!      double precision, intent(in) :: theta
-!!!!!!!!      double precision, intent(inout) :: h,hu,hv,hm,p
-!!!!!!!!      double precision, intent(out) :: u,v,m!!!!!!!!
-
-!!!!!!!!      !Locals
-!!!!!!!!      double precision :: mlo,mhi,hlo,pmax,phi,plo,rho,dry_tol,m_min,gmod!!!!!!!!
-
-!!!!!!!!      gmod = grav
-!!!!!!!!      dry_tol = dry_tolerance
-!!!!!!!!      if (bed_normal.eq.1) gmod = grav*dcos(theta)!!!!!!!!
-
-!!!!!!!!      if (h.le.dry_tol) then
-!!!!!!!!         h =  0.d0
-!!!!!!!!         hu = 0.d0
-!!!!!!!!         hv = 0.d0
-!!!!!!!!         hm = 0.d0
-!!!!!!!!         p  = 0.d0 !h*gmod*rho_f
-!!!!!!!!         u = 0.d0
-!!!!!!!!         v = 0.d0
-!!!!!!!!         m = 0.d0
-!!!!!!!!         return
-!!!!!!!!      endif!!!!!!!!
-
-!!!!!!!!      u = hu/h
-!!!!!!!!      v = hv/h
-!!!!!!!!      m = hm/h!!!!!!!!
-
-!!!!!!!!      mlo = 0.0d0
-!!!!!!!!      mhi = 1.d0 - mlo!!!!!!!!
-
-!!!!!!!!      if (m.lt.mlo) then
-!!!!!!!!         m = dmax1(m,mlo)
-!!!!!!!!         hm = h*m
-!!!!!!!!      elseif (m.gt.mhi) then
-!!!!!!!!         m = dmin1(m,1.d0)
-!!!!!!!!         hm = h*m
-!!!!!!!!      endif!!!!!!!!
-
-!!!!!!!!      rho = rho_s*m + (1.d0-m)*rho_f
-!!!!!!!!      pmax = rho*gmod*h
-!!!!!!!!      p = dmin1(pmax,p)
-!!!!!!!!      p = dmax1(0.d0,p)!!!!!!!!
-
-!!!!!!!!      if (m < 1d-5) then
-!!!!!!!!         ! reset p to hydrostatic pressure in pure water
-!!!!!!!!         ! (need to figure out proper tolerance in test)
-!!!!!!!!         ! (better way? E.g. relaxation toward hydrostatic in src2?)
-!!!!!!!!         p = h*gmod*rho_f
-!!!!!!!!      endif!!!!!!!!
-
-!!!!!!!!      return!!!!!!!!
-
-!!!!!!!!   end subroutine admissibleq
 
    !====================================================================
    ! subroutine setvars: evaluates needed variable parameters that are
@@ -450,7 +382,7 @@ contains
          !DIG: check whether chi = 1 is coarse or fine
          kr_chi = 10.d0**(delta_kr_order*2.d0*(chi-0.5d0))
       endif
-      kperm = kr_chi*kappita*exp(-(m-m0)/(0.04d0))
+      kperm = kr_chi*kref*exp(-(m-mref)/(0.04d0))
 
       !determine vars related to m_eq and compressibility
       sig_eff = max(0.d0,rho*gz*h - p)
@@ -460,8 +392,8 @@ contains
          sig_0 = sigma_0
       case(2)
          !sig_0 = alpha*(rho_s-rho_f)*gz*h
-         sig_0 = 0.5d0*alpha*(rho_s-rho_f)*gz*h/rho
-         alphainv = m*(sig_eff + sig_0)/alpha
+         sig_0 = 0.5d0*alpha_c*(rho_s-rho_f)*gz*h/rho
+         alphainv = m*(sig_eff + sig_0)/alpha_c
       end select
 
       vnorm = sqrt(u**2 + v**2)
@@ -492,7 +424,7 @@ contains
       ! Note: for v=0, bounds on tau for static friction are determined in Riemann solver
       !        because the bounds are due to gradients in q. This routine determines vars
       !        from pointwise cell-centered value q(i).
-      tau = sig_eff*tan(phi_bed + psi)
+      tau = sig_eff*tan(phi + psi)
 
       ! Note:  for water (m=0) sig_eff=0.0 and so tau=0.
       !        However, for dilute suspensions,
@@ -502,80 +434,6 @@ contains
       return
 
       end subroutine setvars
-
-
-!!!   !====================================================================
-!!!   ! subroutine auxeval: evaluates the auxiliary variables as functions
-!!!   !                     of the solution vector q
-!!!   !====================================================================!!!
-
-!!!   subroutine auxeval(h,u,v,m,p,phi_bed,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)!!!
-
-!!!      implicit none!!!
-
-!!!      !i/o
-!!!      double precision, intent(inout) :: chi
-!!!      double precision, intent(in)  :: h,u,v,m,p,phi_bed,theta
-!!!      double precision, intent(out) :: S,rho,tanpsi,D,tau,kappa
-!!!      double precision, intent(out) :: sigbed,kperm,compress!!!
-
-!!!      !local
-!!!      double precision :: m_eqn,vnorm,gmod,sigbedc,shear,tanphi,rho_fp
-!!!      double precision :: seg,pmtanh01,m_crit_m,m_crit_pm
-!!!      if (h.lt.dry_tolerance) return!!!
-
-!!!      gmod=grav
-!!!      chi = max(0.0d0,chi)
-!!!      chi = min(1.0d0,chi)!!!
-
-!!!      if (bed_normal.eq.1) gmod=grav*dcos(theta)
-!!!      vnorm = dsqrt(u**2 + v**2)
-!!!      rho = rho_s*m + rho_fp*(1.d0-m)
-!!!      shear = 2.0d0*vnorm/h
-!!!      sigbed = dmax1(0.d0,rho*gmod*h - p)
-!!!      sigbedc = rho_s*(shear*delta)**2 + sigbed
-!!!      if (sigbedc.gt.0.0d0) then
-!!!         S = (mu*shear/(sigbedc))
-!!!      else
-!!!         S = 0.d0
-!!!      endif
-!!!      !Note: m_eqn = m_crit/(1+sqrt(S))
-!!!      !From Boyer et. al!!!
-
-!!!      kperm = kappita*exp(-(m-m0)/(0.04d0))!*(10**(pmtanh01))
-!!!      m_crit_pm =  0.d0!!!
-
-!!!      m_crit_pm = pmtanh01*0.09d0
-!!!      m_crit_m = m_crit - m_crit_pm
-!!!      m_eqn = m_crit_m/(1.d0 + sqrt(S))
-!!!      tanpsi = c1*(m-m_eqn)*tanh(shear/0.1d0)!!!
-
-!!!      if (m.le.1.d-16) then
-!!!         compress = 1.d16
-!!!         kperm = 0.0d0
-!!!         tanpsi = 0.0d0
-!!!         sigbed=0.0d0
-!!!      else
-!!!         compress = alpha/(m*(sigbed +  sigma_0))
-!!!      endif!!!
-
-!!!      if (vnorm.le.0.d0) then
-!!!         tanpsi = 0.d0
-!!!         D = 0.d0
-!!!      elseif (h*mu.gt.0.d0) then
-!!!         D = 2.0d0*(kperm/(mu*h))*(rho_fp*gmod*h - p)
-!!!      else
-!!!         D = 0.d0
-!!!      endif!!!
-
-!!!      tanphi = dtan(phi_bed + datan(tanpsi))!!!
-
-!!!      tau = dmax1(0.d0,sigbed*tanphi)*((tanh(100.0*(m-0.05))+1.0)*0.5)!!!
-
-!!!      !kappa: earth pressure coefficient
-!!!      kappa = 1.d0!!!
-
-!!!   end subroutine auxeval
 
 
    ! ========================================================================
@@ -634,7 +492,6 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             p  = q(i_pb,i,j)
             hchi = q(i_hchi,i,j)
 
-            ! call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
             call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
 
             b = aux(1,i,j)-q(i_bdif,i,j)
@@ -648,7 +505,6 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             pL  = q(i_pb,i-1,j)
             hchiL = q(i_hchi,i-1,j)
 
-            ! call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
             call qfix(hL,huL,hvL,hmL,pL,hchiL,uL,vL,mL,chiL,rhoL,gz)
 
             bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
@@ -663,7 +519,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hmR = q(i_hm,i+1,j)
             pR  = q(i_pb,i+1,j)
             hchiR = q(i_hchi,i+1,j)
-            !call admissibleq(hR,huR,hvR,hmR,pR,uR,vR,mR,theta)
+
             call qfix(hR,huR,hvR,hmR,pR,hchiR,uR,vR,mR,chiR,rhoR,gz)
 
             bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
@@ -678,7 +534,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hmB = q(i_hm,i,j-1)
             pB  = q(i_pb,i,j-1)
             hchiB = q(i_hchi,i,j-1)
-            !call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
+
             call qfix(hB,huB,hvB,hmB,pB,hchiB,uB,vB,mB,chiB,rhoB,gz)
 
             bB = aux(1,i,j-1)-q(i_bdif,i,j-1)
@@ -693,7 +549,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hmT = q(i_hm,i,j+1)
             pT  = q(i_pb,i,j+1)
             hchiT = q(i_hchi,i,j+1)
-            !call admissibleq(hT,huT,hvT,hmT,pT,uT,vT,mT,theta)
+
             call qfix(hT,huT,hvT,hmT,pT,hchiT,uT,vT,mT,chiT,rhoT,gz)
 
             bT = aux(1,i,j+1)-q(i_bdif,i,j+1)
@@ -932,29 +788,6 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          write(*,*) '--------------------------------------------'
       endif
    end subroutine calc_pmin
-
-   !====================================================================
-   !subroutine admissibleq
-   !accept solution q, return q in admissible space
-   !====================================================================
-
-subroutine calc_pmtanh(pm,seg,pmtanh)
-
-      implicit none
-
-      !i/o
-      double precision, intent(in) :: pm,seg
-      double precision, intent(out) :: pmtanh
-
-      !Locals
-
-
-      pmtanh = seg*(0.5d0*(tanh(40.d0*(pm-0.9d0))+1.d0))
-      !pmtanh = 0.8d0*seg*(0.5d0*(tanh(40.d0*(pm-0.98d0))+1.d0))
-
-      return
-
-   end subroutine calc_pmtanh
 
 
 end module digclaw_module

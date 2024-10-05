@@ -2,7 +2,7 @@
         subroutine ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,b_eroded,b_remaining)
 
         use digclaw_module, only: rho_f,rho_s,sigma_0,mu,chie,entrainment_rate
-        use digclaw_module, only: me,alpha,setvars,qfix,qfix_cmass,phi,m_crit,delta
+        use digclaw_module, only: me,setvars,qfix,qfix_cmass,phi,m_crit,delta
         use geoclaw_module, only: grav,dry_tolerance
         use geoclaw_module, only: manning_coefficient,friction_forcing
 

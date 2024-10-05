@@ -44,7 +44,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
     ! in right-half plane as v increases and kperm decreases.
     !====================================================================
 
-       use digclaw_module, only: rho_f,rho_s,sigma_0,mu,alpha,setvars,qfix,qfix_cmass,m_crit,delta
+       use digclaw_module, only: rho_f,rho_s,sigma_0,mu,setvars,qfix,qfix_cmass,m_crit,delta
        use geoclaw_module, only: grav
 
        implicit none

@@ -273,19 +273,12 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                        q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j), &
                           u,v,sv,chi,rho,gz)
 
-!                  call admissibleq(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j), &
-!                             q(i_hm,i,j),q(i_pb,i,j),u,v,sv,aux(i_theta,i,j))
-
-
                   if (bed_normal.eq.1) then
                      p_ratioij = init_pmin_ratio &
                          + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(i_h,i,j)
                   endif
 
-!                  rho = sv*rho_s + (1.d0-sv)*rho_f
-
                   q(i_pb,i,j) = p_ratioij*rho*gz*q(i_h,i,j)
-
 
                enddo
             enddo

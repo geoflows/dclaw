@@ -53,11 +53,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
         do i=1-mbc,mx+mbc
             if (bed_normal.eq.1) gz=grav*dcos(aux(i_theta,i,j))
 
-!            call admissibleq(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),u,v,m,theta)
             call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j),u,v,m,chi,rho,gz)
-
-
-
 
             q(i_bdif,i,j) = max(q(i_bdif,i,j),0.0d0) ! DIG: if we store deposition in i_bdif, remove.
         enddo

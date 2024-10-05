@@ -82,8 +82,6 @@ c
          !inform of a bad Riemann problem from the start
          !if((qr(i_h,i-1).lt.0.d0).or.(ql(i_h,i) .lt. 0.d0)) then
          !   write(*,*) 'Negative input: hl,hr,i=',qr(i-1,1),ql(i,1),i
-         !   call admissibleq(ql(i_h,i),ql(mhu,i),ql(nhv,i),ql(i_hm,i),ql(i_pb,i),uR,vR,mR,thetaR)
-         !   call admissibleq(qr(i_h,i-1),qr(mhu,i-1),qr(nhv,i-1),qr(i_hm,i-1),qr(i_pb,i-1),uL,vL,mL,thetaL)
          !endif
 
          !Initialize Riemann problem for grid interface
@@ -140,12 +138,6 @@ c        !set normal direction
          endif
 
          !zero (small) negative values if they exist and set velocities
-
-!         call admissibleq(ql(i_h,i),ql(mhu,i),ql(nhv,i),
-!     &            ql(i_hm,i),ql(i_pb,i),uR,vR,mR,thetaR)!
-
-!         call admissibleq(qr(i_h,i-1),qr(mhu,i-1),qr(nhv,i-1),
-!     &            qr(i_hm,i-1),qr(i_pb,i-1),uL,vL,mL,thetaL)
 
          call qfix(ql(i_h,i),ql(mhu,i),ql(nhv,i),ql(i_hm,i),
      &             ql(i_pb,i),ql(i_hchi,i),uR,vR,mR,chiR,rhoR,gzR)
