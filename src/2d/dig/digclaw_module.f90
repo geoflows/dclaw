@@ -399,25 +399,33 @@ contains
    !                     functions of the solution vector q
    !====================================================================
 
-   subroutine setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+   subroutine setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
 
       implicit none
 
       !i/o
       real(kind=8), intent(inout) :: rho
-      real(kind=8), intent(in)  :: h,u,v,m,p,gz
+      real(kind=8), intent(in)  :: h,u,v,m,p,gz,chi
       real(kind=8), intent(out) :: alphainv,sig_0,sig_eff
       real(kind=8), intent(out) :: tau,m_eq,tanpsi,kperm
 
       !local
-      real(kind=8) :: vnorm,shear,Nden,Nnum,psi
+      real(kind=8) :: vnorm,shear,Nden,Nnum,psi,delta_kr_order,kr_chi
 
 
       !check rho
       rho = m*(rho_s-rho_f) + rho_f
 
       !determine kperm
-      kperm = kappita*exp(-(m-m0)/(0.04d0))
+      !segregation effect on kperm
+      kr_chi = 1.0d0
+      if (segregation) then
+         !how many orders of magnitude should kperm change with chi=[0,1]
+         delta_kr_order = 2.d0
+         !DIG: check whether chi = 1 is coarse or fine
+         kr_chi = 10.d0**(delta_kr_order*2.d0*(chi-0.5d0))
+      endif
+      kperm = kr_chi*kappita*exp(-(m-m0)/(0.04d0))
 
       !determine vars related to m_eq and compressibility
       sig_eff = max(0.d0,rho*gz*h - p)

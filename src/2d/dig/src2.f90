@@ -90,7 +90,7 @@
                gz = grav*cos(theta)
                gx = grav*sin(theta)
             endif
-            if (curvature==1) then
+            if (curvature==1.or.segregation==1) then
                b = aux(1,i,j)-q(i_bdif,i,j)
                bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
                bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
@@ -100,9 +100,13 @@
                bTL = aux(1,i-1,j+1)-q(i_bdif,i-1,j+1)
                bBR = aux(1,i+1,j-1)-q(i_bdif,i+1,j-1)
                bBL = aux(1,i-1,j-1)-q(i_bdif,i-1,j-1)
+               b_x = (bR-bL)/2.d0*dx
+               b_y = (bT-bB)/2.d0*dy
                b_xx=(bR - 2.d0*b + bL)/(dx**2)
                b_yy=(bT - 2.d0*b + bB)/(dy**2)
                b_xy=((bTR-bTL) - (bBR-bBL))/(4.0*dx*dy)
+            endif
+            if (curvature==1) then
                dtheta = -(aux(i_theta,i+1,j) - aux(i_theta,i-1,j))/(2.d0*dx)
                gacc = max(u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!max:currently only consider enhancement not reduction of gz (ie. basin not a hump)
                gz = gz + gacc
@@ -190,15 +194,22 @@ c----------- ! integrate p  & m-------------------------------------------
                endif
 
             end select
+            !========================== end src integration ======================
+
             call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
 
-
             !======================mass entrainment===========================
+            if (entrainment) then
+               b_eroded = q(i_bdif,i,j)
+               b_remaining = aux(i_ent,i,j)-b_eroded
+               select case(entrain_method)
+               case(1)
+                  call ent_dclaw4()
+               case(2)
+                  !do nothing yet
+               end select
 
-            ! call admissible q and auxeval before moving on to mass entrainment.
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
-
+            endif
             vnorm = sqrt(u**2 + v**2)
             vlow = 0.1d0 ! minimum velocity for entrainment to occur. ! DIG: should this be a user
             ! specified variable.
