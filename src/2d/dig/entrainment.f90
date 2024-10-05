@@ -1,19 +1,26 @@
         
-        subroutine ent_dclaw4(dt,h,u,v,m,p,rho,chi,gz,b_x,b_y,b_eroded,b_remaining)
+        subroutine ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,b_eroded,b_remaining)
         
         use digclaw_module, only: rho_f,rho_s,sigma_0,mu,chie
         use digclaw_module, only: me,alpha,setvars,qfix,qfix_cmass,phi,m_crit,delta
-        use geoclaw_module, only: grav,drytolerance
+        use geoclaw_module, only: grav,dry_tolerance
+        use geoclaw_module, only: manning_coefficient,friction_forcing
  
         implicit none
  
         !i/o
-        real(kind=8), intent(inout) :: h,m,p,u,v,rho,b_eroded,b_remaining,chi
-        real(kind=8), intent(in)  :: b_x,b_y,dt
+        real(kind=8), intent(inout) :: h,m,p,u,v,rho,b_eroded,hchi
+        real(kind=8), intent(in)  :: b_x,b_y,dt,b_remaining
         real(kind=8), intent(in)  :: gz
 
         !local
-        real(kind=8) :: vlow,vnorm,dbdv,rhoe
+        real(kind=8) :: vlow,vnorm,dbdv,rhoe,coeff,gamma,visc,beta,t1bot,t2top
+
+        if (friction_forcing) then
+            coeff = manning_coefficient(1)
+        else
+            coeff = 0.d0
+        endif
 
         vnorm = sqrt(u**2 + v**2)
         ! minimum velocity for entrainment to occur. ! DIG: should this be a user
@@ -29,41 +36,33 @@
             ! calculate entrained material density
             rhoe = me*rho_s + (1.d0-me)*rho_f
 
-            ! calculate top and bottom shear stress.
-            t1bot = (1.d0-m)*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d-2))
-                     
-                     gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d-2)**(1.0d0/3.0d0))
+            ! calculate top and bottom shear stress. note rho*psi_2
+            beta = 1.d0-m 
+            visc = beta*vnorm*2.d0*mu*(1.d0-m)/h
+            gamma= rho*beta*(vnorm)*(beta*gz*coeff**2)/(h**(4.d0/3.d0))
+            t1bot = visc + gamma + tau
 
-                     t1bot = t1bot + gamma
-                     t1bot = t1bot + tau
+            !DIG: this needs to be sorted out...don't remember what's going on here
+            !DIG: fix
+            t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
 
-                     t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
+            ! calculate pressure ratio
+            prat = p/(rho*h)
 
-                     ! calculate pressure ratio
-                     prat = p/(rho*h)
+            ! calculate dh
+            dh = entrainment_rate*dt*(t1bot-t2top)/(rho2*beta*vnorm)
+            dh = min(dh,b_remaining)
 
-                     ! calculate dh
-                     dh = entrainment_rate*dt*(t1bot-t2top)/(rho2*beta2*vnorm)
-                     dh = min(dh,b_remaining)
+            ! increment h based on dh
+            h = h + dh
+            hm = hm + dh*me
+            hchi = hchi + dh*chie
+            hrho = hm*rho_s + (h-hm)*rho_f
+            rho = hrho/h
+            b_eroded = b_eroded + dh
+            p = prat*hrho
 
-                     ! increment h based on dh
-                     h = h + dh
-                     hm = hm + dh*m2
 
-                     ! store amount eroded in q7
-                     q(i_bdif,i,j) = q(i_bdif,i,j) + dh
-
-                     call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                     call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
-
-                     ! update pressure based on prior pressure ratio.
-                     p = prat*rho*h
-
-                     ! DIG: should hchi (pm) be updated here, just as there is a m2, should there be a pm2?
-
-                     call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                  endif
-               endif
             endif
 
         end subroutine ent_dclaw4
