@@ -465,8 +465,12 @@ contains
       end select
 
       vnorm = sqrt(u**2 + v**2)
-      shear = 2.d0*vnorm/h
 
+      if (h.gt.dry_tolerance) then
+        shear = 2.d0*vnorm/h
+      else
+        shear = 0.d0
+      endif
 
       !determine m_eq
       !m_eq = m_crit* 1/(1 + sqrt(Nnum/Nden))
