@@ -346,7 +346,7 @@ def basalP(current_data):
 
 def species1_fraction(current_data):
     """
-    Return a masked array containing the fraction of species 1 in wet cells.
+    Return a masked array containing the fraction of species A in wet cells.
     """
     if hasattr(current_data.plotdata, "geoclaw_data"):
         drytol = current_data.plotdata.geoclaw_data.dry_tolerance
@@ -363,7 +363,7 @@ def species1_fraction(current_data):
 
 def species2_fraction(current_data):
     """
-    Return a masked array containing the fraction of species 2 in wet cells.
+    Return a masked array containing the fraction of species B in wet cells.
     """
     if hasattr(current_data.plotdata, "geoclaw_data"):
         drytol = current_data.plotdata.geoclaw_data.dry_tolerance

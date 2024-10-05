@@ -558,7 +558,38 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
 
 class PInitDClawInputData(clawpack.clawutil.data.ClawData):
     r"""
-    D-Claw pressure initialization data object
+    Data object describing the initialization of the D-Claw pressure field.
+
+    The attributes of ``PInitDClawInputData`` control how the initial values
+    of the basal pressure field, :math:`p_b` are initialized.
+
+    Within the setrun, the ``rundata`` object will have an attribute
+    ``rundata.pinitdclaw_data``. This object has one attribute, ``init_ptype``
+    that controls the pressure initialization.
+
+    .. list-table::
+       :widths: 10 30
+       :header-rows: 1
+
+       *   - ``init_ptype``
+           - Description
+       *   - -1
+           - :math:`p_b=0`. If a user-defined spatially variable file is provided
+             through :py:class:`dclaw.data.QinitDClawData`, use this option.
+       *   - 0
+           - Hydrostatic pressure, :math:`p_b=\rho_f g_z h`
+       *   - 1
+           - Based on the values of :math:`h` and :math:`b`, a static force
+             balance is conducted at each mesh cell to determine the failure
+             pressure, :math:`p_f`, at which the granular material is not stable.
+             At each cell, the failure pressure ratio,
+             :math:`R_f=p_f/(\rho_f g_z h)` is calculated.
+             The minimum value of :math:`R_f` is used to calculate the initial
+             basal pressure, :math:`p_b = \mathrm{min} (R_f) \rho_f g_z h`.
+       *   - 2
+           - Same as case 1, except that the average failure pressure is used.
+             :math:`p_b = \mathrm{mean} (R_f) \rho_f g_z h`.
+
     """
 
     def __init__(self):
@@ -567,9 +598,6 @@ class PInitDClawInputData(clawpack.clawutil.data.ClawData):
 
         # Set default values:
         self.add_attribute("init_ptype", 0)
-        self.add_attribute("init_pmax_ratio", 1.0)
-        self.add_attribute("init_ptf", 1.0)
-        self.add_attribute("init_ptf2", 0.0)
 
     def write(self, out_file="pinit_dclaw.data", data_source="setrun.py"):
         """Write the contents of a ``PInitDClawInputData`` to a file."""
@@ -578,56 +606,78 @@ class PInitDClawInputData(clawpack.clawutil.data.ClawData):
         # open file and write a warning header:
         self.data_write(
             "init_ptype",
-            description="-1 = zero pressure or user defined files in qinit, 0 = hydrostatic, 1,2 = failure pressure (1=min, 2=avg), 3,4 = rising pressure (3=min, 4=avg)",
+            description="-1 = zero pressure or user defined files in qinit, 0 = hydrostatic, 1,2 = failure pressure (1=min, 2=avg)",
         )
-        self.data_write(
-            "init_pmax_ratio",
-            description="p(init_ptf2)= hydro*init_pmax_ratio: pressure will rise to hydrostatic *init_pmax_ratio",
-        )
-        self.data_write(
-            "init_ptf",
-            description="p(init_ptf) = failure, pressure will rise until t = init_ptf without dilatancy",
-        )
-        self.data_write(
-            "init_ptf2",
-            description="p(init_ptf2)= hydro*init_pmax_ratio, pressure will rise until t = init_ptf2",
-        )
-
         self.close_data_file()
 
 
 class FlowGradesData(clawpack.clawutil.data.ClawData):
     r"""
-    Flowgrades data object.
+    Data object describing the flowgrades used to control refinement.
 
-    For using flowgrades for refinement append lines of the form
+    In D-Claw refinement will be flagged within a mesh cell on an adaptive
+    mesh refinement level if the characteristics of **q** meet user-defined
+    criteria.
 
-    [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
+    A flagged cell will refine to the minimum level specified only if refinement
+    to this level is permitted based on refinement regions. See the
+    `clawpack documentation <https://www.clawpack.org/setrun_geoclaw.html#amr-refinement-region-parameters>`__
+    for more details.
 
-    where:
+    Note that the
+    `geoclaw-specific refinement criteria <https://www.clawpack.org/setrun_geoclaw.html#additional-amr-parameters>`__
+    ``wave_tolerance`` and ``speed_tolerance`` are not supported in D-Claw.
 
-    - flowgradevalue:
-        floating point relevant flowgrade value for following measure:
-    - flowgradevariable:
-        1=depth,
-        2= momentum,
-        3 = sign(depth)*(depth+topo) (0 at sealevel or dry land).
-    - flowgradetype:
-        1 = norm(flowgradevariable),
-        2 = norm(grad(flowgradevariable))
-    - flowgrademinlevel:
-        refine to at least this level if flowgradevalue is exceeded.
+    .. code-block::
 
-    flowgradesdata.flowgrades = []
-    flowgradesdata.flowgrades.append([1.0e-6, 2, 1, 1])
+        # First, the rundata object is initialized.
+        from clawpack.clawutil import data
+        assert claw_pkg.lower() == 'dclaw',  "Expected claw_pkg = 'dclaw'"
+        num_dim = 2
+        rundata = data.ClawRunData(claw_pkg, num_dim)
 
-    Additionally, to turn on "keep fine" refinement, set
+        # For a D-Claw model, rundata will have an attribute
+        # flowgrades_data. This is an instance of the
+        # FlowGradesData class.
+        flowgrades_data = rundata.flowgrades_data
 
-    flowgradesdata.keep_fine = True
+        flowgrades_data.flowgrades = []
+
+        # for using flowgrades for refinement append lines of the form
+        # [flowgradevalue, flowgradevariable, flowgradetype, flowgrademinlevel]
+        # where:
+        #  flowgradevalue:
+        #      floating point relevant flowgrade value for following measure:
+        #  flowgradevariable:
+        #      1 = depth
+        #      2 = velocity, sqrt(u**2+v**2)
+        #      3 = sign(depth)*(depth+topo) (0 at sealevel or dry land)
+        #  flowgradetype:
+        #      1 = norm(flowgradevariable)
+        #      2 = norm(grad(flowgradevariable))
+        #  flowgrademinlevel:
+        #      refine to at least this level if flowgradevalue is exceeded
+
+        flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 3])
+
+        # multiple flowgrades may be used by appending multiple lists.
+        # refinement will occur if *any* of the criteria are met.
+
+    Traditionally, refinement in clawpack adaptive mesh codes only evaluates
+    whether refinement should be flagged up to one minus the maximum level.
+    In confined topography, it is possible to have a fine grid that meets the
+    refinement criteria but the coarse grid does not. This may result in
+    unexpected derefinement.
+
+    To address this issue, use
+
+    .. code-block::
+
+        flowgradesdata.keep_fine = True
 
     If the finest grid level meets the flowgrades refinement criteria,
     a coarser grid containing it that does not itself meet the refinement
-    criteria will stay refined.
+    criteria will remain refined.
 
     """
 

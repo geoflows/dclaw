@@ -8,9 +8,7 @@
 !  (1) topography
 !  (2) capacity (set if coordinate_system == 2)
 !  (3) length ratio of edge (set if coordinate_system == 2)
-!  (frition_index). Location of manning's N (variable_friction)
-!  (wind_index, wind_index + 1).  Location of x and y wind speeds (wind_forcing)
-!  (pressure_index).  Location of pressure field (pressure_forcing)
+
 !
 ! There are a couple of additional things of note:
 !

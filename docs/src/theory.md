@@ -225,6 +225,12 @@ As the mixture shears, species {math}`A` moves to the surface of the flow, and i
 \frac{\partial}{\partial x} \left (\beta h \chi u \left( 1-\chi\right) \right)=0
 ```
 
+:::{admonition} todo
+Reconcile this with
+G&K, solver, and plot.py.
+is chi the fraction of the faster or slower species?
+:::
+
 The representation of the feedback between the value of {math}`\chi` and flow behavior is highly experimental (c.f., Jones et al., 2023).
 
 :::{admonition} todo

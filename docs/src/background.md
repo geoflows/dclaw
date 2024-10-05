@@ -1,23 +1,25 @@
 # Background
 
+:::{admonition} todo
+Not done yet
+:::
 
-D-Claw has these two citations
+List the two D-Claw citations
 
 D-Claw builds on clawpack/amrclaw/geoclaw
 
-Clawpack/amrclaw/geoclaw has these citations
+List the Clawpack/amrclaw/geoclaw citations
 
 D-Claw is in fortran with a python wrapper
 
 A user should expect to read the clawpack documentation.
 
-
 ## Model, Numerics, Application
 
 The D-Claw model is the combination of
-- mathematical equations
+- Mathematical equations
 - Numerical methods
-- Software implementations
+- Software implementation
 
 
 Any individual simulation run with the D-claw model requires the
