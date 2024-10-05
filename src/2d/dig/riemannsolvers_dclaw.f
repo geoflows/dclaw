@@ -47,8 +47,9 @@ c-----------------------------------------------------------------------
       double precision delb,s1m,s2m,hm,heL,heR,criticaltol,criticaltol_2
       double precision s1s2bar,s1s2tilde,hbar,source2dx,veltol1,veltol2
       double precision hstarHLL,deldelh,drytol,gmod,geps,tausource
-      double precision raremin,raremax,rare1st,rare2st,sdelta,rho_fp,seg
+      double precision raremin,raremax,rare1st,rare2st,sdelta
       double precision gammaL,gammaR,theta1,theta2,theta3,vnorm,pmtanh01
+      double precision alpha_seg
       logical sonic,rare1,rare2
       logical rarecorrectortest,rarecorrector
 
@@ -63,23 +64,17 @@ c-----------------------------------------------------------------------
          psi(m) = 0.d0
       enddo
 
-
-      ! DIG: move segregation into segeval() that
-      ! adjusts rho_fp, etc.
-
       pmL = chiL
       pmR = chiR
       pm = 0.5*(chiL + chiR)
       pm = min(1.0d0,pm)
       pm = max(0.0d0,pm)
-      if (alpha_seg==1.0d0) then
-         seg = 0.0d0
-      else
-         seg = 1.0d0
-      endif
-      call calc_pmtanh(pm,seg,pmtanh01)
-      rho_fp = (1.0d0-pmtanh01)*rho_f
 
+      ! alpha seg here reflects alpha in Gray and Kokelaar (2010)
+      ! alpha_seg 0 = simple shear and 1 = plug flow
+      ! we have defined beta_seg as 1-alpha_seg
+
+      alpha_seg=1.0d0-beta_seg
 
       if (hL.ge.drytol.and.hR.ge.drytol) then
          call auxeval(hL,uL,vL,mL,pL,phiL,thetaL,
@@ -114,9 +109,9 @@ c-----------------------------------------------------------------------
       rho = 0.5d0*(rhoL + rhoR)
       tau = 0.5d0*(tauL + tauR)
       theta = 0.5d0*(thetaL + thetaR)
-      gamma = 0.25d0*(rho_fp + 3.0d0*rho)/rho
-      gammaL = 0.25d0*(rho_fp + 3.0d0*rhoL)/rhoL
-      gammaR = 0.25d0*(rho_fp + 3.0d0*rhoR)/rhoR
+      gamma = 0.25d0*(rho_f + 3.0d0*rho)/rho
+      gammaL = 0.25d0*(rho_f + 3.0d0*rhoL)/rhoL
+      gammaR = 0.25d0*(rho_f + 3.0d0*rhoR)/rhoR
 
       eps = kappa + (1.d0-kappa)*gamma
 
@@ -198,7 +193,7 @@ c     !find if sonic problem
       elseif ((uL-dsqrt(geps*hL))*(uR-dsqrt(geps*hR)).lt.0.d0) then
          sonic=.true.
       endif
-      
+
       if (sonic) then
          source2dx = -gmod*hbar*delb
       else

@@ -8,12 +8,13 @@
 
       use digclaw_module, only: alpha_c,beta_seg,bed_normal,curvature
       use digclaw_module, only: entrainment,entrainment_rate,entrainment_method
-      use digclaw_module, only: phi
+      use digclaw_module, only: src2method
+      use digclaw_module, only: phi,segregation
       use digclaw_module, only: i_ent,i_fsphi,i_phi,i_theta
       use digclaw_module, only: mu,rho_f,rho_s, sigma_0
       use digclaw_module, only: admissibleq,auxeval
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
-
+      use digclaw_module, only: qfix,setvars
       implicit none
 
       ! Input parameters
@@ -26,24 +27,25 @@
 
       !local
       real(kind=8) :: gz,gx,h,hu,hv,hm,u,v,m,p
+      real(kind=8) :: rhoh
       real(kind=8) :: b,bR,bL,bT,bB,bTR,bTL,bBR,bBL
       real(kind=8) :: kappa,S,rho,tanpsi
       real(kind=8) :: D,tau,sigbed,kperm,compress,chi,coeffmanning
       real(kind=8) :: vnorm,hvnorm,theta,dtheta,w,taucf,hvnorm0
-      real(kind=8) :: shear,sigebar,pmtanh01,rho_fp,seg
+      real(kind=8) :: shear,sigebar,pmtanh01,rho_fp,seg,m_eq
       real(kind=8) :: b_xx,b_yy,b_xy,hchi,beta
       real(kind=8) :: t1bot,t2top,beta2,dh,rho2,prat,b_x,b_y,dbdv
       real(kind=8) :: vlow,m2,vreg,slopebound
       real(kind=8) :: b_eroded,b_remaining
-      real(kind=8) :: gamma,zeta,krate,p_eq,dgamma,sig_0
-      real(kind=8) :: dtk,dtremaining,alphainv
+      real(kind=8) :: gamma,zeta,krate,p_eq,dgamma,sig_0,sig_eff
+      real(kind=8) :: dtk,dtremaining,alphainv,gacc
 
 
       ! TO REMOVE
-      double precision :: alpha,kappita,phi_bed,alpha_seg,dgamma
+      double precision :: alpha,kappita,phi_bed,alpha_seg
       ! END TO REMOVE
 
-      integer :: i,j,ii,jj,icount
+      integer :: i,j,ii,jj,icount,itercount,itercountmax
 
       logical :: debug
       debug = .false.
@@ -130,11 +132,11 @@
                endif
             endif
 
-c-----------!integrate momentum source term------------------------
+!-----------!integrate momentum source term------------------------
             ! need tau:
             call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
 
-c-----------! changes only hu,hv,u,v ------------------------------
+!-----------! changes only hu,hv,u,v ------------------------------
             !integrate momentum source term
             hvnorm0 = sqrt(hu**2 + hv**2)
             vnorm = hvnorm0/h
@@ -152,9 +154,9 @@ c-----------! changes only hu,hv,u,v ------------------------------
                vnorm = sqrt(u**2 + v**2)
                ! velocity now constant for remainder of src2. hu,hv adjusted due to change in h
             endif
-c-------------------------------------------------------------------------
+!-------------------------------------------------------------------------
             call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
-c----------- ! integrate p  & m-------------------------------------------
+!----------- ! integrate p  & m-------------------------------------------
 
             select case (src2method)
 

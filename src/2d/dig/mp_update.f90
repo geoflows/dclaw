@@ -438,16 +438,21 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       implicit none
 
       !i/o
-      real(kind=8), intent(inout) :: h,m,p
-      real(kind=8), intent(in)  :: u,v,rhoh,dt,chi
+      real(kind=8), intent(inout) :: h,u,v,m,p,chi
+      real(kind=8), intent(in)  :: rhoh,dt
       real(kind=8), intent(in)  :: gz
 
       !local
       real(kind=8) :: m_0,p_eq,p_exc,sig_eff,sig_0,vnorm,m_eq
       real(kind=8) :: rho,tanpsi,D,tau,kperm,alphainv
-      real(kind=8) :: krate,zeta,D
+      real(kind=8) :: krate,zeta,hchi,hu,hv,hm
 
       call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+
+      hu=h*u
+      hv=h*v
+      hm=h*m
+      hchi=h*chi
 
       ! integrate pressure response to dilation/contraction
       vnorm = sqrt(hu**2 + hv**2)/h
@@ -462,7 +467,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       !integrate changes in hm
       p_exc = p - rho_f*gz*h
       !define conservative variabls: (note u,v,m passed in, no hu,hv,hm yet).
-      qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
+      call qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
       D = -2.0d0*(kperm/(mu*h))*p_exc
       krate = D*(rho-rho_f)/rhoh
       hm = hm*exp(-dt*D*rho_f/(rhoh))
@@ -478,7 +483,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
          hchi = h*chi
          hu = hu*exp(dt*krate)
          hv = hv*exp(dt*krate)
-         qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+         call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
       case(1)
          ! redefine h by hm, rhoh, set hu,hv by new h
          ! rationale is to maintain rhoh = constant
@@ -486,7 +491,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
          hu = h*u
          hv = h*v
          hchi = h*chi
-         qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+         call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
       end select
 
       end subroutine mp_update_relax_Dclaw4

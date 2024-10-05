@@ -255,7 +255,7 @@ contains
    !accept solution q, return admissible q and primitive vars: u,v,m,rho,chi
    !====================================================================
 
-   subroutine qfix(h,hu,hv,hm,hchi,p,u,v,m,chi,rho,gz)
+   subroutine qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
 
       implicit none
 
