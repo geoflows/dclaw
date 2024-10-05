@@ -353,69 +353,69 @@ contains
 
    end subroutine qfix_cmass
 
-   !====================================================================
-   !subroutine admissibleq
-   !accept solution q, return q in admissible space
-   !====================================================================
+!!!!!!!!   !====================================================================
+!!!!!!!!   !subroutine admissibleq
+!!!!!!!!   !accept solution q, return q in admissible space
+!!!!!!!!   !====================================================================!!!!!!!!
 
-   subroutine admissibleq(h,hu,hv,hm,p,u,v,m,theta)
+!!!!!!!!   subroutine admissibleq(h,hu,hv,hm,p,u,v,m,theta)!!!!!!!!
 
-      implicit none
+!!!!!!!!      implicit none!!!!!!!!
 
-      !i/o
-      double precision, intent(in) :: theta
-      double precision, intent(inout) :: h,hu,hv,hm,p
-      double precision, intent(out) :: u,v,m
+!!!!!!!!      !i/o
+!!!!!!!!      double precision, intent(in) :: theta
+!!!!!!!!      double precision, intent(inout) :: h,hu,hv,hm,p
+!!!!!!!!      double precision, intent(out) :: u,v,m!!!!!!!!
 
-      !Locals
-      double precision :: mlo,mhi,hlo,pmax,phi,plo,rho,dry_tol,m_min,gmod
+!!!!!!!!      !Locals
+!!!!!!!!      double precision :: mlo,mhi,hlo,pmax,phi,plo,rho,dry_tol,m_min,gmod!!!!!!!!
 
-      gmod = grav
-      dry_tol = dry_tolerance
-      if (bed_normal.eq.1) gmod = grav*dcos(theta)
+!!!!!!!!      gmod = grav
+!!!!!!!!      dry_tol = dry_tolerance
+!!!!!!!!      if (bed_normal.eq.1) gmod = grav*dcos(theta)!!!!!!!!
 
-      if (h.le.dry_tol) then
-         h =  0.d0
-         hu = 0.d0
-         hv = 0.d0
-         hm = 0.d0
-         p  = 0.d0 !h*gmod*rho_f
-         u = 0.d0
-         v = 0.d0
-         m = 0.d0
-         return
-      endif
+!!!!!!!!      if (h.le.dry_tol) then
+!!!!!!!!         h =  0.d0
+!!!!!!!!         hu = 0.d0
+!!!!!!!!         hv = 0.d0
+!!!!!!!!         hm = 0.d0
+!!!!!!!!         p  = 0.d0 !h*gmod*rho_f
+!!!!!!!!         u = 0.d0
+!!!!!!!!         v = 0.d0
+!!!!!!!!         m = 0.d0
+!!!!!!!!         return
+!!!!!!!!      endif!!!!!!!!
 
-      u = hu/h
-      v = hv/h
-      m = hm/h
+!!!!!!!!      u = hu/h
+!!!!!!!!      v = hv/h
+!!!!!!!!      m = hm/h!!!!!!!!
 
-      mlo = 0.0d0
-      mhi = 1.d0 - mlo
+!!!!!!!!      mlo = 0.0d0
+!!!!!!!!      mhi = 1.d0 - mlo!!!!!!!!
 
-      if (m.lt.mlo) then
-         m = dmax1(m,mlo)
-         hm = h*m
-      elseif (m.gt.mhi) then
-         m = dmin1(m,1.d0)
-         hm = h*m
-      endif
+!!!!!!!!      if (m.lt.mlo) then
+!!!!!!!!         m = dmax1(m,mlo)
+!!!!!!!!         hm = h*m
+!!!!!!!!      elseif (m.gt.mhi) then
+!!!!!!!!         m = dmin1(m,1.d0)
+!!!!!!!!         hm = h*m
+!!!!!!!!      endif!!!!!!!!
 
-      rho = rho_s*m + (1.d0-m)*rho_f
-      pmax = rho*gmod*h
-      p = dmin1(pmax,p)
-      p = dmax1(0.d0,p)
+!!!!!!!!      rho = rho_s*m + (1.d0-m)*rho_f
+!!!!!!!!      pmax = rho*gmod*h
+!!!!!!!!      p = dmin1(pmax,p)
+!!!!!!!!      p = dmax1(0.d0,p)!!!!!!!!
 
-      if (m < 1d-5) then
-         ! reset p to hydrostatic pressure in pure water
-         ! (need to figure out proper tolerance in test)
-         ! (better way? E.g. relaxation toward hydrostatic in src2?)
-         p = h*gmod*rho_f
-      endif
+!!!!!!!!      if (m < 1d-5) then
+!!!!!!!!         ! reset p to hydrostatic pressure in pure water
+!!!!!!!!         ! (need to figure out proper tolerance in test)
+!!!!!!!!         ! (better way? E.g. relaxation toward hydrostatic in src2?)
+!!!!!!!!         p = h*gmod*rho_f
+!!!!!!!!      endif!!!!!!!!
 
-      return
+!!!!!!!!      return!!!!!!!!
 
-   end subroutine admissibleq
+!!!!!!!!   end subroutine admissibleq
 
    !====================================================================
    ! subroutine setvars: evaluates needed variable parameters that are
@@ -498,6 +498,8 @@ contains
       return
 
       end subroutine setvars
+
+
 !!!   !====================================================================
 !!!   ! subroutine auxeval: evaluates the auxiliary variables as functions
 !!!   !                     of the solution vector q
@@ -591,18 +593,18 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       !Locals
       double precision :: gz
-      double precision :: h,hu,hv,hm,p,b,eta
-      double precision :: hL,huL,hvL,hmL,pL,bL,etaL
-      double precision :: hR,huR,hvR,hmR,pR,bR,etaR
-      double precision :: hB,huB,hvB,hmB,pB,bB,etaB
-      double precision :: hT,huT,hvT,hmT,pT,bT,etaT
+      double precision :: h,hu,hv,hm,p,hchi,b,eta
+      double precision :: hL,huL,hvL,hmL,pL,hchiL,bL,etaL
+      double precision :: hR,huR,hvR,hmR,pR,hchiR,bR,etaR
+      double precision :: hB,huB,hvB,hmB,pB,hchiB,bB,etaB
+      double precision :: hT,huT,hvT,hmT,pT,hchiT,bT,etaT
 
       double precision :: u,v,m,chi
-      double precision :: uL,vL,mL
-      double precision :: uR,vR,mR
-      double precision :: uB,vB,mB
-      double precision :: uT,vT,mT
-      double precision :: thetaL,thetaB,theta
+      double precision :: uL,vL,mL,chiL,rhoL
+      double precision :: uR,vR,mR,chiR,rhoR
+      double precision :: uB,vB,mB,chiB,rhoB
+      double precision :: uT,vT,mT,chiT,rhoT
+      double precision :: theta
       double precision :: tau,rho
       double precision :: tanpsi,kperm,m_eq
       double precision :: Fx,Fy,FxL,FxR,FyL,FyR,FyC,FxC,dot,vnorm,Fproj
@@ -616,13 +618,9 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             if (bed_normal.eq.1) then
               theta = aux(i_theta,i,j)
-              thetaL = aux(i_theta,i-1,j)
-              thetaB = aux(i_theta,i,j-1)
               gz = grav*cos(theta)
             else
               theta = 0.d0
-              thetaL = 0.d0
-              thetaB = 0.d0
             endif
 
             h = q(i_h,i,j)
@@ -630,13 +628,11 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hv = q(i_hv,i,j)
             hm = q(i_hm,i,j)
             p  = q(i_pb,i,j)
-            if (h<dry_tolerance) then
-              chi=0.d0
-            else
-              chi = q(i_hchi,i,j)/h
-            endif
+            hchi = q(i_hchi,i,j)
 
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
+            ! call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
+            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+
             b = aux(1,i,j)-q(i_bdif,i,j)
             eta = h+b
             phi = aux(i_phi,i,j)
@@ -646,7 +642,11 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvL= q(i_hv,i-1,j)
             hmL = q(i_hm,i-1,j)
             pL  = q(i_pb,i-1,j)
-            call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
+            hchiL = q(i_hchi,i-1,j)
+
+            ! call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
+            call qfix(hL,huL,hvL,hmL,pL,hchiL,uL,vL,mL,chiL,rhoL,gz)
+
             bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
             etaL= hL+bL
             if (hL<dry_tolerance) then
@@ -658,7 +658,10 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvR= q(i_hv,i+1,j)
             hmR = q(i_hm,i+1,j)
             pR  = q(i_pb,i+1,j)
-            call admissibleq(hR,huR,hvR,hmR,pR,uR,vR,mR,theta)
+            hchiR = q(i_hchi,i+1,j)
+            !call admissibleq(hR,huR,hvR,hmR,pR,uR,vR,mR,theta)
+            call qfix(hR,huR,hvR,hmR,pR,hchiR,uR,vR,mR,chiR,rhoR,gz)
+
             bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
             etaR= hR+bR
             if (hR<dry_tolerance) then
@@ -670,7 +673,10 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvB= q(i_hv,i,j-1)
             hmB = q(i_hm,i,j-1)
             pB  = q(i_pb,i,j-1)
-            call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
+            hchiB = q(i_hchi,i,j-1)
+            !call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
+            call qfix(hB,huB,hvB,hmB,pB,hchiB,uB,vB,mB,chiB,rhoB,gz)
+
             bB = aux(1,i,j-1)-q(i_bdif,i,j-1)
             etaB= hB+bB
             if (hB<dry_tolerance) then
@@ -682,7 +688,10 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hvT= q(i_hv,i,j+1)
             hmT = q(i_hm,i,j+1)
             pT  = q(i_pb,i,j+1)
-            call admissibleq(hT,huT,hvT,hmT,pT,uT,vT,mT,theta)
+            hchiT = q(i_hchi,i,j+1)
+            !call admissibleq(hT,huT,hvT,hmT,pT,uT,vT,mT,theta)
+            call qfix(hT,huT,hvT,hmT,pT,hchiT,uT,vT,mT,chiT,rhoT,gz)
+
             bT = aux(1,i,j+1)-q(i_bdif,i,j+1)
             etaT= hT+bT
             if (hT<dry_tolerance) then

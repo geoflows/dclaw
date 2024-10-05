@@ -13,7 +13,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
 ! Also calls movetopo if topography might be moving.
 
     use geoclaw_module, only: dry_tolerance
-    use geoclaw_module, only: g => grav
+    use geoclaw_module, only: grav
     use topo_module, only: num_dtopo,topotime
     use topo_module, only: aux_finalized
     use topo_module, only: xlowdtopo,xhidtopo,ylowdtopo,yhidtopo
@@ -24,7 +24,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     use amr_module, only: yhidomain => yupper
     use amr_module, only: xperdom,yperdom,spheredom,NEEDS_TO_BE_SET
 
-    use digclaw_module, only: i_theta,bed_normal,admissibleq,calc_taudir
+    use digclaw_module, only: i_theta,bed_normal,qfix,calc_taudir
     use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
 
     implicit none
@@ -39,7 +39,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
 
     ! Local storage
     integer :: index,i,j,k,dummy
-    real(kind=8) :: h,u,v,sv,theta
+    real(kind=8) :: h,u,v,m,chi,rho,gz
 
     ! Check for NaNs in the solution
     call check4nans(meqn,mbc,mx,my,q,t,1)
@@ -48,13 +48,17 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     ! check for h < drytolerance
     ! set other variables appropriately for these cells
 
+    gz=grav
     do j=1-mbc,my+mbc
         do i=1-mbc,mx+mbc
-            theta = 0.d0
-            if (bed_normal.eq.1) theta=aux(i_theta,i,j)
-            call admissibleq(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),u,v,sv,theta)
-            q(i_hchi,i,j) = min(q(i_hchi,i,j),q(i_h,i,j))
-            q(i_hchi,i,j) = max(q(i_hchi,i,j),0.0d0)
+            if (bed_normal.eq.1) gz=grav*dcos(aux(i_theta,i,j))
+
+!            call admissibleq(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),u,v,m,theta)
+            call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j),u,v,m,chi,rho,gz)
+
+
+
+
             q(i_bdif,i,j) = max(q(i_bdif,i,j),0.0d0) ! DIG: if we store deposition in i_bdif, remove.
         enddo
     enddo
