@@ -46,7 +46,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     use auxinit_module, only: dyauxinit,dxauxinit,myauxinit
     use auxinit_module, only: mauxinit
 
-    use digclaw_module, only: i_dig,i_phi,i_theta,phi_bed,theta_input
+    use digclaw_module, only: i_dig,i_phi,i_theta,phi,theta_input
 
     implicit none
 
@@ -67,7 +67,7 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     real(kind=8) :: xhigher,yhigher,xintlow,xinthi,yintlow,yinthi
     real(kind=8) :: xim,xip,yjm,yjp,xipc,ximc,xc,yjpc,yjmc,yc,daux
     real(kind=8) :: b_x,b_y,gradang,kappa,phi_tread
-    logical :: use_phi_bed,use_theta_input,friction_correction
+    logical :: use_theta_input,friction_correction
     ! Topography integral function
     real(kind=8) :: topointegral
 
@@ -265,20 +265,17 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
          endif
       enddo
 
-      use_phi_bed = .true.
       use_theta_input = .true.
       do mf = 1,mauxinitfiles
-         if (iauxinit(mf).eq.i_phi) use_phi_bed = .false.
          if (iauxinit(mf).eq.i_theta) use_theta_input = .false.
       enddo
 
-      if (use_phi_bed) then
-         do j=1-mbc,my+mbc
-            do i=1-mbc,mx+mbc
-               aux(i_phi,i,j) = phi_bed
-            enddo
+      do j=1-mbc,my+mbc
+         do i=1-mbc,mx+mbc
+            aux(i_phi,i,j) = phi
          enddo
-      endif
+      enddo
+
 
       if (use_theta_input) then
          do j=1-mbc,my+mbc

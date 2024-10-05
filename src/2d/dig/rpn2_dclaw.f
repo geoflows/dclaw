@@ -31,7 +31,7 @@ c
       use geoclaw_module, only: earth_radius, deg2rad
       use amr_module, only: mcapa
 
-      use digclaw_module, only: bed_normal,i_theta,admissibleq
+      use digclaw_module, only: bed_normal,i_theta,qfix
       use digclaw_module, only: i_fsphi,i_phi,i_taudir_x,i_taudir_y
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
 
@@ -68,6 +68,7 @@ c
       double precision h1M,h2M,hu1M,hu2M,u1M,u2M,heR,heL
       double precision sE1,sE2
       double precision chiHL,chiHR,chiL,chiR,fsL,fsR
+      double precision gz,gzL,gzR,rhoR,rhoL
 
       gmod=grav
       veltol = 1.d-3
@@ -81,8 +82,6 @@ c
          !inform of a bad Riemann problem from the start
          !if((qr(i_h,i-1).lt.0.d0).or.(ql(i_h,i) .lt. 0.d0)) then
          !   write(*,*) 'Negative input: hl,hr,i=',qr(i-1,1),ql(i,1),i
-         !   call admissibleq(ql(i_h,i),ql(mhu,i),ql(nhv,i),ql(i_hm,i),ql(i_pb,i),uR,vR,mR,thetaR)
-         !   call admissibleq(qr(i_h,i-1),qr(mhu,i-1),qr(nhv,i-1),qr(i_hm,i-1),qr(i_pb,i-1),uL,vL,mL,thetaL)
          !endif
 
          !Initialize Riemann problem for grid interface
@@ -129,7 +128,9 @@ c        !set normal direction
             thetaL = auxr(i_theta,i-1)
             thetaR = auxl(i_theta,i)
             theta = 0.5d0*(thetaL+thetaR)
-            gmod = grav*dcos(0.5d0*(thetaL+thetaR))
+            gz=grav*dcos(0.5d0*(thetaL+thetaR))
+            gzL=grav*dcos(thetaL)
+            gzR=grav*dcos(thetaR)
          else
             thetaL = 0.d0
             thetaR = 0.d0
@@ -137,12 +138,12 @@ c        !set normal direction
          endif
 
          !zero (small) negative values if they exist and set velocities
-         call admissibleq(ql(i_h,i),ql(mhu,i),ql(nhv,i),
-     &            ql(i_hm,i),ql(i_pb,i),uR,vR,mR,thetaR)
 
-         call admissibleq(qr(i_h,i-1),qr(mhu,i-1),qr(nhv,i-1),
-     &            qr(i_hm,i-1),qr(i_pb,i-1),uL,vL,mL,thetaL)
+         call qfix(ql(i_h,i),ql(mhu,i),ql(nhv,i),ql(i_hm,i),
+     &             ql(i_pb,i),ql(i_hchi,i),uR,vR,mR,chiR,rhoR,gzR)
 
+         call qfix(qr(i_h,i-1),qr(mhu,i-1),qr(nhv,i-1),qr(i_hm,i-1),
+     &             qr(i_pb,i-1),qr(i_hchi,i-1),uL,vL,mL,chiL,rhoL,gzL)
 
          !Riemann problem variables
          hL = qr(i_h,i-1)

@@ -135,6 +135,7 @@ def setplot(plotdata=None):
     plotitem.imshow_cmap = cmocean.cm.speed
     plotitem.imshow_cmin = 0
     plotitem.imshow_cmax = 10
+    plotitem.patchedges_show=True
     #-------------------------------------
     # Plots of timing (CPU and wall time):
 

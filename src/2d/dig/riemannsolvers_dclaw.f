@@ -16,7 +16,8 @@ c-----------------------------------------------------------------------
       !-----------------------------------------------------------------
 
       use geoclaw_module, only: grav, dry_tolerance
-      use digclaw_module ! DIG: specify which variables.
+      use digclaw_module, only: beta_seg, rho_f, kappa
+      use digclaw_module, only: setvars
 
       implicit none
 
@@ -40,15 +41,17 @@ c-----------------------------------------------------------------------
       double precision det1,det2,det3,detR,determinant
       double precision R(0:2,1:3),A(3,3),del(0:4)
       double precision beta(3)
-      double precision rho,rhoL,rhoR,tauL,tauR,tau
-      double precision kappa,kperm,compress,tanpsi,D,SN,sigbed,pmL,pmR
+      double precision rho,rhoL,rhoR,tauL,tauR,tau,gzL,gzR
+      double precision tanpsi
+      double precision kperm,m_eq,alphainv
       double precision theta,gamma,eps,pm
       double precision sL,sR,sRoe1,sRoe2,sE1,sE2,uhat,chat
       double precision delb,s1m,s2m,hm,heL,heR,criticaltol,criticaltol_2
       double precision s1s2bar,s1s2tilde,hbar,source2dx,veltol1,veltol2
-      double precision hstarHLL,deldelh,drytol,gmod,geps,tausource
-      double precision raremin,raremax,rare1st,rare2st,sdelta,rho_fp,seg
+      double precision hstarHLL,deldelh,drytol,gz,geps,tausource
+      double precision raremin,raremax,rare1st,rare2st,sdelta
       double precision gammaL,gammaR,theta1,theta2,theta3,vnorm,pmtanh01
+      double precision alpha_seg
       logical sonic,rare1,rare2
       logical rarecorrectortest,rarecorrector
 
@@ -63,46 +66,48 @@ c-----------------------------------------------------------------------
          psi(m) = 0.d0
       enddo
 
+      gzL=grav*dcos(thetaL)
+      gzR=grav*dcos(thetaR)
+      theta = 0.5d0*(thetaL + thetaR)
+      gz = grav*dcos(theta)
 
-      ! DIG: move segregation into segeval() that
-      ! adjusts rho_fp, etc.
 
-      pmL = chiL
-      pmR = chiR
-      pm = 0.5*(chiL + chiR)
-      pm = min(1.0d0,pm)
-      pm = max(0.0d0,pm)
-      if (alpha_seg==1.0d0) then
-         seg = 0.0d0
-      else
-         seg = 1.0d0
-      endif
-      call calc_pmtanh(pm,seg,pmtanh01)
-      rho_fp = (1.0d0-pmtanh01)*rho_f
-
+      ! alpha seg here reflects alpha in Gray and Kokelaar (2010)
+      ! alpha_seg 0 = simple shear and 1 = plug flow
+      ! we have defined beta_seg as 1-alpha_seg
+      alpha_seg=1.0d0-beta_seg
 
       if (hL.ge.drytol.and.hR.ge.drytol) then
-         call auxeval(hL,uL,vL,mL,pL,phiL,thetaL,
-     &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmL)
-         call auxeval(hR,uR,vR,mR,pR,phiR,thetaR,
-     &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmR)
+
+         call setvars(hL,uL,vL,mL,pL,chiL,gzL,rhoL,kperm,alphainv,m_eq,
+     &        tanpsi,tauL)
+
+         call setvars(hR,uR,vR,mR,pR,chiR,gzR,rhoR,kperm,alphainv,m_eq,
+     &        tanpsi,tauR)
+
+
          h = 0.5d0*(hL + hR)
          v = 0.5d0*(vL + vR)
          mbar = 0.5d0*(mL + mR)
       elseif (hL.ge.drytol) then
-         call auxeval(hL,uL,vL,mL,pL,phiL,thetaL,
-     &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmL)
-         call auxeval(hL,uL,vL,mL,pL,phiL,thetaL,
-     &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmL)
+
+         call setvars(hL,uL,vL,mL,pL,chiL,gzL,rhoL,kperm,alphainv,m_eq,
+     &        tanpsi,tauL)
+
+      call setvars(hL,uL,vL,mL,pL,chiL,gzL,rhoR,kperm,alphainv,m_eq,
+     &        tanpsi,tauR)
+
          tauR=0.5d0*tauL
          h = 0.5d0*hL
          v = vL
          mbar = mL
       else
-         call auxeval(hR,uR,vR,mR,pR,phiR,thetaR,
-     &        kappa,SN,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pmR)
-         call auxeval(hR,uR,vR,mR,pR,phiR,thetaR,
-     &        kappa,SN,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pmR)
+
+         call setvars(hR,uR,vR,mR,pR,chiR,gzR,rhoL,kperm,alphainv,m_eq,
+     &        tanpsi,tauL)
+         call setvars(hR,uR,vR,mR,pR,chiR,gzR,rhoR,kperm,alphainv,m_eq,
+     &        tanpsi,tauR)
+
          tauL=0.5d0*tauR
          h = 0.5d0*hR
          v = vR
@@ -113,15 +118,12 @@ c-----------------------------------------------------------------------
       tauR = fsR*tauR
       rho = 0.5d0*(rhoL + rhoR)
       tau = 0.5d0*(tauL + tauR)
-      theta = 0.5d0*(thetaL + thetaR)
-      gamma = 0.25d0*(rho_fp + 3.0d0*rho)/rho
-      gammaL = 0.25d0*(rho_fp + 3.0d0*rhoL)/rhoL
-      gammaR = 0.25d0*(rho_fp + 3.0d0*rhoR)/rhoR
+      gamma = 0.25d0*(rho_f + 3.0d0*rho)/rho
+      gammaL = 0.25d0*(rho_f + 3.0d0*rhoL)/rhoL
+      gammaR = 0.25d0*(rho_f + 3.0d0*rhoR)/rhoR
 
       eps = kappa + (1.d0-kappa)*gamma
-
-      gmod = grav*dcos(theta)
-      geps = gmod*eps
+      geps = gz*eps
 
       !determine wave speeds
       sL=uL-dsqrt(geps*hL) ! 1 wave speed of left state
@@ -176,8 +178,8 @@ c     !determine the middle entropy corrector wave------------------------
 
       !determine ss-wave
       hbar =  0.5d0*(hL+hR)
-      s1s2bar = 0.25d0*(uL+uR)**2- gmod*hbar
-      s1s2tilde= max(0.d0,uL*uR) - gmod*hbar
+      s1s2bar = 0.25d0*(uL+uR)**2- gz*hbar
+      s1s2tilde= max(0.d0,uL*uR) - gz*hbar
 
 c     !find if sonic problem
       sonic=.false.
@@ -198,18 +200,18 @@ c     !find if sonic problem
       elseif ((uL-dsqrt(geps*hL))*(uR-dsqrt(geps*hR)).lt.0.d0) then
          sonic=.true.
       endif
-      
+
       if (sonic) then
-         source2dx = -gmod*hbar*delb
+         source2dx = -gz*hbar*delb
       else
-         source2dx = -delb*gmod*hbar*s1s2tilde/s1s2bar
+         source2dx = -delb*gz*hbar*s1s2tilde/s1s2bar
       endif
 
-      source2dx=min(source2dx,gmod*max(-hL*delb,-hR*delb))
-      source2dx=max(source2dx,gmod*min(-hL*delb,-hR*delb))
+      source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb))
+      source2dx=max(source2dx,gz*min(-hL*delb,-hR*delb))
 
       if (dabs(u).le.veltol2) then
-         source2dx=-hbar*gmod*delb
+         source2dx=-hbar*gz*delb
       endif
 
 c     !find bounds in case of critical state resonance, or negative states
@@ -218,7 +220,7 @@ c     !find jump in h, deldelh
       if (sonic) then
          deldelh =  -delb
       else
-         deldelh = delb*gmod*hbar/s1s2bar
+         deldelh = delb*gz*hbar/s1s2bar
       endif
 c     !find bounds in case of critical state resonance, or negative states
       if (sE1.lt.-criticaltol.and.sE2.gt.criticaltol) then
@@ -255,11 +257,11 @@ c     !find bounds in case of critical state resonance, or negative states
       !determine del
       del(0) = hR- hL - deldelh
       del(1) = huR - huL
-      del(2) = hR*uR**2 + 0.5d0*kappa*gmod*hR**2 -
-     &      (hL*uL**2 + 0.5d0*kappa*gmod*hL**2)
+      del(2) = hR*uR**2 + 0.5d0*kappa*gz*hR**2 -
+     &      (hL*uL**2 + 0.5d0*kappa*gz*hL**2)
       del(2) = del(2) + (1.d0-kappa)*h*(pR-pL)/rho
-      del(3) = pR - pL - gamma*rho*gmod*deldelh
-      del(4) = -gamma*rho*gmod*u*(hR-hL) + gamma*rho*gmod*del(1)
+      del(3) = pR - pL - gamma*rho*gz*deldelh
+      del(4) = -gamma*rho*gz*u*(hR-hL) + gamma*rho*gz*del(1)
      &         + u*(pR-pL)
 
 *     !determine the source term

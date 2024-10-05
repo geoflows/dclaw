@@ -15,8 +15,8 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     use qinit_module, only: qinitwork,mqinitfiles
 
 
-    use digclaw_module, only: admissibleq,calc_pmin,calc_taudir
-    use digclaw_module, only: bed_normal,chi_init_val,init_ptype
+    use digclaw_module, only: qfix,calc_pmin,calc_taudir
+    use digclaw_module, only: bed_normal,chi0,init_ptype
     use digclaw_module, only: i_theta,m0,rho_f,rho_s,init_pmin_ratio
     use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi
 
@@ -35,7 +35,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     real(kind=8) :: yc,yhigher,yinthi,yintlow,yjm,yjmc,yjp,yjpc
     real(kind=8) :: veta(1-mbc:mx+mbc,1-mbc:my+mbc)
     real(kind=8) :: ddxy
-    real(kind=8) :: u,v,sv,dq,gmod,p_ratioij,rho
+    real(kind=8) :: u,v,sv,dq,p_ratioij,rho,gz,chi
     ! Topography integral function
     real(kind=8) :: topointegral
 
@@ -211,7 +211,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   q(i_hm,i,j) = q(i_h,i,j)*q(i_hm,i,j)
                endif
                if (initchi.eq.0) then
-                  q(i_hchi,i,j) = chi_init_val*q(i_h,i,j)
+                  q(i_hchi,i,j) = chi0*q(i_h,i,j)
                else
                   q(i_hchi,i,j) = q(i_h,i,j)*q(i_hchi,i,j)
                endif
@@ -244,11 +244,11 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
                  if (bed_normal.eq.1) then
-                     gmod = grav*cos(aux(i_theta,i,j))
+                     gz = grav*cos(aux(i_theta,i,j))
                  else
-                     gmod=grav
+                     gz=grav
                  endif
-                 q(i_pb,i,j) = rho_f*gmod*q(i_h,i,j)
+                 q(i_pb,i,j) = rho_f*gz*q(i_h,i,j)
                enddo
             enddo
          case(1:2) ! DIG: Not yet tested
@@ -256,21 +256,30 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
                   p_ratioij = init_pmin_ratio
+
+                  if (bed_normal.eq.1) then
+                     gz = grav*cos(aux(i_theta,i,j))
+                  else
+                     gz = grav
+                  endif
+
                   if (q(i_h,i,j).le.dry_tolerance) then
-                     q(i_pb,i,j) = init_pmin_ratio*rho_f*gmod*q(i_h,i,j)
+                     q(i_pb,i,j) = init_pmin_ratio*rho_f*gz*q(i_h,i,j)
                      cycle
                   endif
-                  call admissibleq(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j), &
-                             q(i_hm,i,j),q(i_pb,i,j),u,v,sv,aux(i_theta,i,j))
+
+
+                  call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j), &
+                       q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j), &
+                          u,v,sv,chi,rho,gz)
+
                   if (bed_normal.eq.1) then
-                     gmod = grav*cos(aux(i_theta,i,j))
                      p_ratioij = init_pmin_ratio &
                          + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(i_h,i,j)
                   endif
 
-                  rho = sv*rho_s + (1.d0-sv)*rho_f
+                  q(i_pb,i,j) = p_ratioij*rho*gz*q(i_h,i,j)
 
-                  q(i_pb,i,j) = p_ratioij*rho*gmod*q(i_h,i,j)
                enddo
             enddo
 
