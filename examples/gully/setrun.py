@@ -1,25 +1,21 @@
 """
-Module to set up run time parameters for Clawpack.
+Module to set up run time parameters for D-Claw.
 
 The values set in the function setrun are then written out to data files
 that will be read in by the Fortran code.
-
 """
 
 import os, sys
 import numpy as np
+from clawpack.geoclaw import fgout_tools
 
+# get information about the extent of the landslide from setinput.py
 from setinput import xl1, xl2, yl1, yl2
 
 try:
     CLAW = os.environ['CLAW']
 except:
     raise Exception("*** Must first set CLAW environment variable")
-
-from clawpack.amrclaw.data import FlagRegion
-from clawpack.geoclaw import fgout_tools
-
-
 
 #------------------------------
 def setrun(claw_pkg='dclaw'):
@@ -29,27 +25,24 @@ def setrun(claw_pkg='dclaw'):
     Define the parameters used for running Clawpack.
 
     INPUT:
-        claw_pkg expected to be "geoclaw" for this setrun.
+        claw_pkg expected to be "dclaw" for this setrun.
 
     OUTPUT:
         rundata - object of class ClawRunData
-
     """
 
     from clawpack.clawutil import data
     assert claw_pkg.lower() == 'dclaw',  "Expected claw_pkg = 'dclaw'"
 
+    # Number of dimensions
     num_dim = 2
     rundata = data.ClawRunData(claw_pkg, num_dim)
-
 
     #------------------------------------------------------------------
     # Problem-specific parameters to be written to setprob.data:
     #------------------------------------------------------------------
 
     #probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    #probdata.add_param('variable_eta_init', True)  # now in qinit info
-
 
     #------------------------------------------------------------------
     # Standard Clawpack parameters to be written to claw.data:
@@ -57,10 +50,8 @@ def setrun(claw_pkg='dclaw'):
     #------------------------------------------------------------------
     clawdata = rundata.clawdata  # initialized when rundata instantiated
 
-
     # Set single grid parameters first.
     # See below for AMR parameters.
-
 
     # ---------------
     # Spatial domain:
@@ -69,21 +60,17 @@ def setrun(claw_pkg='dclaw'):
     # Number of space dimensions:
     clawdata.num_dim = num_dim
 
-
-
     # Lower and upper edge of computational domain:
+    # x-dimension
     clawdata.lower[0] = 0
     clawdata.upper[0] = 6e3
-
+    # y-dimension
     clawdata.lower[1] = 0
     clawdata.upper[1] = 2e3
 
-
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 60
-    clawdata.num_cells[1] = 20
-
-
+    clawdata.num_cells[0] = 60 # x
+    clawdata.num_cells[1] = 20 # y
 
     # ---------------
     # Size of system:
@@ -93,19 +80,18 @@ def setrun(claw_pkg='dclaw'):
     clawdata.num_eqn = 7
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
+    # num_aux must be at least the number needed
     clawdata.num_aux = 10
 
     # Index of aux array corresponding to capacity function, if there is one:
+    # typically only used if coordinate_system=2
     clawdata.capa_index = 0
-
-
 
     # -------------
     # Initial time:
     # -------------
 
     clawdata.t0 = 0.0
-
 
     # Restart from checkpoint file of a previous run?
     # If restarting, t0 above should be from original run, and the
@@ -127,8 +113,8 @@ def setrun(claw_pkg='dclaw'):
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 10 #240
-        clawdata.tfinal = 100. #240.
+        clawdata.num_output_times = 10
+        clawdata.tfinal = 100.
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -141,14 +127,11 @@ def setrun(claw_pkg='dclaw'):
         clawdata.total_steps = 3
         clawdata.output_t0 = True
 
-
     clawdata.output_format = 'ascii'
 
     clawdata.output_q_components = 'all'   # need all
     clawdata.output_aux_components = 'none'  # eta=h+B is in q
     clawdata.output_aux_onlyonce = True    # output aux arrays each frame
-
-
 
     # ---------------------------------------------------
     # Verbosity of messages to screen during integration:
@@ -158,8 +141,6 @@ def setrun(claw_pkg='dclaw'):
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
     clawdata.verbosity = 1
-
-
 
     # --------------
     # Time stepping:
@@ -184,7 +165,6 @@ def setrun(claw_pkg='dclaw'):
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
-
 
     # ------------------
     # Method to be used:
@@ -224,7 +204,6 @@ def setrun(claw_pkg='dclaw'):
     #   src_split == 2 or 'strang'  ==> Strang (2nd order) splitting used,  not recommended.
     clawdata.source_split = 'godunov'
 
-
     # --------------------
     # Boundary conditions:
     # --------------------
@@ -243,7 +222,6 @@ def setrun(claw_pkg='dclaw'):
 
     clawdata.bc_lower[1] = 'extrap'
     clawdata.bc_upper[1] = 'extrap'
-
 
 
     # --------------
@@ -276,7 +254,6 @@ def setrun(claw_pkg='dclaw'):
         # and at the final time.
         clawdata.checkpt_interval = 5
 
-
     # ---------------
     # AMR parameters:
     # ---------------
@@ -290,8 +267,6 @@ def setrun(claw_pkg='dclaw'):
     amrdata.refinement_ratios_x = [4,2]
     amrdata.refinement_ratios_y = [4,2]
     amrdata.refinement_ratios_t = [4,2]
-
-
 
     # Specify type of each aux variable in amrdata.auxtype.
     # This must be a list of length maux, each element of which is one of:
