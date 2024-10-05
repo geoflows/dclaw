@@ -392,12 +392,12 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.rho_s = 2700.0
     dclaw_data.m_crit = 0.64
     dclaw_data.m0 = 0.63
-    dclaw_data.mr = 0.6
-    dclaw_data.kr = 1.e-10
+    dclaw_data.mref = 0.6
+    dclaw_data.kref = 1.e-10
     dclaw_data.phi = 32.0
     dclaw_data.delta = 0.001
     dclaw_data.mu = 0.005
-    dclaw_data.a = 0.01
+    dclaw_data.alpha_c = 0.01
     dclaw_data.c1 = 1
     dclaw_data.sigma_0 = 1.0e3
 

@@ -8,11 +8,20 @@ module digclaw_module
     ! ========================================================================
     ! General digclaw parameters
     ! ========================================================================
-    double precision :: rho_s,rho_f,m_crit,m0,mr,kr,phi,delta,mu,a,c1,sigma_0
+    double precision :: rho_s,rho_f,m_crit,m0,mref,kref,phi,delta,mu,alpha_c
+    double precision :: c1,sigma_0
     double precision :: theta_input,entrainment_rate,me,beta_seg,chi0,chie
+    double precision :: alphainv
+
+
+
+    ! remove
+    double precision :: alpha,kappita,phi_bed
+    ! END remove
 
     integer :: src2method,alphamethod,bed_normal,entrainment,entrainment_method
     integer :: segregation,curvature,init_ptype
+    double precision :: init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
 
     ! momentum autostop
@@ -107,13 +116,13 @@ contains
          read(iunit,*) rho_f
          read(iunit,*) m_crit
          read(iunit,*) m0
-         read(iunit,*) mr
-         read(iunit,*) kr
+         read(iunit,*) mref
+         read(iunit,*) kref
          read(iunit,*) phi
          phi = deg2rad*phi
          read(iunit,*) delta
          read(iunit,*) mu
-         read(iunit,*) a
+         read(iunit,*) alpha_c
          read(iunit,*) c1
          read(iunit,*) sigma_0
 
@@ -165,12 +174,12 @@ contains
          write(DIG_PARM_UNIT,*) '    rho_s:', rho_s
          write(DIG_PARM_UNIT,*) '    m_crit:', m_crit
          write(DIG_PARM_UNIT,*) '    m0:', m0
-         write(DIG_PARM_UNIT,*) '    mr:', mr
-         write(DIG_PARM_UNIT,*) '    kr:', kr
+         write(DIG_PARM_UNIT,*) '    mref:', mref
+         write(DIG_PARM_UNIT,*) '    kref:', kref
          write(DIG_PARM_UNIT,*) '    phi:', phi
          write(DIG_PARM_UNIT,*) '    delta:', delta
          write(DIG_PARM_UNIT,*) '    mu:', mu
-         write(DIG_PARM_UNIT,*) '    a:', a
+         write(DIG_PARM_UNIT,*) '    alpha_c:', alpha_c
          write(DIG_PARM_UNIT,*) '    c1:', c1
          write(DIG_PARM_UNIT,*) '    sigma_0:', sigma_0
          write(DIG_PARM_UNIT,*) '    src2method:', src2method
@@ -223,9 +232,6 @@ contains
 
          call opendatafile(iunit, file_name)
          read(iunit,*) init_ptype
-         read(iunit,*) init_pmax_ratio
-         read(iunit,*) init_ptf ! DIG - some of these parameters are no longer needed
-         read(iunit,*) init_ptf2
          close(unit=iunit)
 
          init_pmin_ratio = 1.d16
@@ -240,8 +246,6 @@ contains
          write(DIG_PARM_UNIT,*) 'SETPINIT:'
          write(DIG_PARM_UNIT,*) '---------'
          write(DIG_PARM_UNIT,*) '    init_ptype:',init_ptype
-         write(DIG_PARM_UNIT,*) '    init_pmax_ratio:',init_pmax_ratio
-         write(DIG_PARM_UNIT,*) '    init_ptf:',init_ptf
          close(DIG_PARM_UNIT)
 
    end subroutine set_pinit
@@ -263,7 +267,7 @@ contains
       !Locals
       double precision :: mmin,mmax,chimin,chimax,pmax,pmin
 
-      if (h.le.drytolerance) then
+      if (h.le.dry_tolerance) then
          h =  0.d0
          hu = 0.d0
          hv = 0.d0
@@ -435,7 +439,7 @@ contains
       !determine kperm
       !segregation effect on kperm
       kr_chi = 1.0d0
-      if (segregation) then
+      if (segregation==1) then
          !how many orders of magnitude should kperm change with chi=[0,1]
          delta_kr_order = 2.d0
          !DIG: check whether chi = 1 is coarse or fine
@@ -509,7 +513,6 @@ contains
       !local
       double precision :: m_eqn,vnorm,gmod,sigbedc,shear,tanphi,rho_fp
       double precision :: seg,pmtanh01,m_crit_m,m_crit_pm
-
       if (h.lt.dry_tolerance) return
 
       gmod=grav

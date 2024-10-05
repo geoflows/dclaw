@@ -76,14 +76,14 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          -
          - float
          - unitless
-       * - ``mr``
+       * - ``mref``
          - :math:`m_r`
          - Reference solid volume fraction
          - 0.60
          -
          - float
          - unitless
-       * - ``kr``
+       * - ``kref``
          - :math:`k_r`
          - Reference permeability
          - 0.0001
@@ -111,9 +111,9 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          -
          - float
          - Pa-s
-       * - ``a``
+       * - ``alpha_c``
          - :math:`a`
-         - Compressibility coefficient
+         - Debris compressibility coefficient
          - 0.01
          - 0.01-0.3
          - float
@@ -247,12 +247,12 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("rho_f", 1000.0)
         self.add_attribute("m_crit", 0.62)
         self.add_attribute("m0", 0.52)
-        self.add_attribute("mr", 0.60)
-        self.add_attribute("kr", 0.0001)
+        self.add_attribute("mref", 0.60)
+        self.add_attribute("kref", 0.0001)
         self.add_attribute("phi", 40.0)
         self.add_attribute("delta", 0.01)
         self.add_attribute("mu", 0.001)
-        self.add_attribute("a", 0.01)
+        self.add_attribute("alpha_c", 0.01)
         self.add_attribute("c1", 1.0)
         self.add_attribute("sigma_0", 1.0e3)
 
@@ -290,13 +290,13 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write("rho_f", description="pore-fluid density  (kg/m^3)")
         self.data_write("m_crit", description="critical state value of m (#)")
         self.data_write("m0", description="initial solid volume fraction (#)")
-        self.data_write("mr", description="reference solid volume fraction (#)")
-        self.data_write("kr", description=" reference permeability",
+        self.data_write("mref", description="reference solid volume fraction (#)")
+        self.data_write("kref", description=" reference permeability",
         )
         self.data_write("phi", description="basal friction angle (degrees)")
         self.data_write("delta", description="characteristic grain diameter (m)")
         self.data_write("mu", description="viscosity of pore-fluid (Pa-s)")
-        self.data_write("a", description="debris compressibility constant (#)")
+        self.data_write("alpha_c", description="debris compressibility constant (#)")
         self.data_write("c1", description="granular dilatency constant (#)")
         self.data_write(
             "sigma_0", description="baseline stress for definition of compressibility"

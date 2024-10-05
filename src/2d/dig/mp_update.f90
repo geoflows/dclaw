@@ -1,6 +1,6 @@
     !file contains routines for integrating part of source term for m, p and h
     !does not affect u,v, but note hu,hv changed due to change in h.
-    !single contained routine should be called from src2 with timestep dtk. 
+    !single contained routine should be called from src2 with timestep dtk.
     !
     !integrates:
     ! dm/dt = f_1(p,m)
@@ -15,40 +15,40 @@
     !
     ! why 2 vs. 3? Note that if m is poorly integrated, h(m) is poorly updated. So maintaining rho h = constant may lead to bad depth approx
     ! or possibly poorer volume conservation, even though mass conservation is exact. method 2 gives a somewhat balanced approach perhaps.
-    
+
 
 subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
     !====================================================================
-    ! subroutine mp_update_FE_4quad: integrate dp_exc/dt,dm/dt by a hybrid 
+    ! subroutine mp_update_FE_4quad: integrate dp_exc/dt,dm/dt by a hybrid
     ! explicit integration that depends on the initial quadrant of phase space.
-    ! Basic idea which conforms to phase space vector field: for each quadrant 
+    ! Basic idea which conforms to phase space vector field: for each quadrant
     ! of phase space (divided by p=p_eq(m_c) and m=m_c, where m_c is m_eqn(p_eq))
-    ! there is only one open 
-    ! interior (physically admissible) boundary that can be crossed. These boundaries 
-    ! are such that a physically admissible solution must proceed clockwise (m horizontal 
-    ! axis, p vertical) if it changes quadrants. 1 (UL)-> 2(UR)-> 3 (LR)-> 4(LL). 
-    ! An open boundary in 1 quadrant is a closed boundary in then next, ie. m=m_c 
-    ! belongs to quads 2 & 4, p=p_eq belongs to 1 & 3. Explicit solution to 
-    ! non-homogeneous exponential ode d/dt(m,p_exc) is used with dtk<=dt  such that only 
-    ! the open/admissible boundary can be crossed in a given substep. For a given 
-    ! substep dt, either (a) sol remains interior to quadrant (dtk=dt), (b) sol. 
-    ! reaches physically inadmissible boundary dtk<=dt (c) solution reaches open 
+    ! there is only one open
+    ! interior (physically admissible) boundary that can be crossed. These boundaries
+    ! are such that a physically admissible solution must proceed clockwise (m horizontal
+    ! axis, p vertical) if it changes quadrants. 1 (UL)-> 2(UR)-> 3 (LR)-> 4(LL).
+    ! An open boundary in 1 quadrant is a closed boundary in then next, ie. m=m_c
+    ! belongs to quads 2 & 4, p=p_eq belongs to 1 & 3. Explicit solution to
+    ! non-homogeneous exponential ode d/dt(m,p_exc) is used with dtk<=dt  such that only
+    ! the open/admissible boundary can be crossed in a given substep. For a given
+    ! substep dt, either (a) sol remains interior to quadrant (dtk=dt), (b) sol.
+    ! reaches physically inadmissible boundary dtk<=dt (c) solution reaches open
     ! quadrant boundary (dtk<=dt) that belongs to next quadrant for next substep.
-    ! Quadrants 1 & 3 contain the p and m nullclines. Substeps are taken based on 
-    ! the initial position wrt these nullclines, because solution is most prone 
-    ! to oscillations if a substep overshoots a nullcline significantly. Solution 
+    ! Quadrants 1 & 3 contain the p and m nullclines. Substeps are taken based on
+    ! the initial position wrt these nullclines, because solution is most prone
+    ! to oscillations if a substep overshoots a nullcline significantly. Solution
     ! converges to p-nullcline envelope when it should, except when above and below
     ! the p-nullcline on left and right of m_eq respectively,the most problematic regions.
-    ! m-nullcline is simply p=p_eq(m). p-nullcline is complicated but = m-nullcline if vnorm = 0. 
-    ! Otherwise rises toward (above?) lithostatic pressure in left-half plane and 0 (negative?) 
+    ! m-nullcline is simply p=p_eq(m). p-nullcline is complicated but = m-nullcline if vnorm = 0.
+    ! Otherwise rises toward (above?) lithostatic pressure in left-half plane and 0 (negative?)
     ! in right-half plane as v increases and kperm decreases.
     !====================================================================
 
-       use digclaw_module, only: rho_f,rho_s,sigma_0,mu,alpha,setvars,qfix,qfix_cmass,phi_bed,m_crit,delta
-       use geoclaw_module, only: grav,drytolerance
- 
+       use digclaw_module, only: rho_f,rho_s,sigma_0,mu,alpha,setvars,qfix,qfix_cmass,m_crit,delta
+       use geoclaw_module, only: grav
+
        implicit none
- 
+
        !i/o
        real(kind=8), intent(inout) :: h,m,p
        real(kind=8), intent(in)  :: u,v,rhoh,dt,chi
@@ -57,7 +57,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
        !local
        real(kind=8) :: h0,p0,m_0,p_eq0,p_exc0,sig_eff,sig_0,vnorm,m_eq
-       real(kind=8) :: kappa,S,rho,rho0,tanpsi,D,tau,sigbed,kperm,phi
+       real(kind=8) :: kappa,S,rho,rho0,tanpsi,D,tau,sigbed,kperm
        real(kind=8) :: km,kp,alphainv,c_d,p_exc,dtr,dtm,dtp,dts,p_excm,p_exc_ave
        real(kind=8) :: km0,kp0,alphainv0,c_d0
        real(kind=8) :: hu,hv,hm
@@ -65,13 +65,12 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        real(kind=8) :: m_c0,p_eq_c0,sig_c,Nd,Nn,normc,shear,convtol,m_eq1,sig_eff1
        integer :: debugloop,iter,itermax,quad0,quad1
        logical :: outquad,debug
- 
+
        debugloop = 0
        debug = .false.
        outquad = .true.
-       phi = phi_bed
        vnorm = sqrt(u**2 + v**2)
- 
+
        !explicit integration (hybrid FE and explicit exponential solution)---------------------------------------------------
        ! q1 = q0 + dtk*f(q0)
        call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
@@ -81,10 +80,10 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        p0 = p
        p_eq0 = rho_f*gz*h0
        p_exc0 = p0 - p_eq0
-       
+
        dtk = 0.d0
        dtr = dt
-       
+
        quad0=0
        quad1=0
        ! if at critical point dq/dt = 0
@@ -146,7 +145,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              endif
              if (iter>10.and.debug) then
                 write(*,*) '--------------------------------------------------'
-                write(*,*) 'SRC2 WARNING: fixed point iterations:', iter 
+                write(*,*) 'SRC2 WARNING: fixed point iterations:', iter
                 write(*,*) 'norm for convergence:', normc
              endif
           enddo
@@ -156,7 +155,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
                 h_c = rhoh/rho_c
                 p_eq_c = rho_f*gz*h_c
           endif
-          
+
        endif
 
        !determine quadrant of initial solution in state space
@@ -170,9 +169,9 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        elseif ((m<=m_c).and.(p<p_eq_c)) then
           quad0=4
        endif
-       
+
        select case (quad0)
-       
+
        case(1) !UL quadrant, variable material and p_exc
           debugloop = 1000
           !statically loose
@@ -188,18 +187,18 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              endif
              dts = min(dtr,dtp)
              !integrate dp_exc/dt = -kp0 p_exc + c_d with coefficients at t=0.
-             dts = max(dts,0.d0) 
+             dts = max(dts,0.d0)
              p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dts) +c_d0)
-             !m = m_0*exp(dts*km0*0.5d0*(p_exc0+p_exc))    
+             !m = m_0*exp(dts*km0*0.5d0*(p_exc0+p_exc))
              m = m_0*exp(dts*km0*p_exc)
           elseif ((-kp0*p_exc0+c_d0)>0.d0) then !p_exc is increasing/below nullcline
              debugloop=debugloop + 200
-             !bound time step 
+             !bound time step
              ! to max allowed (lithostatic,rhoh*g) if nullcline exceeds it
              if ((c_d/kp)>(rhoh*gz-p_eq_c)) then
                 debugloop=debugloop + 10
                 dtp = min(dtr,-(1.d0/kp0)*log((-kp0*rhoh*gz+kp0*p_eq_c+c_d)/(-kp0*p_exc0+c_d0)))
-             !bound time step so not to exceed nullcline 
+             !bound time step so not to exceed nullcline
              else
                 debugloop=debugloop + 20
                 dtp = dtr
@@ -223,7 +222,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              debugloop=debugloop + 300
              !p_exc is decreasing/above nullcline or static on nullcline
              ! m strictly increasing
-             if (c_d0>0.d0) then !p_exc remains in quad1 for any dt 
+             if (c_d0>0.d0) then !p_exc remains in quad1 for any dt
                 debugloop=debugloop + 10
                 ! only m can take solution beyond nullcline
                 dtp = dtr
@@ -258,7 +257,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
           !m>m_c>m_eq
           !p is strictly decreasing, m strictly increasing
           debugloop = 2000
-          dtp = min(dtr,-(1.d0/kp0)*log((c_d0)/(-kp0*p_exc0+c_d0))) 
+          dtp = min(dtr,-(1.d0/kp0)*log((c_d0)/(-kp0*p_exc0+c_d0)))
           dtm = min(dtp,(1.d0-m_0)/(km0*p_exc0*m_0))
           p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dtp) +c_d0)
           !m = m_0 + km0*m_0*0.5d0*(p_exc0+p_exc)*min(dts,dtm)
@@ -289,17 +288,17 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              else
                 debugloop=debugloop + 20
                 dtp = dtr
-             endif 
+             endif
              !p_exc decrease bounded by p=0 or nullcline if dtp>=dtr
              p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dtp) +c_d0)
              p_exc_ave = 0.5d0*(p_exc+p_exc0)
-             if (p_exc_ave>0.d0) then 
+             if (p_exc_ave>0.d0) then
                 debugloop=debugloop + 1
                 !p_exc still above m nullcline (p=p_eq) even though below p_eq_c, m increasing
                 !happens only if still near p_exc=0.
                 dtm = min(dtr,(1.d0-m_0)/(km0*p_exc_ave*m_0))
              else
-                debugloop=debugloop + 2  
+                debugloop=debugloop + 2
                 m_lower = m_eq + max(0.d0,(1.d0/3.d0)*kp0*h0*(-p_exc_ave)/(vnorm*alphainv))
                 dtm = min(dtr,(m_lower-m_0)/(km0*p_exc_ave*m_0))
              endif
@@ -334,7 +333,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
           call qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
           dtk = dts
           dtr = dtr-dts
-          
+
        case(4) !LL quadrant
           ! m is strictly decreasing, p strictly increasing
           debugloop = 4000
@@ -366,7 +365,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
        if (debug) then
           call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff1,m_eq1,tanpsi,tau)
-          
+
           if (dtk/dtr<1.d-6.and.quad0==quad1) then
              write(*,*) '---------------SRC WARNING: SMALL TIMESTEP---------->>>>>>'
              write(*,*) 'dtk,dtr:', dtk,dtr
@@ -420,7 +419,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              stop
           endif
        endif
-       
+
        return
        end subroutine mp_update_FE_4quad
 
@@ -432,12 +431,12 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
    !for less easier integration of p.
    !update m,h based on new value of D. rho h not exact/approx.
 
-      use digclaw_module, only: rho_f,rho_s,sigma_0,mu,alpha,setvars,qfix,qfix_cmass,phi_bed,m_crit,delta
+      use digclaw_module, only: rho_f,rho_s,sigma_0,mu,setvars,qfix,qfix_cmass,m_crit,delta
       use digclaw_module, only: src2method
-      use geoclaw_module, only: grav,drytolerance
+      use geoclaw_module, only: grav
 
       implicit none
- 
+
       !i/o
       real(kind=8), intent(inout) :: h,m,p
       real(kind=8), intent(in)  :: u,v,rhoh,dt,chi
@@ -445,7 +444,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
 
       !local
       real(kind=8) :: m_0,p_eq,p_exc,sig_eff,sig_0,vnorm,m_eq
-      real(kind=8) :: rho,tanpsi,D,tau,kperm,phi,alphainv
+      real(kind=8) :: rho,tanpsi,D,tau,kperm,alphainv
       real(kind=8) :: krate,zeta,D
 
       call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
@@ -466,10 +465,10 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
       D = -2.0d0*(kperm/(mu*h))*p_exc
       krate = D*(rho-rho_f)/rhoh
-      hm = hm*exp(-dt*D*rho_f/(rhoh)) 
+      hm = hm*exp(-dt*D*rho_f/(rhoh))
 
       select case (src2method)
-      !NOTE: at this point hm has changed. 
+      !NOTE: at this point hm has changed.
       ! can redefine h by constant rho h and hm, or update h directly
       case(0)
          ! integrate hu, hv, hm, and h.
@@ -478,7 +477,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
          h = h + h*krate*dt
          hchi = h*chi
          hu = hu*exp(dt*krate)
-         hv = hv*exp(dt*krate)    
+         hv = hv*exp(dt*krate)
          qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
       case(1)
          ! redefine h by hm, rhoh, set hu,hv by new h
