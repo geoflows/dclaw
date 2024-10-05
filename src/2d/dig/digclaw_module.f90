@@ -9,7 +9,7 @@ module digclaw_module
     ! General digclaw parameters
     ! ========================================================================
     double precision :: rho_s,rho_f,m_crit,m0,mref,kref,phi,delta,mu,alpha_c
-    double precision :: c1,sigma_0
+    double precision :: c1,sigma_0,kappa
     double precision :: theta_input,entrainment_rate,me,beta_seg,chi0,chie
     double precision :: alphainv
 
@@ -97,6 +97,9 @@ contains
          i_taudir_x = i_dig + 3
          i_taudir_y = i_dig + 4
          i_ent = i_dig + 5
+
+         !kappa: earth pressure coefficient
+         kappa = 1.d0
 
          ! Read user parameters from setgeo.data
          if (present(fname)) then
@@ -419,21 +422,23 @@ contains
    !                     functions of the solution vector q
    !====================================================================
 
-   subroutine setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+   subroutine setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
 
       implicit none
 
       !i/o
-      real(kind=8), intent(inout) :: rho
-      real(kind=8), intent(in)  :: h,u,v,m,p,gz,chi
-      real(kind=8), intent(out) :: alphainv,sig_0,sig_eff
+      real(kind=8), intent(in)  :: h,u,v,m,p,chi,gz
+      real(kind=8), intent(out) :: alphainv
       real(kind=8), intent(out) :: tau,m_eq,tanpsi,kperm
+      real(kind=8), intent(out) :: rho
 
       !local
       real(kind=8) :: vnorm,shear,Nden,Nnum,psi,delta_kr_order,kr_chi
+      real(kind=8) :: sig_0,sig_eff
 
 
-      !check rho
+      !calculate rho ! DIG: Cleaner approach would be for rho to be in, and
+      ! always have been calculated beforehand.
       rho = m*(rho_s-rho_f) + rho_f
 
       !determine kperm
@@ -450,7 +455,6 @@ contains
       !determine vars related to m_eq and compressibility
       sig_eff = max(0.d0,rho*gz*h - p)
 
-      alphamethod = 2
       select case (alphamethod)
       case(0:1)
          sig_0 = sigma_0
@@ -484,89 +488,88 @@ contains
       ! Note: for v=0, bounds on tau for static friction are determined in Riemann solver
       !        because the bounds are due to gradients in q. This routine determines vars
       !        from pointwise cell-centered value q(i).
-      tau = sig_eff*tan(phi_bed + 0.d0*psi)
+      tau = sig_eff*tan(phi_bed + psi)
+
       ! Note:  for water (m=0) sig_eff=0.0 and so tau=0.
       !        However, for dilute suspensions,
       !        we make o(m) not O(m))
-      !if (m<0.55d0) then
-      tau = tau*0.5d0*(1.d0 + tanh(50.d0*(m-0.40d0))) !+ 100.d0*shear))
-      !endif
+      tau = tau*0.5d0*(1.d0 + tanh(50.d0*(m-0.05d0)))
 
       return
 
       end subroutine setvars
-   !====================================================================
-   ! subroutine auxeval: evaluates the auxiliary variables as functions
-   !                     of the solution vector q
-   !====================================================================
+!!!   !====================================================================
+!!!   ! subroutine auxeval: evaluates the auxiliary variables as functions
+!!!   !                     of the solution vector q
+!!!   !====================================================================!!!
 
-   subroutine auxeval(h,u,v,m,p,phi_bed,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
+!!!   subroutine auxeval(h,u,v,m,p,phi_bed,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)!!!
 
-      implicit none
+!!!      implicit none!!!
 
-      !i/o
-      double precision, intent(inout) :: chi
-      double precision, intent(in)  :: h,u,v,m,p,phi_bed,theta
-      double precision, intent(out) :: S,rho,tanpsi,D,tau,kappa
-      double precision, intent(out) :: sigbed,kperm,compress
+!!!      !i/o
+!!!      double precision, intent(inout) :: chi
+!!!      double precision, intent(in)  :: h,u,v,m,p,phi_bed,theta
+!!!      double precision, intent(out) :: S,rho,tanpsi,D,tau,kappa
+!!!      double precision, intent(out) :: sigbed,kperm,compress!!!
 
-      !local
-      double precision :: m_eqn,vnorm,gmod,sigbedc,shear,tanphi,rho_fp
-      double precision :: seg,pmtanh01,m_crit_m,m_crit_pm
-      if (h.lt.dry_tolerance) return
+!!!      !local
+!!!      double precision :: m_eqn,vnorm,gmod,sigbedc,shear,tanphi,rho_fp
+!!!      double precision :: seg,pmtanh01,m_crit_m,m_crit_pm
+!!!      if (h.lt.dry_tolerance) return!!!
 
-      gmod=grav
-      chi = max(0.0d0,chi)
-      chi = min(1.0d0,chi)
+!!!      gmod=grav
+!!!      chi = max(0.0d0,chi)
+!!!      chi = min(1.0d0,chi)!!!
 
-      if (bed_normal.eq.1) gmod=grav*dcos(theta)
-      vnorm = dsqrt(u**2 + v**2)
-      rho = rho_s*m + rho_fp*(1.d0-m)
-      shear = 2.0d0*vnorm/h
-      sigbed = dmax1(0.d0,rho*gmod*h - p)
-      sigbedc = rho_s*(shear*delta)**2 + sigbed
-      if (sigbedc.gt.0.0d0) then
-         S = (mu*shear/(sigbedc))
-      else
-         S = 0.d0
-      endif
-      !Note: m_eqn = m_crit/(1+sqrt(S))
-      !From Boyer et. al
+!!!      if (bed_normal.eq.1) gmod=grav*dcos(theta)
+!!!      vnorm = dsqrt(u**2 + v**2)
+!!!      rho = rho_s*m + rho_fp*(1.d0-m)
+!!!      shear = 2.0d0*vnorm/h
+!!!      sigbed = dmax1(0.d0,rho*gmod*h - p)
+!!!      sigbedc = rho_s*(shear*delta)**2 + sigbed
+!!!      if (sigbedc.gt.0.0d0) then
+!!!         S = (mu*shear/(sigbedc))
+!!!      else
+!!!         S = 0.d0
+!!!      endif
+!!!      !Note: m_eqn = m_crit/(1+sqrt(S))
+!!!      !From Boyer et. al!!!
 
-      kperm = kappita*exp(-(m-m0)/(0.04d0))!*(10**(pmtanh01))
-      m_crit_pm =  0.d0
+!!!      kperm = kappita*exp(-(m-m0)/(0.04d0))!*(10**(pmtanh01))
+!!!      m_crit_pm =  0.d0!!!
 
-      m_crit_pm = pmtanh01*0.09d0
-      m_crit_m = m_crit - m_crit_pm
-      m_eqn = m_crit_m/(1.d0 + sqrt(S))
-      tanpsi = c1*(m-m_eqn)*tanh(shear/0.1d0)
+!!!      m_crit_pm = pmtanh01*0.09d0
+!!!      m_crit_m = m_crit - m_crit_pm
+!!!      m_eqn = m_crit_m/(1.d0 + sqrt(S))
+!!!      tanpsi = c1*(m-m_eqn)*tanh(shear/0.1d0)!!!
 
-      if (m.le.1.d-16) then
-         compress = 1.d16
-         kperm = 0.0d0
-         tanpsi = 0.0d0
-         sigbed=0.0d0
-      else
-         compress = alpha/(m*(sigbed +  sigma_0))
-      endif
+!!!      if (m.le.1.d-16) then
+!!!         compress = 1.d16
+!!!         kperm = 0.0d0
+!!!         tanpsi = 0.0d0
+!!!         sigbed=0.0d0
+!!!      else
+!!!         compress = alpha/(m*(sigbed +  sigma_0))
+!!!      endif!!!
 
-      if (vnorm.le.0.d0) then
-         tanpsi = 0.d0
-         D = 0.d0
-      elseif (h*mu.gt.0.d0) then
-         D = 2.0d0*(kperm/(mu*h))*(rho_fp*gmod*h - p)
-      else
-         D = 0.d0
-      endif
+!!!      if (vnorm.le.0.d0) then
+!!!         tanpsi = 0.d0
+!!!         D = 0.d0
+!!!      elseif (h*mu.gt.0.d0) then
+!!!         D = 2.0d0*(kperm/(mu*h))*(rho_fp*gmod*h - p)
+!!!      else
+!!!         D = 0.d0
+!!!      endif!!!
 
-      tanphi = dtan(phi_bed + datan(tanpsi))
+!!!      tanphi = dtan(phi_bed + datan(tanpsi))!!!
 
-      tau = dmax1(0.d0,sigbed*tanphi)*((tanh(100.0*(m-0.05))+1.0)*0.5)
+!!!      tau = dmax1(0.d0,sigbed*tanphi)*((tanh(100.0*(m-0.05))+1.0)*0.5)!!!
 
-      !kappa: earth pressure coefficient
-      kappa = 1.d0
+!!!      !kappa: earth pressure coefficient
+!!!      kappa = 1.d0!!!
 
-   end subroutine auxeval
+!!!   end subroutine auxeval
 
 
    ! ========================================================================
@@ -587,27 +590,26 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       integer :: mx,my,mbc,meqn,maux
 
       !Locals
-      double precision :: gmod,dry_tol
+      double precision :: gz
       double precision :: h,hu,hv,hm,p,b,eta
       double precision :: hL,huL,hvL,hmL,pL,bL,etaL
       double precision :: hR,huR,hvR,hmR,pR,bR,etaR
       double precision :: hB,huB,hvB,hmB,pB,bB,etaB
       double precision :: hT,huT,hvT,hmT,pT,bT,etaT
 
-      double precision :: u,v,m
+      double precision :: u,v,m,chi
       double precision :: uL,vL,mL
       double precision :: uR,vR,mR
       double precision :: uB,vB,mB
       double precision :: uT,vT,mT
       double precision :: thetaL,thetaB,theta
-      double precision :: tau,tauL,tauR,tauB,tauT,rho,rhoL,rhoR,rhoT,rhoB
-      double precision :: phi,kappa,S,tanpsi,D,sigbed,kperm,compress,pm
+      double precision :: tau,rho
+      double precision :: tanpsi,kperm,m_eq
       double precision :: Fx,Fy,FxL,FxR,FyL,FyR,FyC,FxC,dot,vnorm,Fproj
 
       integer :: i,j
 
-      dry_tol = dry_tolerance
-      gmod = grav
+      gz = grav
 
       do j=2-mbc,my+mbc-1
          do i=2-mbc,mx+mbc-1
@@ -616,7 +618,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
               theta = aux(i_theta,i,j)
               thetaL = aux(i_theta,i-1,j)
               thetaB = aux(i_theta,i,j-1)
-              gmod = grav*cos(theta)
+              gz = grav*cos(theta)
             else
               theta = 0.d0
               thetaL = 0.d0
@@ -628,6 +630,12 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hv = q(i_hv,i,j)
             hm = q(i_hm,i,j)
             p  = q(i_pb,i,j)
+            if (h<dry_tolerance) then
+              chi=0.d0
+            else
+              chi = q(i_hchi,i,j)/h
+            endif
+
             call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
             b = aux(1,i,j)-q(i_bdif,i,j)
             eta = h+b
@@ -641,7 +649,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             call admissibleq(hL,huL,hvL,hmL,pL,uL,vL,mL,theta)
             bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
             etaL= hL+bL
-            if (hL<dry_tol) then
+            if (hL<dry_tolerance) then
                etaL = min(etaL,eta)
             endif
 
@@ -653,7 +661,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             call admissibleq(hR,huR,hvR,hmR,pR,uR,vR,mR,theta)
             bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
             etaR= hR+bR
-            if (hR<dry_tol) then
+            if (hR<dry_tolerance) then
                etaR = min(etaR,eta)
             endif
 
@@ -665,7 +673,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             call admissibleq(hB,huB,hvB,hmL,pB,uB,vB,mB,theta)
             bB = aux(1,i,j-1)-q(i_bdif,i,j-1)
             etaB= hB+bB
-            if (hB<dry_tol) then
+            if (hB<dry_tolerance) then
                etaB = min(etaB,eta)
             endif
 
@@ -677,39 +685,33 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             call admissibleq(hT,huT,hvT,hmT,pT,uT,vT,mT,theta)
             bT = aux(1,i,j+1)-q(i_bdif,i,j+1)
             etaT= hT+bT
-            if (hT<dry_tol) then
+            if (hT<dry_tolerance) then
                etaT = min(etaT,eta)
             endif
 
-            if (h<dry_tol) then
+            if (h<dry_tolerance) then
                eta = min(etaL,eta)
                eta = min(etaB,eta)
             endif
 
-            if ((h+hL+hB+hR+hT)<dry_tol) then
+            if ((h+hL+hB+hR+hT)<dry_tolerance) then
                aux(i_taudir_x,i,j) = 0.d0
                aux(i_taudir_y,i,j) = 0.d0
                aux(i_fsphi,i,j) = 0.d0
                cycle
             endif
 
-
-            pm = 0.5d0 !does not effect tau. only need tau in different cells
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-            call auxeval(hL,uL,vL,mL,pL,phi,theta,kappa,S,rhoL,tanpsi,D,tauL,sigbed,kperm,compress,pm)
-            call auxeval(hR,uR,vR,mR,pR,phi,theta,kappa,S,rhoR,tanpsi,D,tauR,sigbed,kperm,compress,pm)
-            call auxeval(hB,uB,vB,mB,pB,phi,theta,kappa,S,rhoB,tanpsi,D,tauB,sigbed,kperm,compress,pm)
-            call auxeval(hT,uT,vT,mT,pT,phi,theta,kappa,S,rhoT,tanpsi,D,tauT,sigbed,kperm,compress,pm)
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
 
             !minmod gradients
-            FxC = -gmod*h*(EtaR-EtaL)/(2.d0*dx) + gmod*h*sin(theta)
-            FyC = -gmod*h*(EtaT-EtaB)/(2.d0*dy)
+            FxC = -gz*h*(EtaR-EtaL)/(2.d0*dx) + gz*h*sin(theta)
+            FyC = -gz*h*(EtaT-EtaB)/(2.d0*dy)
 
-            FxL = -gmod*0.5d0*(h+hL)*(Eta-EtaL)/(dx) + gmod*0.5d0*(h+hL)*sin(theta)
-            FyL = -gmod*0.5d0*(h+hB)*(Eta-EtaB)/(dy)
+            FxL = -gz*0.5d0*(h+hL)*(Eta-EtaL)/(dx) + gz*0.5d0*(h+hL)*sin(theta)
+            FyL = -gz*0.5d0*(h+hB)*(Eta-EtaB)/(dy)
 
-            FxR = -gmod*0.5d0*(h+hR)*(EtaR-Eta)/(dx) + gmod*0.5d0*(h+hR)*sin(theta)
-            FyR = -gmod*0.5d0*(h+hT)*(EtaT-Eta)/(dy)
+            FxR = -gz*0.5d0*(h+hR)*(EtaR-Eta)/(dx) + gz*0.5d0*(h+hR)*sin(theta)
+            FyR = -gz*0.5d0*(h+hT)*(EtaT-Eta)/(dy)
 
             if (FxL*FxR>0.d0) then
                Fx = sign(min(abs(FxL),abs(FxR)),FxL)

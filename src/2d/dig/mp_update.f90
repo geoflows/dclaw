@@ -56,13 +56,13 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        real(kind=8), intent(out) :: dtk
 
        !local
-       real(kind=8) :: h0,p0,m_0,p_eq0,p_exc0,sig_eff,sig_0,vnorm,m_eq
+       real(kind=8) :: h0,p0,m_0,p_eq0,p_exc0,vnorm,m_eq
        real(kind=8) :: kappa,S,rho,rho0,tanpsi,D,tau,sigbed,kperm
        real(kind=8) :: km,kp,alphainv,c_d,p_exc,dtr,dtm,dtp,dts,p_excm,p_exc_ave
        real(kind=8) :: km0,kp0,alphainv0,c_d0
        real(kind=8) :: hu,hv,hm
        real(kind=8) :: rho_c,h_c,p_eq_c,m_c,rho_c1,h_c1,p_eq_c1,m_c1,m_lower,m_upper
-       real(kind=8) :: m_c0,p_eq_c0,sig_c,Nd,Nn,normc,shear,convtol,m_eq1,sig_eff1
+       real(kind=8) :: m_c0,p_eq_c0,sig_c,Nd,Nn,normc,shear,convtol,m_eq1
        integer :: debugloop,iter,itermax,quad0,quad1
        logical :: outquad,debug
 
@@ -73,7 +73,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
        !explicit integration (hybrid FE and explicit exponential solution)---------------------------------------------------
        ! q1 = q0 + dtk*f(q0)
-       call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+       call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
        h0 = h
        m_0 = m
        rho0 = m_0*(rho_s-rho_f)+rho_f
@@ -351,7 +351,6 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        end select
 
        if (debug) then
-          !call setvars(h,u,v,m,p,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
           if ((m<m_c).and.(p>=p_eq_c)) then
              quad1=1
           elseif ((m>=m_c).and.(p>p_eq_c)) then
@@ -364,7 +363,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        endif
 
        if (debug) then
-          call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff1,m_eq1,tanpsi,tau)
+          call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq1,tanpsi,tau)
 
           if (dtk/dtr<1.d-6.and.quad0==quad1) then
              write(*,*) '---------------SRC WARNING: SMALL TIMESTEP---------->>>>>>'
@@ -380,7 +379,6 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              write(*,*) 'm1 - m_c:', m - m_c
              write(*,*) 'm1 - m_eq1:', m - m_eq1
              write(*,*) 'meq1 - m_c:', m_eq1 - m_c
-             write(*,*) 'sig_eff0,sig_eff1:', sig_eff,sig_eff1
              write(*,*) 'p0,p1:', p0,p
              write(*,*) 'p_exc0,p_exc:', p_exc0,p_exc
              write(*,*) 'h0,h_c,diff', h0,h_c,h0-h_c
@@ -443,11 +441,11 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       real(kind=8), intent(in)  :: gz
 
       !local
-      real(kind=8) :: m_0,p_eq,p_exc,sig_eff,sig_0,vnorm,m_eq
+      real(kind=8) :: m_0,p_eq,p_exc,vnorm,m_eq
       real(kind=8) :: rho,tanpsi,D,tau,kperm,alphainv
       real(kind=8) :: krate,zeta,hchi,hu,hv,hm
 
-      call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+      call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
 
       hu=h*u
       hv=h*v

@@ -6,13 +6,12 @@
       use geoclaw_module, only: grav, dry_tolerance,deg2rad,friction_depth
       use geoclaw_module, only: manning_coefficient,friction_forcing
 
-      use digclaw_module, only: alpha_c,beta_seg,bed_normal,curvature
+      use digclaw_module, only: bed_normal,curvature
       use digclaw_module, only: entrainment,entrainment_rate,entrainment_method
       use digclaw_module, only: src2method
-      use digclaw_module, only: phi,segregation
-      use digclaw_module, only: i_ent,i_fsphi,i_phi,i_theta
-      use digclaw_module, only: mu,rho_f,rho_s, sigma_0
-      use digclaw_module, only: admissibleq,auxeval
+      use digclaw_module, only: segregation
+      use digclaw_module, only: i_ent,i_theta
+      use digclaw_module, only: mu,rho_f,rho_s
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
       use digclaw_module, only: qfix,setvars
       implicit none
@@ -26,24 +25,19 @@
       double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
       !local
-      real(kind=8) :: gz,gx,h,hu,hv,hm,u,v,m,p
-      real(kind=8) :: rhoh
+      real(kind=8) :: gz,gx,h,hu,hv,hm,u,v,m,p,chi
       real(kind=8) :: b,bR,bL,bT,bB,bTR,bTL,bBR,bBL
-      real(kind=8) :: kappa,S,rho,tanpsi
-      real(kind=8) :: D,tau,sigbed,kperm,compress,chi,coeffmanning
-      real(kind=8) :: vnorm,hvnorm,theta,dtheta,w,taucf,hvnorm0
-      real(kind=8) :: shear,sigebar,pmtanh01,rho_fp,seg,m_eq
-      real(kind=8) :: b_xx,b_yy,b_xy,hchi,beta
-      real(kind=8) :: t1bot,t2top,beta2,dh,rho2,prat,b_x,b_y,dbdv
-      real(kind=8) :: vlow,m2,vreg,slopebound
+
+      real(kind=8) :: rhoh,hchi
+      real(kind=8) :: rho,tanpsi
+      real(kind=8) :: tau,kperm
+      real(kind=8) :: vnorm,hvnorm,theta,dtheta,hvnorm0
+      real(kind=8) :: m_eq
+      real(kind=8) :: b_x,b_y,b_xx,b_yy,b_xy
+      real(kind=8) :: beta,coeffmanning
       real(kind=8) :: b_eroded,b_remaining
-      real(kind=8) :: gamma,zeta,krate,p_eq,dgamma,sig_0,sig_eff
+      real(kind=8) :: gamma,zeta,dgamma
       real(kind=8) :: dtk,dtremaining,alphainv,gacc
-
-
-      ! TO REMOVE
-      double precision :: alpha,kappita,phi_bed,alpha_seg
-      ! END TO REMOVE
 
       integer :: i,j,ii,jj,icount,itercount,itercountmax
 
@@ -128,13 +122,12 @@
                   hv= hv/dgamma
                   !new u,v below
                   call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
-                  !call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
                endif
             endif
 
 !-----------!integrate momentum source term------------------------
             ! need tau:
-            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
 
 !-----------! changes only hu,hv,u,v ------------------------------
             !integrate momentum source term
@@ -155,7 +148,7 @@
                ! velocity now constant for remainder of src2. hu,hv adjusted due to change in h
             endif
 !-------------------------------------------------------------------------
-            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
 !----------- ! integrate p  & m-------------------------------------------
 
             select case (src2method)
@@ -202,7 +195,7 @@
             end select
             !========================== end src integration ======================
 
-            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
 
             !======================mass entrainment===========================
             if (entrainment==1) then
