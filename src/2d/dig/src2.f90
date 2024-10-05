@@ -79,11 +79,7 @@
             hchi = q(i_hchi,i,j)
             rhoh = hm*rho_s + (h-hm)*rho_f
             call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
-            ! DIG: 10/3/24: DLG: not sure need chi check below...should be checked somewhere
-            ! else where hchi or chi is computed. Or in the physical check of q (qfix or admissible q)
-            !chi = max(0.0d0,chi)
-            !chi = min(1.0d0,chi)
-           
+            
             !modified gravity: bed-normal weight and acceleration
             if (bed_normal==1) then
                theta = aux(i_theta,i,j)
@@ -202,87 +198,15 @@ c----------- ! integrate p  & m-------------------------------------------
             if (entrainment) then
                b_eroded = q(i_bdif,i,j)
                b_remaining = aux(i_ent,i,j)-b_eroded
-               select case(entrain_method)
+               select case(entrainment_method)
+               case(0)
+                  call ent_dclaw4(dt,h,u,v,m,p,chi,gz,b_x,b_y,b_eroded,b_remaining)
+                  q(i_bdif,i,j) = b_eroded
                case(1)
-                  call ent_dclaw4()
-               case(2)
                   !do nothing yet
                end select
-
             endif
-            vnorm = sqrt(u**2 + v**2)
-            vlow = 0.1d0 ! minimum velocity for entrainment to occur. ! DIG: should this be a user
-            ! specified variable.
-
-            if (ent.and.vnorm.gt.vlow) then
-               if (aux(i_ent,i,j)>0.d0) then
-
-                  ! calculate the basal surface (aux(1)-q(i_bdif)) gradients in x and y
-                  ! to determine dbdv, the slope in the direction of flow by taking the dot
-                  ! product of the slope vector and the unit vector in the direction of flow.
-
-                  b_x = (aux(1,i+1,j)-q(i_bdif,i+1,j)-aux(1,i-1,j)+q(i_bdif,i-1,j))/(2.d0*dx)
-                  b_y = (aux(1,i,j+1)-q(i_bdif,i,j+1)-aux(1,i,j-1)+q(i_bdif,i,j-1))/(2.d0*dy)
-                  dbdv = (u*b_x+v*b_y)/vnorm
-                  slopebound = 1.d10
-                  b_eroded = q(i_bdif,i,j)
-
-                  ! erode if material to erode is still available and the slope is
-                  ! less than a critical slope value. !DIG: Improve critical slope value.
-
-                  if (dbdv<slopebound.and.b_eroded<aux(i_ent,i,j)) then
-
-                     ! calculate remaining material that may be eroded.
-                     b_remaining = aux(i_ent,i,j)-b_eroded
-
-                     ! value for m for entrained material
-                     m2 = 0.6d0
-                     ! DIG: eventually make this a user defined variable or an aux value.
-                     ! DIG: should there also be a substrate value for chi?
-
-                     ! calculate entrained material density, using hard coded values
-                     ! for rho_f and rho_s
-                     rho2 = m2*2700.d0 + (1.d0-m2)*1000.d0
-
-                     beta2 = 0.66d0
-
-                     ! calculate top and bottom shear stress.
-                     t1bot = beta2*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d-2))
-                     beta = 1.d0-m
-                     gamma= rho*beta2*(vnorm**2)*(beta*gmod*coeff**2)/(tanh(h+1.d-2)**(1.0d0/3.0d0))
-
-                     t1bot = t1bot + gamma
-                     t1bot = t1bot + tau
-
-                     t2top = min(t1bot,(1.d0-beta*entrainment_rate)*(tau))
-
-                     ! calculate pressure ratio
-                     prat = p/(rho*h)
-
-                     ! calculate dh
-                     dh = entrainment_rate*dt*(t1bot-t2top)/(rho2*beta2*vnorm)
-                     dh = min(dh,b_remaining)
-
-                     ! increment h based on dh
-                     h = h + dh
-                     hm = hm + dh*m2
-
-                     ! store amount eroded in q7
-                     q(i_bdif,i,j) = q(i_bdif,i,j) + dh
-
-                     call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                     call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
-
-                     ! update pressure based on prior pressure ratio.
-                     p = prat*rho*h
-
-                     ! DIG: should hchi (pm) be updated here, just as there is a m2, should there be a pm2?
-
-                     call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                  endif
-               endif
-            endif
-
+            
             !===================================================================
             ! end of entrainment, put state variables back in q.
 
