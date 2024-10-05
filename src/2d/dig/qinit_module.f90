@@ -60,7 +60,6 @@ module qinit_module
       integer, allocatable ::  mxqinit(:), myqinit(:)
       integer, allocatable :: i0qinit(:), mqinit(:)
       integer, allocatable :: iqinit(:), qinitftype(:)
-      integer, allocatable ::  minlevelqinit(:), maxlevelqinit(:)
 
 contains
 
@@ -444,21 +443,18 @@ contains
       allocate(xlowqinit(mqinitfiles),ylowqinit(mqinitfiles))
       allocate(xhiqinit(mqinitfiles),yhiqinit(mqinitfiles))
       allocate(dxqinit(mqinitfiles),dyqinit(mqinitfiles))
-      allocate(minlevelqinit(mqinitfiles),maxlevelqinit(mqinitfiles))
       allocate(qinitfname(mqinitfiles),qinitftype(mqinitfiles))
       allocate(iqinit(mqinitfiles))
       allocate(i0qinit(mqinitfiles),mqinit(mqinitfiles))
 
       do i=1,mqinitfiles
          read(iunit,*) qinitfname(i)
-         read(iunit,*) qinitftype(i),iqinit(i),minlevelqinit(i), maxlevelqinit(i)
+         read(iunit,*) qinitftype(i),iqinit(i)
 
          write(GEO_PARM_UNIT,*) '   '
          write(GEO_PARM_UNIT,*) '   ',qinitfname(i)
          write(GEO_PARM_UNIT,*) '  qinitftype = ', qinitftype(i)
          write(GEO_PARM_UNIT,*) '  iqinit = ', iqinit(i)
-         write(GEO_PARM_UNIT,*) '  minlevel, maxlevel = ', &
-                                  minlevelqinit(i), maxlevelqinit(i)
 
          call read_qinit_dig_header(qinitfname(i),qinitftype(i),mxqinit(i), &
                 myqinit(i),xlowqinit(i),ylowqinit(i),xhiqinit(i),yhiqinit(i), &

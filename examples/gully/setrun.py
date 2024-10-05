@@ -394,11 +394,11 @@ def setrun(claw_pkg='dclaw'):
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
     etafile = 'surface_topo.tt3'
-    qinitdclaw_data.qinitfiles.append([3, 8, 1, 2, etafile])
+    qinitdclaw_data.qinitfiles.append([3, 8, etafile])
 
     mfile = 'mass_frac.tt3'
     #mfile = 'mass_frac0.tt3' # with m0 = 0 below
-    qinitdclaw_data.qinitfiles.append([3, 4, 1, 2, mfile])
+    qinitdclaw_data.qinitfiles.append([3, 4, mfile])
 
     #hfile = 'landslide_depth.tt3'
     #qinitdclaw_data.qinitfiles.append([3, 1, 1, 2, hfile])
@@ -413,29 +413,31 @@ def setrun(claw_pkg='dclaw'):
     # == setdclaw.data values ==
     dclaw_data = rundata.dclaw_data  # initialized when rundata instantiated
 
-    dclaw_data.c1 = 1.0 # do we want to remove this?
     dclaw_data.rho_f = 1000.0
     dclaw_data.rho_s = 2700.0
-    dclaw_data.phi_bed = 32.0
-    dclaw_data.theta_input = 0.0
-    dclaw_data.mu = 0.005
-    dclaw_data.m0 = 0.63
-    #dclaw_data.m0 = 0. # pure water
     dclaw_data.m_crit = 0.64
-    dclaw_data.kappita = 1.e-10
-    #dclaw_data.kappita_diff = 1
-    #dclaw_data.chi_init_val=0.5 # not currently used.
-    dclaw_data.alpha_c = 0.05
-    dclaw_data.alpha_seg = 0.0
-    #dclaw_data.phi_seg_coeff = 0.0
+    dclaw_data.m0 = 0.63
+    dclaw_data.mr = 0.6
+    dclaw_data.kr = 1.e-10
+    dclaw_data.phi = 32.0
     dclaw_data.delta = 0.001
+    dclaw_data.mu = 0.005
+    dclaw_data.a = 0.01
+
+    dclaw_data.sigma_0 = 1.0e3
+    dclaw_data.c1 = 1.0 # do we want to remove this?
+
+
+    dclaw_data.segregation=1
+    dclaw_data.beta_seg = 0.0
+    dclaw_data.chi_init_val=0.5
+
     dclaw_data.bed_normal = 0
+    dclaw_data.theta_input = 0.0
+
     dclaw_data.entrainment = 0
     dclaw_data.entrainment_rate = 0.0
-    dclaw_data.sigma_0 = 1.0e3
-    #dclaw_data.mom_autostop = True
-    #dclaw_data.momlevel = 1
-    #dclaw_data.mom_perc = 0.0
+
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated

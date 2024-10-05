@@ -235,8 +235,6 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       ! ========= Pressure initialization for Mobilization Modeling======
       call calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
-      ! DIG - consider making pressures here reflect rho_fp and any other
-      ! changes associated with hchi.
 
       select case (init_ptype)
          case (-1)
