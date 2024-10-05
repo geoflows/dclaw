@@ -7,9 +7,9 @@
       use geoclaw_module, only: manning_coefficient,friction_forcing
 
       use digclaw_module, only: alpha,alpha_seg,bed_normal,curvature
-      use digclaw_module, only: entrainment,entrainment_rate
+      use digclaw_module, only: entrainment,entrainment_rate,phi_bed
       use digclaw_module, only: i_ent,i_fsphi,i_phi,i_theta
-      use digclaw_module, only: mu,rho_f,sigma_0
+      use digclaw_module, only: mu,rho_f,rho_s, sigma_0
       use digclaw_module, only: admissibleq,auxeval
       use digclaw_module, only: calc_pmtanh
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
@@ -25,29 +25,28 @@
       double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
       !local
-      real(kind=8) :: gmod,h,hu,hv,hm,u,v,m,p,phi,kappa,S,rho,tanpsi
-      real(kind=8) :: D,tau,sigbed,kperm,compress,pm,coeff
-      real(kind=8) :: vnorm,hvnorm,theta,dtheta,w,taucf,fsphi,hvnorm0
+      real(kind=8) :: gz,gx,h,hu,hv,hm,u,v,m,p
+      real(kind=8) :: b,bR,bL,bT,bB,bTR,bTL,bBR,bBL
+      real(kind=8) :: phi,kappa,S,rho,tanpsi
+      real(kind=8) :: D,tau,sigbed,kperm,compress,chi,coeffmanning
+      real(kind=8) :: vnorm,hvnorm,theta,dtheta,w,taucf,hvnorm0
       real(kind=8) :: shear,sigebar,pmtanh01,rho_fp,seg
-      real(kind=8) :: b_xx,b_yy,b_xy,chi,beta
+      real(kind=8) :: b_xx,b_yy,b_xy,hchi,beta
       real(kind=8) :: t1bot,t2top,beta2,dh,rho2,prat,b_x,b_y,dbdv
       real(kind=8) :: vlow,m2,vreg,slopebound
       real(kind=8) :: b_eroded,b_remaining
       real(kind=8) :: gamma,zeta,krate,p_eq,dgamma
 
       integer :: i,j,ii,jj,icount
-      logical :: ent
-
+      
 
       ! check for NANs in solution:
       call check4nans(meqn,mbc,mx,my,q,t,2)
 
-      gmod=grav
-
       if (friction_forcing) then
-         coeff = manning_coefficient(1)
+         coeffmanning = manning_coefficient(1)
       else
-         coeff = 0.d0
+         coeffmanning = 0.d0
       endif
 
       ! Current implementation of friction has manning as an array
@@ -56,27 +55,19 @@
       ! it will be manning_coefficient(1)
       ! DIG: Decide if this should be handled in some other way.
 
-      if (entrainment>0) then
-         ent = .true.
-      else
-         ent = .false.
-      endif
 
-      do j=1-mbc+1,my+mbc-1
-         do i=1-mbc+1,mx+mbc-1
+      gz = grav  !needed later for bed-normal direction gravity
+      gx = 0.d0
+      theta=0.d0 
+      phi = phi_bed
+
+      do j=1,my
+         do i=1,mx
          ! DIG: 1/12/24: KRB and MJB notice that here we are looping over ghost cells.
          ! These ghost cells have not been updated by the riemann solver? Are they used
          ! meaningfully (e.g., theta is diffed below.)
          ! 1/30/2024 - Leaving this as is for the moment, this is something to evaluate later.
-
-            ! adjust gravity if bed_normal = 1
-            theta = 0.d0
-            dtheta = 0.d0
-            if (bed_normal==1) then
-               theta = aux(i_theta,i,j)
-               gmod = grav*cos(theta)
-               dtheta = -(aux(i_theta,i+1,j) - theta)/dx
-            endif
+         ! DIG: 10/3/24: DLG is eliminating ghost cells from loop. 
 
             ! Get state variable
             h = q(i_h,i,j)
@@ -85,97 +76,140 @@
             hv = q(i_hv,i,j)
             hm = q(i_hm,i,j)
             p =  q(i_pb,i,j)
-            phi = aux(i_phi,i,j)
-            pm = q(i_hchi,i,j)/h
-            pm = max(0.0d0,pm)
-            pm = min(1.0d0,pm)
-            fsphi = aux(i_fsphi,i,j)
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-
-            !integrate momentum source term
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-
-            ! calculate total velocity
-            vnorm = sqrt(u**2 + v**2)
-            hvnorm = sqrt(hu**2 + hv**2)
-            hvnorm0 = hvnorm
-
-            !integrate friction
-            hvnorm = dmax1(0.d0,hvnorm - dt*tau/rho)
-            hvnorm = hvnorm*exp(-(1.d0-m)*2.0d0*mu*dt/(rho*h**2))
-            if (hvnorm<1.d-16) hvnorm = 0.d0
-
-            ! adjust based on curvature
-            if (hvnorm>0.d0.and.curvature==1) then
-               b_xx=(aux(1,i+1,j)-2.d0*aux(1,i,j)+aux(1,i-1,j))/(dx**2)
-               b_yy=(aux(1,i,j+1)-2.d0*aux(1,i,j)+aux(1,i,j-1))/(dy**2)
-               b_xy=(aux(1,i+1,j+1)-aux(1,i-1,j+1) -aux(1,i+1,j-1)+aux(1,i-1,j-1))/(4.d0*dx*dy)
-               chi = (u**2*b_xx + v**2*b_yy + 2.0d0*u*v*b_xy)/gmod
-               chi = max(chi,-1.d0)
-               taucf = chi*tau
-               hvnorm = dmax1(0.d0,hvnorm - dt*taucf/rho)
-               taucf = u**2*dtheta*tau/gmod
-               hvnorm = dmax1(0.d0,hvnorm - dt*taucf/rho)
+            hchi = q(i_hchi,i,j)
+            rhoh = hm*rho_s + (h-hm)*rho_f
+            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+            ! DIG: 10/3/24: DLG: not sure need chi check below...should be checked somewhere
+            ! else where hchi or chi is computed. Or in the physical check of q (qfix or admissible q)
+            !chi = max(0.0d0,chi)
+            !chi = min(1.0d0,chi)
+           
+            !modified gravity: bed-normal weight and acceleration
+            if (bed_normal==1) then
+               theta = aux(i_theta,i,j)
+               gz = grav*cos(theta)
+               gx = grav*sin(theta)
             endif
+            if (curvature==1.or.segregation==1) then
+               b = aux(1,i,j)-q(i_bdif,i,j)
+               bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
+               bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
+               bT = aux(1,i,j+1)-q(i_bdif,i,j+1)
+               bB = aux(1,i,j-1)-q(i_bdif,i,j-1)
+               bTR = aux(1,i+1,j+1)-q(i_bdif,i+1,j+1)
+               bTL = aux(1,i-1,j+1)-q(i_bdif,i-1,j+1)
+               bBR = aux(1,i+1,j-1)-q(i_bdif,i+1,j-1)
+               bBL = aux(1,i-1,j-1)-q(i_bdif,i-1,j-1)
+               b_x = (bR-bL)/2.d0*dx
+               b_y = (bT-bB)/2.d0*dy
+               b_xx=(bR - 2.d0*b + bL)/(dx**2)
+               b_yy=(bT - 2.d0*b + bB)/(dy**2)
+               b_xy=((bTR-bTL) - (bBR-bBL))/(4.0*dx*dy)
+            endif
+            if (curvature==1) then
+               dtheta = -(aux(i_theta,i+1,j) - aux(i_theta,i-1,j))/(2.d0*dx)
+               gacc = max(u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!max:currently only consider enhancement not reduction of gz (ie. basin not a hump)
+               gz = gz + gacc
+            endif
+
+            !Manning friction
+            if ((friction_forcing).and.(coeffmanning>0.d0)) then
+               if (h<=friction_depth) then
+                  beta = 1.0d0-m
+                  gamma= beta*sqrt(hu**2 + hv**2)*(gz*coeffmanning**2)/(h**(7.d0/3.d0))
+                  dgamma=1.d0 + dt*gamma
+                  hu= hu/dgamma
+                  hv= hv/dgamma
+                  !new u,v below
+                  call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+                  !call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
+               endif
+            endif
+
+c-----------!integrate momentum source term------------------------
+            ! need tau:
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+           
+c-----------! changes only hu,hv,u,v ------------------------------
+            !integrate momentum source term
+            hvnorm0 = sqrt(hu**2 + hv**2)
+            vnorm = hvnorm0/h
 
             if (hvnorm0>0.d0) then
-               hu = hvnorm*hu/hvnorm0
+               !integrate dynamic friction !DIG: TO DO - move dynamic friction to Riemann solver
+               vnorm = max(0.d0,vnorm - dt*tau/rhoh) !exact solution for Coulomb friction
+               vnorm = vnorm*exp(-(1.d0-m)*2.0d0*mu*dt/(h*rhoh)) !exact solution (prior to h change) for effective viscous friction
+               ! velocity determined, calculate directions etc. from vnorm
+               hvnorm = h*vnorm
+               hu = hvnorm*hu/hvnorm0 + gx*h*dt !gx=0 unless bed-normal !DIG: last term should ultimately be in Riemann solver
                hv = hvnorm*hv/hvnorm0
+               u = hu/h
+               v = hv/h
+               vnorm = sqrt(u**2 + v**2)
+               ! velocity now constant for remainder of src2. hu,hv adjusted due to change in h
             endif
+c-------------------------------------------------------------------------
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
+c----------- ! integrate p  & m-------------------------------------------
+            
+            select case (src2method)
 
-            ! call admissible q and auxeval before moving on to shear induced
-            ! dilatancy.
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
+            case(0:1)
+               call mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
+               hu = h*u
+               hv = h*v
+               hm = h*m
+               hchi = h*chi
+            case(2)
+            ! changes only p,m,hm,& h. hrho constant
+            ! takes in general multiple interior timesteps, dtk
+            ! sum(dtk) = dt
+            ! explicit integration for each dt
+               dtremaining = dt
+               itercountmax=10
+               itercount=0
 
-            ! calculate velocity
-            vnorm = sqrt(u**2 + v**2)
+               do while (dtremaining>1.d-99)
+                  call mp_update_FE_4quad(dtremaining,h,u,v,m,p,chi,rhoh,gz,dtk)
+                  dtremaining = dtremaining-dtk
+                  itercount = itercount + 1
+                  if (dtk==0.d0.and.(.not.debug)) exit
+                  if (h<drytolerance) exit
+                  if (itercount>=itercountmax) then
+                     exit
+                  endif
+                  if (debug.and.(itercount>50)) then
+                     write(*,*) 'WARNING SRC2: update iteration'
+                     write(*,*) 'itercount,dt,dtremaining:',itercount,dt,dtremaining
+                  endif
+               enddo
+            
+               hu = h*u
+               hv = h*v
+               hm = h*m
+               hchi = h*chi
+               call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+               if (h<=drytolerance) then
+                  cycle
+               endif
 
-            !integrate shear-induced dilatancy
-            shear = 2.d0*vnorm/h
-            krate = 1.5d0*shear*m*tanpsi/alpha
-            if (compress<1.d15) then !elasticity is = 0.0 but compress is given 1d16 in auxeval
-               p = p - dt*3.d0*vnorm*tanpsi/(h*compress)
-            endif
+            end select
+            !========================== end src integration ======================
 
-            ! update pmtanh01 and rho_fp for segregation
-            ! DIG: if segregation is compartmentalized
-            if (dabs(alpha_seg-1.d0)<1.d-6) then
-         		seg = 0.d0
-               rho_fp = rho_f
-               pmtanh01=0.d0
-      		else
-         		seg = 1.d0
-               call calc_pmtanh(pm,seg,pmtanh01)
-               rho_fp = max(0.d0,(1.d0-pmtanh01))*rho_f
-      		endif
-
-            ! integrate pressure relaxation
-            zeta = ((m*(sigbed +  sigma_0))/alpha)*3.d0/(h*2.d0)  + (rho-rho_fp)*rho_fp*gmod/(4.d0*rho)
-            krate=-zeta*2.d0*kperm/(h*max(mu,1.d-16))
-            p_eq = h*rho_fp*gmod
-            p = p_eq + (p-p_eq)*exp(krate*dt)
-
-            ! call admissible q and auxeval before moving on to dilatancy.
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-
-            ! calculate rate of change
-            krate = D*(rho-rho_fp)/rho
-
-            ! integrate hu, hv, hm, and h.
-            hu = hu*exp(dt*krate/h)
-            hv = hv*exp(dt*krate/h)
-            hm = hm*exp(-dt*D*rho_fp/(h*rho))
-            h = h + krate*dt
-
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
 
             !======================mass entrainment===========================
+            if (entrainment) then
+               b_eroded = q(i_bdif,i,j)
+               b_remaining = aux(i_ent,i,j)-b_eroded
+               select case(entrain_method)
+               case(1)
+                  call ent_dclaw4()
+               case(2)
+                  !do nothing yet
+               end select
 
-            ! call admissible q and auxeval before moving on to mass entrainment.
-            call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-            call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-
+            endif
             vnorm = sqrt(u**2 + v**2)
             vlow = 0.1d0 ! minimum velocity for entrainment to occur. ! DIG: should this be a user
             ! specified variable.
@@ -237,7 +271,7 @@
                      q(i_bdif,i,j) = q(i_bdif,i,j) + dh
 
                      call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                     call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
+                     call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
 
                      ! update pressure based on prior pressure ratio.
                      p = prat*rho*h
@@ -257,55 +291,10 @@
             q(i_hv,i,j) = hv
             q(i_hm,i,j) = hm
             q(i_pb,i,j) = p
-            q(i_hchi,i,j) = pm*h
+            q(i_hchi,i,j) = hchi
 
          enddo
       enddo
-
-
-
-      ! Manning friction------------------------------------------------
-      if (friction_forcing) then
-      if (coeff>0.d0.and.friction_depth>0.d0) then
-
-         do j=1,my
-            do i=1,mx
-
-               if (bed_normal==1) gmod = grav*cos(aux(i_theta,i,j))
-                  h=q(i_h, i,j)
-               if (h<=friction_depth) then
-                 !# apply friction source term only in shallower water
-                  hu=q(i_hu,i,j)
-                  hv=q(i_hv,i,j)
-                  hm = q(i_hm,i,j)
-                  p =  q(i_pb,i,j)
-                  phi = aux(i_phi,i,j)
-                  theta = aux(i_theta,i,j)
-                  call admissibleq(h,hu,hv,hm,p,u,v,m,theta)
-                  if (h<dry_tolerance) cycle
-                  pm = q(i_hchi,i,j)/h
-                  pm = max(0.0d0,pm)
-                  pm = min(1.0d0,pm)
-                  call auxeval(h,u,v,m,p,phi,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
-
-                  if (h.lt.dry_tolerance) then
-                     q(i_h,i,j)=0.d0
-                     q(i_hu,i,j)=0.d0
-                     q(i_hv,i,j)=0.d0
-                  else
-                     !beta = 1.d0-m  ! reduced friction led to high velocities
-                     beta = 1.d0     ! use full Manning friction
-                     gamma= beta*dsqrt(hu**2 + hv**2)*(gmod*coeff**2)/(h**(7.0d0/3.0d0))
-                     dgamma=1.d0 + dt*gamma
-                     q(i_hu,i,j)= q(i_hu,i,j)/dgamma
-                     q(i_hv,i,j)= q(i_hv,i,j)/dgamma
-                  endif
-               endif
-            enddo
-         enddo
-         endif
-      endif
-     ! ----------------------------------------------------------------
 
       return
       end

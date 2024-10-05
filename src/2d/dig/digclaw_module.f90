@@ -9,9 +9,10 @@ module digclaw_module
     ! General digclaw parameters
     ! ========================================================================
     double precision :: rho_s,rho_f,phi_bed,theta_input,delta,kappita
-    double precision :: mu,alpha,m_crit,c1,m0,alpha_seg,sigma_0,entrainment_rate
+    double precision :: mu,alpha,m_crit,c1,m0,beta_seg,sigma_0,entrainment_rate
 
-    integer :: init_ptype,bed_normal,entrainment,curvature
+    integer :: init_ptype,bed_normal,entrainment,curvature,alphamethod,src2method 
+    integer :: segregation
     double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
     double precision :: chi_init_val
@@ -118,8 +119,7 @@ contains
          read(iunit,*) c1
          read(iunit,*) m0
          read(iunit,*) sigma_0
-         read(iunit,*) alpha_seg
-         alpha_seg = 1.d0 - alpha_seg
+         read(iunit,*) beta_seg
          read(iunit,*) bed_normal
          read(iunit,*) entrainment
          read(iunit,*) entrainment_rate
@@ -164,7 +164,7 @@ contains
          write(DIG_PARM_UNIT,*) '    c1:', c1
          write(DIG_PARM_UNIT,*) '    m0:', m0
          write(DIG_PARM_UNIT,*) '    sigma_0:', sigma_0
-         write(DIG_PARM_UNIT,*) '    alpha_seg:', alpha_seg
+         write(DIG_PARM_UNIT,*) '    beta_seg:', beta_seg
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal
          write(DIG_PARM_UNIT,*) '    entrainment:', entrainment
          write(DIG_PARM_UNIT,*) '    entrainment_rate:', entrainment_rate
@@ -230,6 +230,105 @@ contains
 
    end subroutine set_pinit
 
+   !====================================================================
+   !subroutine qfix
+   !accept solution q, return admissible q and primitive vars: u,v,m,rho,chi
+   !====================================================================
+
+   subroutine qfix(h,hu,hv,hm,hchi,p,u,v,m,chi,rho,gz)
+
+      implicit none
+
+      !i/o
+      double precision, intent(in) :: gz
+      double precision, intent(inout) :: h,hu,hv,hm,p,hchi
+      double precision, intent(inout) :: u,v,m,rho,chi
+
+      !Locals
+      double precision :: mmin,mmax,chimin,chimax,pmax,pmin
+
+      if (h.le.drytolerance) then
+         h =  0.d0
+         hu = 0.d0
+         hv = 0.d0
+         hm = 0.d0
+         p  = 0.d0 
+         u = 0.d0
+         v = 0.d0
+         m = 0.d0
+         chi = 0.d0
+         rho = 0.d0
+         return
+      endif
+
+      u = hu/h
+      v = hv/h
+      m = hm/h
+      chi = hchi/h
+
+      !mlo = 1.d-3
+      mmin = 0.0d0
+      mmax = 1.d0 
+      m = max(m,mmin)
+      m = min(m,mmax)
+      hm = h*m
+
+      chimin = 0.0d0
+      chimax = 1.d0 
+      chi = max(chi,chimin)
+      chi = min(chi,chimax)
+      hchi = h*chi
+
+      rho = rho_s*m + (1.d0-m)*rho_f
+      pmax = rho*gz*h
+      pmin = 0.d0
+      p = max(0.d0,p)
+      p = min(pmax,p)
+
+      return
+
+   end subroutine qfix
+
+   !====================================================================
+   !subroutine qfix_cmass
+   !find physically admissible values of h,m,p,rho while holding rhoh,u,v const.
+   !====================================================================
+
+   subroutine qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
+
+      implicit none
+
+      !i/o
+      double precision, intent(in) :: gz
+      double precision, intent(in) :: u,v,rhoh
+      double precision, intent(inout) :: h,m,rho,p_exc,p
+      double precision, intent(out):: hu,hv,hm
+      !Locals
+      double precision :: mmin,mmax,p_exc_max,p_exc_min
+
+      mmin = 0.0d0
+      mmax = 1.d0 
+      m = max(m,mmin)
+      m = min(m,mmax)
+      
+      rho = m*(rho_s - rho_f) + rho_f
+      h = rhoh/rho
+
+      !p_exc = p - rho_f*gz*h
+      p_exc_max = rhoh*gz-rho_f*h*gz
+      p_exc_min = 0.d0-rho_f*h*gz
+      p_exc = max(p_exc_min,p_exc)
+      p_exc = min(p_exc_max,p_exc)
+
+      p = rho_f*gz*h + p_exc
+
+      hu = h*u
+      hv = h*v
+      hm = h*m
+
+      return
+
+   end subroutine qfix_cmass
 
    !====================================================================
    !subroutine admissibleq
@@ -296,16 +395,97 @@ contains
    end subroutine admissibleq
 
    !====================================================================
-   ! subroutine auxeval: evaluates the auxiliary variables as functions
-   !                     of the solution vector q
+   ! subroutine setvars: evaluates needed variable parameters that are
+   !                     functions of the solution vector q
    !====================================================================
 
-   subroutine auxeval(h,u,v,m,p,phi_bed,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,pm)
+   subroutine setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,sig_0,sig_eff,m_eq,tanpsi,tau)
 
       implicit none
 
       !i/o
-      double precision, intent(inout) :: pm
+      real(kind=8), intent(inout) :: rho
+      real(kind=8), intent(in)  :: h,u,v,m,p,gz,chi
+      real(kind=8), intent(out) :: alphainv,sig_0,sig_eff
+      real(kind=8), intent(out) :: tau,m_eq,tanpsi,kperm
+
+      !local
+      real(kind=8) :: vnorm,shear,Nden,Nnum,psi,delta_kr_order,kr_chi
+
+
+      !check rho
+      rho = m*(rho_s-rho_f) + rho_f
+
+      !determine kperm
+      !segregation effect on kperm
+      kr_chi = 1.0d0
+      if (segregation) then
+         !how many orders of magnitude should kperm change with chi=[0,1]
+         delta_kr_order = 2.d0
+         !DIG: check whether chi = 1 is coarse or fine
+         kr_chi = 10.d0**(delta_kr_order*2.d0*(chi-0.5d0))
+      endif
+      kperm = kr_chi*kappita*exp(-(m-m0)/(0.04d0))
+
+      !determine vars related to m_eq and compressibility
+      sig_eff = max(0.d0,rho*gz*h - p)
+
+      alphamethod = 2
+      select case (alphamethod) 
+      case(0:1)
+         sig_0 = sigma_0
+      case(2)
+         !sig_0 = alpha*(rho_s-rho_f)*gz*h
+         sig_0 = 0.5d0*alpha*(rho_s-rho_f)*gz*h/rho
+         alphainv = m*(sig_eff + sig_0)/alpha
+      end select
+
+      vnorm = sqrt(u**2 + v**2)
+      shear = 2.d0*vnorm/h
+      
+
+      !determine m_eq
+      !m_eq = m_crit* 1/(1 + sqrt(Nnum/Nden))
+      !m_eq = m_crit* sqrt(Nden)/(sqrt(Nden)+sqrt(Nnum))
+      Nden = rho_s*(shear*delta)**2 + sig_eff
+      Nnum = mu*shear
+      if (Nnum<=0.d0) then
+         m_eq = m_crit
+      else
+         m_eq = m_crit*(sqrt(Nden)/(sqrt(Nden)+ sqrt(Nnum)))
+      endif
+      !Note: c1 is an adjustable parameter that we have traditionally set to 1.0.
+      !For problems where one wants to avoid the complications of dilatancy and use
+      !     a simpler rheological model, can be set to 0 or a small value.
+      tanpsi = c1*(m-m_eq)
+      psi = atan(c1*(m-m_eq)) !does atan return the correct angle always?
+
+      !calculate coulomb friction tau
+      ! Note: for v=0, bounds on tau for static friction are determined in Riemann solver
+      !        because the bounds are due to gradients in q. This routine determines vars
+      !        from pointwise cell-centered value q(i).
+      tau = sig_eff*tan(phi_bed + 0.d0*psi)
+      ! Note:  for water (m=0) sig_eff=0.0 and so tau=0.         
+      !        However, for dilute suspensions, 
+      !        we make o(m) not O(m))
+      !if (m<0.55d0) then
+      tau = tau*0.5d0*(1.d0 + tanh(50.d0*(m-0.40d0))) !+ 100.d0*shear))
+      !endif
+
+      return
+
+      end subroutine setvars
+   !====================================================================
+   ! subroutine auxeval: evaluates the auxiliary variables as functions
+   !                     of the solution vector q
+   !====================================================================
+
+   subroutine auxeval(h,u,v,m,p,phi_bed,theta,kappa,S,rho,tanpsi,D,tau,sigbed,kperm,compress,chi)
+
+      implicit none
+
+      !i/o
+      double precision, intent(inout) :: chi
       double precision, intent(in)  :: h,u,v,m,p,phi_bed,theta
       double precision, intent(out) :: S,rho,tanpsi,D,tau,kappa
       double precision, intent(out) :: sigbed,kperm,compress
@@ -317,17 +497,8 @@ contains
       if (h.lt.dry_tolerance) return
 
       gmod=grav
-      pm = max(0.0d0,pm)
-      pm = min(1.0d0,pm)
-      if (dabs(alpha_seg-1.0d0)<1.d-6) then
-         seg = 0.0d0
-         rho_fp = rho_f
-         pmtanh01=0.0d0
-      else
-         seg = 1.0d0
-         call calc_pmtanh(pm,seg,pmtanh01)
-         rho_fp = (1.0d0-pmtanh01)*rho_f
-      endif
+      chi = max(0.0d0,chi)
+      chi = min(1.0d0,chi)
 
       if (bed_normal.eq.1) gmod=grav*dcos(theta)
       vnorm = dsqrt(u**2 + v**2)
