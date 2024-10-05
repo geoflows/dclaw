@@ -29,7 +29,6 @@ module auxinit_module
       integer, allocatable ::  mxauxinit(:), myauxinit(:)
       integer, allocatable :: i0auxinit(:), mauxinit(:)
       integer, allocatable :: iauxinit(:), auxinitftype(:)
-      integer, allocatable ::  minlevelauxinit(:), maxlevelauxinit(:)
 
 
 
@@ -105,21 +104,18 @@ contains
       allocate(xlowauxinit(mauxinitfiles),ylowauxinit(mauxinitfiles))
       allocate(xhiauxinit(mauxinitfiles),yhiauxinit(mauxinitfiles))
       allocate(dxauxinit(mauxinitfiles),dyauxinit(mauxinitfiles))
-      allocate(minlevelauxinit(mauxinitfiles),maxlevelauxinit(mauxinitfiles))
       allocate(auxinitfname(mauxinitfiles),auxinitftype(mauxinitfiles))
       allocate(iauxinit(mauxinitfiles))
       allocate(i0auxinit(mauxinitfiles),mauxinit(mauxinitfiles))
 
       do i=1,mauxinitfiles
          read(iunit,*) auxinitfname(i)
-         read(iunit,*) auxinitftype(i),iauxinit(i),minlevelauxinit(i), maxlevelauxinit(i)
+         read(iunit,*) auxinitftype(i),iauxinit(i)
 
          write(GEO_PARM_UNIT,*) '   '
          write(GEO_PARM_UNIT,*) '   ',auxinitfname(i)
          write(GEO_PARM_UNIT,*) '  auxinitftype = ', auxinitftype(i)
          write(GEO_PARM_UNIT,*) '  iauxinit = ', iauxinit(i)
-         write(GEO_PARM_UNIT,*) '  minlevel, maxlevel = ', &
-                                  minlevelauxinit(i), maxlevelauxinit(i)
 
          call read_auxinit_header(auxinitfname(i),auxinitftype(i),mxauxinit(i), &
                 myauxinit(i),xlowauxinit(i),ylowauxinit(i),xhiauxinit(i),yhiauxinit(i), &
@@ -205,7 +201,7 @@ contains
                 read(iunit,'(a)') str
                 call parse_values(str, n, values)
                 no_data_value = values(1)
-                
+
 
                 ! Read in data
                 missing = 0
@@ -280,7 +276,7 @@ contains
         real(kind=8) :: values(10)
         character(len=80) :: str
         logical :: xll_registered, yll_registered
-        
+
         inquire(file=fname,exist=found_file)
         if (.not. found_file) then
             print *, 'Missing auxinit file:'
