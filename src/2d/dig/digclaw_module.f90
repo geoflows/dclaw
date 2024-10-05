@@ -8,14 +8,12 @@ module digclaw_module
     ! ========================================================================
     ! General digclaw parameters
     ! ========================================================================
-    double precision :: rho_s,rho_f,phi_bed,theta_input,delta,kappita
-    double precision :: mu,alpha,m_crit,c1,m0,beta_seg,sigma_0,entrainment_rate
+    double precision :: rho_s,rho_f,m_crit,m0,mr,kr,phi,delta,mu,a,c1,sigma_0
+    double precision :: theta_input,entrainment_rate,me,beta_seg,chi0,chie
 
-    integer :: init_ptype,bed_normal,entrainment,curvature,alphamethod,src2method 
-    integer :: segregation
-    double precision :: init_pmax_ratio,init_ptf2,init_ptf,init_pmin_ratio
+    integer :: src2method,alphamethod,bed_normal,entrainment,entrainment_method
+    integer :: segregation,curvature,init_ptype
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
-    double precision :: chi_init_val
 
     ! momentum autostop
     logical :: mom_autostop
@@ -107,23 +105,34 @@ contains
 
          read(iunit,*) rho_s
          read(iunit,*) rho_f
-         read(iunit,*) phi_bed
-         phi_bed = deg2rad*phi_bed
-         read(iunit,*) theta_input
-         theta_input = deg2rad*theta_input
-         read(iunit,*) delta
-         read(iunit,*) kappita
-         read(iunit,*) mu
-         read(iunit,*) alpha
          read(iunit,*) m_crit
-         read(iunit,*) c1
          read(iunit,*) m0
+         read(iunit,*) mr
+         read(iunit,*) kr
+         read(iunit,*) phi
+         phi = deg2rad*phi
+         read(iunit,*) delta
+         read(iunit,*) mu
+         read(iunit,*) a
+         read(iunit,*) c1
          read(iunit,*) sigma_0
-         read(iunit,*) beta_seg
+
+         read(iunit,*) src2method
+         read(iunit,*) alphamethod
+
          read(iunit,*) bed_normal
+         read(iunit,*) theta_input
+
          read(iunit,*) entrainment
+         read(iunit,*) entrainment_method
          read(iunit,*) entrainment_rate
-         read(iunit,*) chi_init_val
+         read(iunit,*) me
+
+         read(iunit,*) segregation
+         read(iunit,*) beta_seg
+         read(iunit,*) chi0
+         read(iunit,*) chie
+
          read(iunit,*) mom_autostop
          read(iunit,*) momlevel
          read(iunit,*) curvature
@@ -152,23 +161,30 @@ contains
          write(DIG_PARM_UNIT,*) '--------------------------------------------'
          write(DIG_PARM_UNIT,*) 'SETDIG:'
          write(DIG_PARM_UNIT,*) '---------'
-         write(DIG_PARM_UNIT,*) '    rho_s:',rho_s
-         write(DIG_PARM_UNIT,*) '    rho_f:',rho_f
-         write(DIG_PARM_UNIT,*) '    phi_bed:', phi_bed/deg2rad
-         write(DIG_PARM_UNIT,*) '    theta_input:', theta_input/deg2rad
-         write(DIG_PARM_UNIT,*) '    delta:', delta
-         write(DIG_PARM_UNIT,*) '    kappita:', kappita
-         write(DIG_PARM_UNIT,*) '    mu:', mu
-         write(DIG_PARM_UNIT,*) '    alpha:', alpha
+         write(DIG_PARM_UNIT,*) '    rho_s:', rho_s
+         write(DIG_PARM_UNIT,*) '    rho_s:', rho_s
          write(DIG_PARM_UNIT,*) '    m_crit:', m_crit
-         write(DIG_PARM_UNIT,*) '    c1:', c1
          write(DIG_PARM_UNIT,*) '    m0:', m0
+         write(DIG_PARM_UNIT,*) '    mr:', mr
+         write(DIG_PARM_UNIT,*) '    kr:', kr
+         write(DIG_PARM_UNIT,*) '    phi:', phi
+         write(DIG_PARM_UNIT,*) '    delta:', delta
+         write(DIG_PARM_UNIT,*) '    mu:', mu
+         write(DIG_PARM_UNIT,*) '    a:', a
+         write(DIG_PARM_UNIT,*) '    c1:', c1
          write(DIG_PARM_UNIT,*) '    sigma_0:', sigma_0
-         write(DIG_PARM_UNIT,*) '    beta_seg:', beta_seg
+         write(DIG_PARM_UNIT,*) '    src2method:', src2method
+         write(DIG_PARM_UNIT,*) '    alphamethod:', alphamethod
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal
+         write(DIG_PARM_UNIT,*) '    theta_input:', theta_input
          write(DIG_PARM_UNIT,*) '    entrainment:', entrainment
+         write(DIG_PARM_UNIT,*) '    entrainment_method:', entrainment_method
          write(DIG_PARM_UNIT,*) '    entrainment_rate:', entrainment_rate
-         write(DIG_PARM_UNIT,*) '    chi_init_val:', chi_init_val
+         write(DIG_PARM_UNIT,*) '    me:', me
+         write(DIG_PARM_UNIT,*) '    segregation:', segregation
+         write(DIG_PARM_UNIT,*) '    beta_seg:', beta_seg
+         write(DIG_PARM_UNIT,*) '    chi0:', chi0
+         write(DIG_PARM_UNIT,*) '    chie:', chie
          write(DIG_PARM_UNIT,*) '    mom_autostop:', mom_autostop
          write(DIG_PARM_UNIT,*) '    momlevel:', momlevel
          write(DIG_PARM_UNIT,*) '    curvature:', curvature
@@ -252,7 +268,7 @@ contains
          hu = 0.d0
          hv = 0.d0
          hm = 0.d0
-         p  = 0.d0 
+         p  = 0.d0
          u = 0.d0
          v = 0.d0
          m = 0.d0
@@ -268,13 +284,13 @@ contains
 
       !mlo = 1.d-3
       mmin = 0.0d0
-      mmax = 1.d0 
+      mmax = 1.d0
       m = max(m,mmin)
       m = min(m,mmax)
       hm = h*m
 
       chimin = 0.0d0
-      chimax = 1.d0 
+      chimax = 1.d0
       chi = max(chi,chimin)
       chi = min(chi,chimax)
       hchi = h*chi
@@ -307,10 +323,10 @@ contains
       double precision :: mmin,mmax,p_exc_max,p_exc_min
 
       mmin = 0.0d0
-      mmax = 1.d0 
+      mmax = 1.d0
       m = max(m,mmin)
       m = min(m,mmax)
-      
+
       rho = m*(rho_s - rho_f) + rho_f
       h = rhoh/rho
 
@@ -431,7 +447,7 @@ contains
       sig_eff = max(0.d0,rho*gz*h - p)
 
       alphamethod = 2
-      select case (alphamethod) 
+      select case (alphamethod)
       case(0:1)
          sig_0 = sigma_0
       case(2)
@@ -442,7 +458,7 @@ contains
 
       vnorm = sqrt(u**2 + v**2)
       shear = 2.d0*vnorm/h
-      
+
 
       !determine m_eq
       !m_eq = m_crit* 1/(1 + sqrt(Nnum/Nden))
@@ -465,8 +481,8 @@ contains
       !        because the bounds are due to gradients in q. This routine determines vars
       !        from pointwise cell-centered value q(i).
       tau = sig_eff*tan(phi_bed + 0.d0*psi)
-      ! Note:  for water (m=0) sig_eff=0.0 and so tau=0.         
-      !        However, for dilute suspensions, 
+      ! Note:  for water (m=0) sig_eff=0.0 and so tau=0.
+      !        However, for dilute suspensions,
       !        we make o(m) not O(m))
       !if (m<0.55d0) then
       tau = tau*0.5d0*(1.d0 + tanh(50.d0*(m-0.40d0))) !+ 100.d0*shear))
@@ -886,7 +902,7 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          enddo
       enddo
 
-      if (init_ptype==2.or.init_ptype==4) then
+      if (init_ptype==2) then
          init_pmin_ratio = 1.d0-(grad_eta_ave/eta_cell_count)
       endif
       if (init_ptype>0) then

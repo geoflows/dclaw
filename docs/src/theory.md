@@ -190,10 +190,10 @@ with {math}`\sigma_e = \rho g_z h - p_b`, the basal effective normal stress.
 {math}`\psi` is the granular dilatancy angle:
 
 ```{math}
-\tan\psi = m - \frac{m_\mathrm{crit}}{1+\sqrt{N}}
+c_1 \tan\psi = m - \frac{m_\mathrm{crit}}{1+\sqrt{N}}
 ```
 
-{math}`m_\mathrm{crit}` is the critical-state solid fraction and {math}`N` is a dimensionless variable defined as
+:math:`\c_1` is a dimensionless constant (typically 1), {math}`m_\mathrm{crit}` is the critical-state solid fraction, and {math}`N` is a dimensionless variable defined as
 
 ```{math}
 N = \frac{\mu \dot{\gamma}}{\rho_s \dot{\gamma}^2 \delta^2 + \sigma_e}.
@@ -239,7 +239,7 @@ Add what is in segeval
 
 ### Entrainment
 
-Multiple options for entrainment are present in D-Claw. A user specifies a spatially variable value of the thickness of material available for entrainment, {math}`h_e`. An entrainment rate, {math}`\frac{\partial h_e}{\partial t}` is calculated if {math}`h_e` is less than the thickness of material that has already been entrained, {math}`\Delta b`.
+Multiple options for entrainment are present in D-Claw. A user specifies a spatially variable value of the thickness of material available for entrainment, {math}`h_e`. An entrainment rate, {math}`\frac{\partial h_e}{\partial t}` is calculated if {math}`h_e` is less than the thickness of material that has already been entrained, {math}`\Delta b`. The entrainable material is assumed to have a constant solid volume fraction, {math}`m_e`.
 
 The options for {math}`\frac{\partial h_e}{\partial t}` are:
 

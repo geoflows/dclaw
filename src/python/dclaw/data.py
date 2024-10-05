@@ -118,11 +118,50 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - 0.01-0.3
          - float
          - unitless
+       * - ``c1``
+         - :math:`c_1`
+         - Granular dilation coefficient
+         - 1
+         -
+         - float
+         - unitless
+       * - ``sigma_0``
+         - :math:`\sigma_0`
+         - Reference stress
+         - 1000
+         -
+         - float
+         - Pa
 
+    Two parameters control the numerical method used for integrating the source
+    term (``src2method``) and the equation used to calculate :math:`\alpha`,
+    the debris compressibility.
 
-    TODO sigma_0 and c1
+    .. list-table::
+       :widths: 10 30 10 10
+       :header-rows: 1
 
-    TODO introductory text for other variables.
+       * - Attribute Name
+         - Description
+         - Default Value
+         - Type
+       * - ``src2method``
+         - Method used to integrate the source term. 0 = traditional method,
+           1 = intermediate method, 2 = new method. DIG: TODO UPDATE
+         - 0
+         - int
+       * - ```alphamethod```
+         - Method used to calculate :math:`\alpha`, the debris
+           compressibility.
+           0 = traditional method, in which :math:`\sigma_0` is a constant as
+           specified in the ``setrun.py``.
+           1 = new method, in which :math:`\sigma_0` is dynamically determined
+           as :math:`\sigma_0 = 0.5 \alpha (\rho_s-\rho_f)g_z h/\rho`
+         - 0
+         - int
+
+    The following parameters are used to control whether and how bed
+    normal coordinates, segregation, and entrainment are implemented.
 
     .. list-table::
        :widths: 10 30 10 10
@@ -152,6 +191,10 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - A coefficient for use of entrainment. TODO
          - 0.2
          - float
+       * - ``me``
+         - Solid volume fraction of entrainable material.
+         - 0.65
+         - float
        * - ``segregation``
          - Whether to use segregation (1) or not (0).
          - 0
@@ -165,6 +208,19 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - The initial value of :math:`\chi`. Only used if :math:`\beta>0`.
          - 0.5
          - float
+
+    Finally, the following parameters control whether the simulation will halt
+    when the momentum on a specific adaptive mesh refinement level reaches zero
+    and whether to use curvature terms.
+
+    .. list-table::
+       :widths: 10 30 10 10
+       :header-rows: 1
+
+       * - Attribute Name
+         - Description
+         - Default Value
+         - Type
        * - ``mom_autostop``
          - Whether to halt the simulation when the momentum on ``momlevel``
            is equal to zero.
@@ -197,18 +253,24 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("delta", 0.01)
         self.add_attribute("mu", 0.001)
         self.add_attribute("a", 0.01)
-
+        self.add_attribute("c1", 1.0)
         self.add_attribute("sigma_0", 1.0e3)
+
+        self.add_attribute("src2method", 0)
+        self.add_attribute("alphamethod", 0)
 
         self.add_attribute("bed_normal", 0)
         self.add_attribute("theta_input", 0.0)
 
         self.add_attribute("entrainment", 0)
+        self.add_attribute("entrainment_method", 1)
         self.add_attribute("entrainment_rate", 0.2)
+        self.add_attribute("me", 0.65)
 
         self.add_attribute("segregation", 0)
         self.add_attribute("beta_seg", 0.0)
-        self.add_attribute("chi_init_val", 0.5)
+        self.add_attribute("chi0", 0.5)
+        self.add_attribute("chie", 0.5)
 
         self.add_attribute("mom_autostop", False)
         self.add_attribute("momlevel", 1)
@@ -235,10 +297,13 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write("delta", description="characteristic grain diameter (m)")
         self.data_write("mu", description="viscosity of pore-fluid (Pa-s)")
         self.data_write("a", description="debris compressibility constant (#)")
-
+        self.data_write("c1", description="granular dilatency constant (#)")
         self.data_write(
             "sigma_0", description="baseline stress for definition of compressibility"
         )
+
+        self.data_write("src2method", description = "0=orig,1=intermediate,2=new" ) # DIG: update text
+        self.data_write("alphamethod", description = "0=,1=,2=") # DIG: update text
 
         self.data_write(
             "bed_normal",
@@ -249,8 +314,12 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write(
             "entrainment", description="flag for entrainment, 0 = no entrainment"
         )
+        self.data_write("entrainment_method", description="flag for entrainment method")# DIG: update text
         self.data_write(
             "entrainment_rate", description="rate of entrainment parameter 0-1"
+        )
+        self.data_write(
+            "me", description="Solid volume fraction of entrainable material"
         )
 
         self.data_write(
@@ -262,8 +331,12 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
             description="coefficient of segregation velocity profile",
         )
         self.data_write(
-            "chi_init_val",
+            "chi0",
             description="initial fraction of species A (#). Between 0-1.",
+        )
+        self.data_write(
+            "chie",
+            description="fraction of species A of entrainable material (#). Between 0-1.",
         )
 
         self.data_write(
