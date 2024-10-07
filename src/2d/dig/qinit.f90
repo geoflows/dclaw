@@ -16,7 +16,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
 
     use digclaw_module, only: qfix,calc_pmin,calc_taudir
-    use digclaw_module, only: bed_normal,chi0,init_ptype
+    use digclaw_module, only: bed_normal,chi0,init_ptype,segregation
     use digclaw_module, only: i_theta,m0,rho_f,rho_s,init_pmin_ratio
     use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi
 
@@ -210,10 +210,13 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                else
                   q(i_hm,i,j) = q(i_h,i,j)*q(i_hm,i,j)
                endif
-               if (initchi.eq.0) then
-                  q(i_hchi,i,j) = chi0*q(i_h,i,j)
-               else
-                  q(i_hchi,i,j) = q(i_h,i,j)*q(i_hchi,i,j)
+               if (segregation.eq.1) then
+                  ! only initialize chi if segregation is enabled
+                  if (initchi.eq.0) then
+                    q(i_hchi,i,j) = chi0*q(i_h,i,j)
+                  else
+                    q(i_hchi,i,j) = q(i_h,i,j)*q(i_hchi,i,j)
+                  endif 
                endif
                if (initu.eq.1) then
                   q(i_hu,i,j) = q(i_h,i,j)*q(i_hu,i,j)
