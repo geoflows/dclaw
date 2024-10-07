@@ -69,8 +69,8 @@ def setrun(claw_pkg='dclaw'):
     clawdata.upper[1] = 2e3
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 60 # x
-    clawdata.num_cells[1] = 20 # y
+    clawdata.num_cells[0] = 60*8 # x
+    clawdata.num_cells[1] = 20*8 # y
 
     # ---------------
     # Size of system:
@@ -260,7 +260,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 3
+    amrdata.amr_levels_max = 1
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
@@ -404,7 +404,7 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.src2method=0
     dclaw_data.alphamethod=0
 
-    dclaw_data.segregation=1
+    dclaw_data.segregation=0
     dclaw_data.beta_seg = 0.0
     dclaw_data.chi0=0.5
     dclaw_data.chie=0.5
@@ -475,7 +475,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata.tprint = False      # time step reporting each level
     amrdata.uprint = False      # update/upbnd reporting
 
-    amrdata.max1d = 300
+    amrdata.max1d = 10000
     # More AMR parameters can be set -- see the defaults in pyclaw/data.py
 
     return rundata
