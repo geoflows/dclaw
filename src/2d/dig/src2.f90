@@ -87,8 +87,8 @@
             !modified gravity: bed-normal weight and acceleration
             if (bed_normal==1) then
                theta = aux(i_theta,i,j)
-               gz = grav*cos(theta)
-               gx = grav*sin(theta)
+               gz = grav*dcos(theta)
+               gx = grav*dsin(theta)
             endif
             if (curvature==1.or.segregation==1) then
                b = aux(1,i,j)-q(i_bdif,i,j)
@@ -111,6 +111,7 @@
                gacc = max(u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!max:currently only consider enhancement not reduction of gz (ie. basin not a hump)
                gz = gz + gacc
             endif
+
 
             !Manning friction
             if ((friction_forcing).and.(coeffmanning>0.d0)) then
