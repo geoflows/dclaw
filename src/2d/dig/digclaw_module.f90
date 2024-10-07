@@ -42,6 +42,7 @@ module digclaw_module
     integer ::  i_ent
 
     integer, parameter ::  DIG_PARM_UNIT = 78
+    integer, parameter ::  PINIT_PARM_UNIT = 79
 
 
 contains
@@ -128,6 +129,7 @@ contains
 
          read(iunit,*) bed_normal
          read(iunit,*) theta_input
+         theta_input = deg2rad*theta_input
 
          read(iunit,*) entrainment
          read(iunit,*) entrainment_method
@@ -168,12 +170,12 @@ contains
          write(DIG_PARM_UNIT,*) 'SETDIG:'
          write(DIG_PARM_UNIT,*) '---------'
          write(DIG_PARM_UNIT,*) '    rho_s:', rho_s
-         write(DIG_PARM_UNIT,*) '    rho_s:', rho_s
+         write(DIG_PARM_UNIT,*) '    rho_f:', rho_f
          write(DIG_PARM_UNIT,*) '    m_crit:', m_crit
          write(DIG_PARM_UNIT,*) '    m0:', m0
          write(DIG_PARM_UNIT,*) '    mref:', mref
          write(DIG_PARM_UNIT,*) '    kref:', kref
-         write(DIG_PARM_UNIT,*) '    phi:', phi
+         write(DIG_PARM_UNIT,*) '    phi:', phi/deg2rad
          write(DIG_PARM_UNIT,*) '    delta:', delta
          write(DIG_PARM_UNIT,*) '    mu:', mu
          write(DIG_PARM_UNIT,*) '    alpha_c:', alpha_c
@@ -182,7 +184,7 @@ contains
          write(DIG_PARM_UNIT,*) '    src2method:', src2method
          write(DIG_PARM_UNIT,*) '    alphamethod:', alphamethod
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal
-         write(DIG_PARM_UNIT,*) '    theta_input:', theta_input
+         write(DIG_PARM_UNIT,*) '    theta_input:', theta_input/deg2rad
          write(DIG_PARM_UNIT,*) '    entrainment:', entrainment
          write(DIG_PARM_UNIT,*) '    entrainment_method:', entrainment_method
          write(DIG_PARM_UNIT,*) '    entrainment_rate:', entrainment_rate
@@ -194,6 +196,7 @@ contains
          write(DIG_PARM_UNIT,*) '    mom_autostop:', mom_autostop
          write(DIG_PARM_UNIT,*) '    momlevel:', momlevel
          write(DIG_PARM_UNIT,*) '    curvature:', curvature
+         close(DIG_PARM_UNIT)
 
 
    end subroutine set_dig
@@ -237,13 +240,13 @@ contains
          grad_eta_ave = 0.d0
          eta_cell_count = 1.e-6
 
-
-         write(DIG_PARM_UNIT,*) ' '
-         write(DIG_PARM_UNIT,*) '--------------------------------------------'
-         write(DIG_PARM_UNIT,*) 'SETPINIT:'
-         write(DIG_PARM_UNIT,*) '---------'
-         write(DIG_PARM_UNIT,*) '    init_ptype:',init_ptype
-         close(DIG_PARM_UNIT)
+         open(unit=PINIT_PARM_UNIT,file='fort.pinit',status="unknown",action="write")
+         write(PINIT_PARM_UNIT,*) ' '
+         write(PINIT_PARM_UNIT,*) '--------------------------------------------'
+         write(PINIT_PARM_UNIT,*) 'SETPINIT:'
+         write(PINIT_PARM_UNIT,*) '---------'
+         write(PINIT_PARM_UNIT,*) '    init_ptype:',init_ptype
+         close(PINIT_PARM_UNIT)
 
    end subroutine set_pinit
 
