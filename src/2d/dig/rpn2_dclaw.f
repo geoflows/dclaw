@@ -135,10 +135,12 @@ c        !set normal direction
             thetaL = 0.d0
             thetaR = 0.d0
             theta = 0.d0
+            gz = grav
+            gzL = grav
+            gzR = grav
          endif
 
          !zero (small) negative values if they exist and set velocities
-
          call qfix(ql(i_h,i),ql(mhu,i),ql(nhv,i),ql(i_hm,i),
      &             ql(i_pb,i),ql(i_hchi,i),uR,vR,mR,chiR,rhoR,gzR)
 
