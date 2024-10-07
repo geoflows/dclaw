@@ -273,10 +273,11 @@ contains
          hv = 0.d0
          hm = 0.d0
          p  = 0.d0
+         hchi = 0.d0
          u = 0.d0
          v = 0.d0
-         m = 0.d0
-         chi = 0.d0
+         m = 0.d0 ! dig, is this correct?
+         chi = 0.d0 ! dig, is this correct?
          rho = 0.d0
          return
       endif
