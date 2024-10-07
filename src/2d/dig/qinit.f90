@@ -247,13 +247,14 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
                  if (bed_normal.eq.1) then
-                     gz = grav*cos(aux(i_theta,i,j))
+                     gz = grav*dcos(aux(i_theta,i,j))
                  else
                      gz=grav
                  endif
                  q(i_pb,i,j) = rho_f*gz*q(i_h,i,j)
                enddo
             enddo
+
          case(1:2) ! DIG: Not yet tested
             !set to failure
             do i=1-mbc,mx+mbc
@@ -261,7 +262,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   p_ratioij = init_pmin_ratio
 
                   if (bed_normal.eq.1) then
-                     gz = grav*cos(aux(i_theta,i,j))
+                     gz = grav*dcos(aux(i_theta,i,j))
                   else
                      gz = grav
                   endif
