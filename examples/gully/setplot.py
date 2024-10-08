@@ -9,7 +9,6 @@ function setplot is called to set the plot parameters.
 
 import numpy as np
 import matplotlib.pyplot as plt
-import cmocean
 import matplotlib as mpl
 
 from clawpack.visclaw import geoplot
@@ -103,7 +102,7 @@ def setplot(plotdata=None):
         "orientation": "horizontal",
     }
     plotitem.colorbar_label = "Surface (m)"
-    plotitem.imshow_cmap = cmocean.cm.matter
+    plotitem.imshow_cmap = "Purples"
     plotitem.imshow_cmin = 0
     plotitem.imshow_cmax = 2
 
@@ -132,7 +131,7 @@ def setplot(plotdata=None):
         "orientation": "horizontal",
     }
     plotitem.colorbar_label = "Velocity (m/s)"
-    plotitem.imshow_cmap = cmocean.cm.speed
+    plotitem.imshow_cmap = "Greens"
     plotitem.imshow_cmin = 0
     plotitem.imshow_cmax = 10
     plotitem.patchedges_show=True

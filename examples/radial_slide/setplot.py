@@ -9,12 +9,11 @@ function setplot is called to set the plot parameters.
 
 import numpy as np
 import matplotlib.pyplot as plt
-import cmocean
 import matplotlib as mpl
 
 from clawpack.visclaw import geoplot
 from clawpack.visclaw import colormaps
-from clawpack.visclaw import gridtools 
+from clawpack.visclaw import gridtools
 
 
 import os,sys
@@ -105,13 +104,13 @@ def setplot(plotdata=None):
         "orientation": "horizontal",
     }
     plotitem.colorbar_label = "Surface (m)"
-    plotitem.imshow_cmap = cmocean.cm.curl
+    plotitem.imshow_cmap = "seismic"
     plotitem.imshow_cmin = 90
     plotitem.imshow_cmax = 110
     # Debris
     plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
     plotitem.plot_var = dplot.solid_frac_gt03
-    plotitem.imshow_cmap = cmocean.cm.turbid
+    plotitem.imshow_cmap = "copper_r"
     plotitem.imshow_cmin = 0.3
     plotitem.imshow_cmax = 1
     plotitem.add_colorbar = False
@@ -138,11 +137,11 @@ def setplot(plotdata=None):
         eta = dplot.eta(current_data)
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
-        water = np.where(np.logical_and(h>1e-3, m<0.1), 
+        water = np.where(np.logical_and(h>1e-3, m<0.1),
                          eta, np.nan)
         #import pdb; pdb.set_trace()
         return water
-        
+
     # Water
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
     #plotitem.plot_var = geoplot.surface
@@ -163,11 +162,11 @@ def setplot(plotdata=None):
         eta = dplot.eta(current_data)
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
-        landslide = np.where(np.logical_and(h>1e-3, m>0.1), 
+        landslide = np.where(np.logical_and(h>1e-3, m>0.1),
                          h, np.nan)
         #import pdb; pdb.set_trace()
         return landslide
-        
+
     # Landslide
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
     #plotitem.plot_var = geoplot.surface
@@ -181,7 +180,7 @@ def setplot(plotdata=None):
     plotitem.add_colorbar = True
     plotitem.amr_celledges_show = [0,0,0]
     plotitem.patchedges_show = 0
-    
+
     def land(current_data):
        """
        Return a masked array containing the surface elevation only in dry cells.
@@ -229,11 +228,11 @@ def setplot(plotdata=None):
         #xout = linspace(-3e3,3e3,1000)
         #yout = ones(xout.shape) # near x-axis
         #rout = xout
-        
+
         xout = linspace(-3e3,3e3,1000)
         yout = xout
         rout = xout * sqrt(2)
-        
+
         etaout = gridtools.grid_output_2d(framesoln, -1, xout, yout)
         hout = gridtools.grid_output_2d(framesoln, 0, xout, yout)
         zetaout = where(hout>0.001, etaout, nan)
@@ -259,7 +258,7 @@ def setplot(plotdata=None):
     #-----------------------------------------
     plotfigure = plotdata.new_plotfigure(name='Depth', figno=2)
     #plotfigure.show = False
-    
+
     # Set up for axes in this figure:
     plotaxes = plotfigure.new_plotaxes('pcolor')
     #plotaxes.title = 'Water or landslide depth'
@@ -275,11 +274,11 @@ def setplot(plotdata=None):
         hm = q[3,:,:]
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
-        water = np.where(np.logical_and(h>1e-3, m<0.1), 
+        water = np.where(np.logical_and(h>1e-3, m<0.1),
                          h, np.nan)
         import pdb; pdb.set_trace()
         return water
-        
+
     # Water
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
     #plotitem.plot_var = geoplot.surface
@@ -340,7 +339,7 @@ def setplot(plotdata=None):
         hm = q[3,:,:]
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
-        mwet = np.where(h > 0.01, m, np.nan) 
+        mwet = np.where(h > 0.01, m, np.nan)
         mmax = np.nanmax(mwet)
         print('mmax = %.3e' % mmax)
         q3max = abs(q[3,:,:]).max()
@@ -349,7 +348,7 @@ def setplot(plotdata=None):
         print('q3max = %.3e' % q3max, 'q4max = %.3e' % q4max,
               'q5max = %.3e' % q5max)
         return mwet
-        
+
     plotitem = plotaxes.new_plotitem(plot_type='2d_pcolor')
     plotitem.plot_var = mass_frac
     plotitem.pcolor_cmap = colormaps.blue_yellow_red
@@ -370,8 +369,8 @@ def setplot(plotdata=None):
     plotitem.amr_celledges_show = [0]
     plotitem.patchedges_show = 0
 
-    
-    
+
+
     # -----------------------
     # Figure for scatter plot
     # -----------------------
@@ -385,7 +384,7 @@ def setplot(plotdata=None):
     plotaxes.title = 'Scatter plot'
     plotaxes.grid = True
 
-    
+
     def h_vs_r(current_data):
         # Return radius of each grid cell and p value in the cell
         from pylab import sqrt
@@ -412,7 +411,7 @@ def setplot(plotdata=None):
         plotitem.plotstyle = '.'
         plotitem.color = 'r'
         plotitem.kwargs = {'markersize':1}
-    
+
     # -----------------------
     # Figure for scatter plot of pressure
     # -----------------------
@@ -426,7 +425,7 @@ def setplot(plotdata=None):
     plotaxes.title = 'pressure'
     plotaxes.grid = True
 
-    
+
     def p_vs_r(current_data):
         # Return radius of each grid cell and p value in the cell
         from pylab import sqrt
@@ -477,7 +476,7 @@ def setplot(plotdata=None):
     plotaxes.title = 'speed'
     plotaxes.grid = True
 
-    
+
     def s_vs_r(current_data):
         # Return radius of each grid cell and p value in the cell
         from pylab import sqrt,nan,where
