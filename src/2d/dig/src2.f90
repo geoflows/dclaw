@@ -3,6 +3,7 @@
    !=========================================================
       subroutine src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)
    !=========================================================
+
       use geoclaw_module, only: grav, dry_tolerance,deg2rad,friction_depth
       use geoclaw_module, only: manning_coefficient,friction_forcing
 
@@ -90,7 +91,7 @@
                gz = grav*dcos(theta)
                gx = grav*dsin(theta)
             endif
-            if (curvature==1.or.segregation==1) then
+            if (curvature==1.or.entrainment==1) then
                b = aux(1,i,j)-q(i_bdif,i,j)
                bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
                bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
@@ -105,6 +106,8 @@
                b_xx=(bR - 2.d0*b + bL)/(dx**2)
                b_yy=(bT - 2.d0*b + bB)/(dy**2)
                b_xy=((bTR-bTL) - (bBR-bBL))/(4.0*dx*dy)
+               ! entrainment only needs b_x and b_y.
+               ! curvature also needs b_xx,b_yy,and b_xy
             endif
             if (curvature==1) then
                dtheta = -(aux(i_theta,i+1,j) - aux(i_theta,i-1,j))/(2.d0*dx)
