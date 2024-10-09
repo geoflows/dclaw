@@ -486,7 +486,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             if (bed_normal.eq.1) then
               theta = aux(i_theta,i,j)
-              gz = grav*cos(theta)
+              gz = grav*dcos(theta)
             else
               theta = 0.d0
             endif
@@ -579,13 +579,13 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
 
             !minmod gradients
-            FxC = -gz*h*(EtaR-EtaL)/(2.d0*dx) + gz*h*sin(theta)
+            FxC = -gz*h*(EtaR-EtaL)/(2.d0*dx) + gz*h*dsin(theta)
             FyC = -gz*h*(EtaT-EtaB)/(2.d0*dy)
 
-            FxL = -gz*0.5d0*(h+hL)*(Eta-EtaL)/(dx) + gz*0.5d0*(h+hL)*sin(theta)
+            FxL = -gz*0.5d0*(h+hL)*(Eta-EtaL)/(dx) + gz*0.5d0*(h+hL)*dsin(theta)
             FyL = -gz*0.5d0*(h+hB)*(Eta-EtaB)/(dy)
 
-            FxR = -gz*0.5d0*(h+hR)*(EtaR-Eta)/(dx) + gz*0.5d0*(h+hR)*sin(theta)
+            FxR = -gz*0.5d0*(h+hR)*(EtaR-Eta)/(dx) + gz*0.5d0*(h+hR)*dsin(theta)
             FyR = -gz*0.5d0*(h+hT)*(EtaT-Eta)/(dy)
 
             if (FxL*FxR>0.d0) then
