@@ -160,6 +160,8 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - 0
          - int
 
+    TODO: Make comments on how, if at all src2method and alphamethod may be combined. 
+
     The following parameters are used to control whether and how bed
     normal coordinates, segregation, and entrainment are implemented.
 

@@ -474,6 +474,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       !NOTE: at this point hm has changed.
       ! can redefine h by constant rho h and hm, or update h directly
       case(0)
+         ! case 0: old method.
          ! integrate hu, hv, hm, and h.
          ! rationale is if hm is poor, not to base h,hu,hv on it
          ! even if rho h is varied
@@ -483,6 +484,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
          hv = hv*exp(dt*krate)
          call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
       case(1)
+         ! case 1: half-way new method.
          ! redefine h by hm, rhoh, set hu,hv by new h
          ! rationale is to maintain rhoh = constant
          h = (rhoh - hm*(rho_s-rho_f))/rho_f
@@ -491,5 +493,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
          hchi = h*chi
          call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
       end select
+
+      ! qfix will set prim with conserved
 
       end subroutine mp_update_relax_Dclaw4
