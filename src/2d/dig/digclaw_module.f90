@@ -365,8 +365,7 @@ contains
 
       !i/o
       real(kind=8), intent(in)  :: h,u,v,m,p,chi,gz
-      real(kind=8), intent(out) :: alphainv
-      real(kind=8), intent(out) :: tau,m_eq,tanpsi,kperm
+      real(kind=8), intent(out) :: tau,m_eq,tanpsi,kperm,alphainv
       real(kind=8), intent(out) :: rho
 
       !local
@@ -472,7 +471,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       double precision :: uB,vB,mB,chiB,rhoB
       double precision :: uT,vT,mT,chiT,rhoT
       double precision :: theta
-      double precision :: tau,rho
+      double precision :: tau,rho,alphainv
       double precision :: tanpsi,kperm,m_eq
       double precision :: Fx,Fy,FxL,FxR,FyL,FyR,FyC,FxC,dot,vnorm,Fproj
 
