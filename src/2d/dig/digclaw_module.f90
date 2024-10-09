@@ -11,7 +11,6 @@ module digclaw_module
     double precision :: rho_s,rho_f,m_crit,m0,mref,kref,phi,delta,mu,alpha_c
     double precision :: c1,sigma_0,kappa
     double precision :: theta_input,entrainment_rate,me,beta_seg,chi0,chie
-    double precision :: alphainv
 
     integer :: src2method,alphamethod,bed_normal,entrainment,entrainment_method
     integer :: segregation,curvature,init_ptype
@@ -439,7 +438,7 @@ contains
 
       return
 
-      end subroutine setvars
+end subroutine setvars
 
 
    ! ========================================================================
