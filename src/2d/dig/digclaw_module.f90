@@ -392,13 +392,15 @@ contains
       sig_eff = max(0.d0,rho*gz*h - p)
 
       select case (alphamethod)
-      case(0:1)
+      case(0)
+         ! case 0: old d-claw, constant sig_0, set as user defined sigma_0
          sig_0 = sigma_0
-      case(2)
+      case(1)
+         ! case 1: new method that ensures pressure always decays to hydrostatic
          !sig_0 = alpha*(rho_s-rho_f)*gz*h
          sig_0 = 0.5d0*alpha_c*(rho_s-rho_f)*gz*h/rho
-         alphainv = m*(sig_eff + sig_0)/alpha_c
       end select
+      alphainv = m*(sig_eff + sig_0)/alpha_c
 
       vnorm = sqrt(u**2 + v**2)
 
