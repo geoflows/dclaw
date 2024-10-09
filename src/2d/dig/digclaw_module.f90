@@ -276,8 +276,10 @@ contains
          hchi = 0.d0
          u = 0.d0
          v = 0.d0
-         m = 0.d0 ! dig, is this correct?
-         chi = 0.d0 ! dig, is this correct?
+         m = 0.d0 ! m and chi of dry state should not matter because in
+         chi = 0.d0 ! riemann solver (and elsewhere) the neighbor of a dry
+         ! cell should be used instead. (nowhere should a physically undefined
+         ! variable be used).
          rho = 0.d0
          return
       endif
