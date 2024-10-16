@@ -102,7 +102,7 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
                                   dx, dy, FGFLAG)
             if (FGFLAG) then
                amrflags(i, j) = DOFLAG
-               write(*,*) "flagged"
+               !write(*,*) "++++++++++ flagged"
                cycle x_loop
             end if
          end if
@@ -197,7 +197,7 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
 
                               if (FGFLAG) then
                                  amrflags(i, j) = DOFLAG
-                                 write(*,*) "flagged - keep fine"
+                                 !write(*,*) "++++++++++ flagged - keep fine"
                                  cycle x_loop
                               end if
 

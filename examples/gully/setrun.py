@@ -7,7 +7,7 @@ that will be read in by the Fortran code.
 
 import os, sys
 import numpy as np
-from clawpack.geoclaw import fgout_tools
+from clawpack.geoclaw import fgout_tools, fgmax_tools
 
 # get information about the extent of the landslide from setinput.py
 from setinput import xl1, xl2, yl1, yl2
@@ -69,8 +69,8 @@ def setrun(claw_pkg='dclaw'):
     clawdata.upper[1] = 2e3
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 60 # x
-    clawdata.num_cells[1] = 20 # y
+    clawdata.num_cells[0] = 60*8 # x
+    clawdata.num_cells[1] = 20*8 # y
 
     # ---------------
     # Size of system:
@@ -140,7 +140,7 @@ def setrun(claw_pkg='dclaw'):
     # The current t, dt, and cfl will be printed every time step
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
-    clawdata.verbosity = 1
+    clawdata.verbosity = 3
 
     # --------------
     # Time stepping:
@@ -260,7 +260,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 3
+    amrdata.amr_levels_max = 1
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
@@ -371,12 +371,68 @@ def setrun(claw_pkg='dclaw'):
     etafile = 'surface_topo.tt3'
     qinitdclaw_data.qinitfiles.append([3, 8, etafile])
 
-    mfile = 'mass_frac.tt3'
-    #mfile = 'mass_frac0.tt3' # with m0 = 0 below
-    qinitdclaw_data.qinitfiles.append([3, 4, mfile])
+    # == fgmax_grids.data values ==
+    # set num_fgmax_val = 1 to save only max depth,
+    #                     2 to also save max speed,
+    #                     5 to also save max hs,hss,hmin
+    rundata.fgmax_data.num_fgmax_val = 5  # Save all quantities
+    fgmax_grids = rundata.fgmax_data.fgmax_grids  # empty list to start
 
-    #hfile = 'landslide_depth.tt3'
-    #qinitdclaw_data.qinitfiles.append([3, 1, 1, 2, hfile])
+    # Now append to this list objects of class fgmax_tools.FGmaxGrid
+    # specifying any fgmax grids.
+    fg = fgmax_tools.FGmaxGrid()
+    fg.point_style = 2  # uniform rectangular x-y grid
+
+    # determine total number of fine cells
+    dx_coarse = (clawdata.upper[0] - clawdata.lower[0]) / clawdata.num_cells[0]
+    dy_coarse = (clawdata.upper[1] - clawdata.lower[1]) / clawdata.num_cells[1]
+    dx_fine = dx_coarse
+    dy_fine = dy_coarse
+    total_refinement_x = 1
+    total_refinement_y = 1
+    for i in range(amrdata.amr_levels_max - 1):
+        dx_fine /= amrdata.refinement_ratios_x[i]
+        dy_fine /= amrdata.refinement_ratios_y[i]
+        total_refinement_x *= amrdata.refinement_ratios_x[i]
+        total_refinement_y *= amrdata.refinement_ratios_y[i]
+
+    fg.x1 = clawdata.lower[0] + dx_fine / 2  # specify pts to align with finite volume cell centers
+    fg.x2 = clawdata.upper[0] - dx_fine / 2
+    fg.y1 = clawdata.lower[1] + dx_fine / 2
+    fg.y2 = clawdata.upper[1] - dx_fine / 2
+
+    fg.dx = dx_fine  # desired resolution of fgmax grid
+    fg.tstart_max = 0.0  # when to start monitoring max values
+    fg.tend_max = 1.0e10  # when to stop monitoring max values
+    fg.dt_check = 1.0  # target time (sec) increment between updating
+    # max values
+    fg.min_level_check = 1  # which levels to monitor max on
+    fg.arrival_tol = 1.0e-2  # tolerance for flagging arrival
+    fg.interp_method = 0  # 0 ==> pw const in cells, recommended
+    #fgmax_grids.append(fg)  # written to fgmax_grids.data
+
+
+    # == fgout_grids.data values ==
+    # Set rundata.fgout_data.fgout_grids to be a list of
+    # objects of class clawpack.geoclaw.fgout_tools.FGoutGrid:
+    fgout_grids = rundata.fgout_data.fgout_grids  # empty list initially
+
+    fgout = fgout_tools.FGoutGrid()
+    fgout.fgno = 1
+    fgout.point_style = 2       # will specify a 2d grid of points
+    #fgout.output_format = 'binary32'  # 4-byte, float32
+    fgout.output_format = 'ascii'  # 4-byte, float32
+    fgout.nx = int(clawdata.num_cells[0]*total_refinement_x)
+    fgout.ny = int(clawdata.num_cells[1]*total_refinement_y)
+    fgout.x1 = clawdata.lower[0]  # specify edges (fgout pts will be cell centers)
+    fgout.x2 = clawdata.upper[0]
+    fgout.y1 = clawdata.lower[1]
+    fgout.y2 = clawdata.upper[1]
+    fgout.tstart = 0.
+    fgout.tend = clawdata.tfinal
+    fgout.nout = 101
+    fgout.q_out_vars = [1,4,8]
+    #fgout_grids.append(fgout)    # written to fgout_grids.data
 
     # == setauxinit.data values ==
     #auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
@@ -404,7 +460,7 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.src2method=0
     dclaw_data.alphamethod=0
 
-    dclaw_data.segregation=1
+    dclaw_data.segregation=0
     dclaw_data.beta_seg = 0.0
     dclaw_data.chi0=0.5
     dclaw_data.chie=0.5
@@ -435,31 +491,6 @@ def setrun(claw_pkg='dclaw'):
     flowgrades_data.keep_fine = True
     flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 3])
     flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 3])
-    flowgrades_data.flowgrades.append([1.0e-6, 2, 2, 3])
-    flowgrades_data.flowgrades.append([1.0e-6, 1, 2, 3])
-
-    # == fgout_grids.data values ==
-    # NEW IN v5.9.0
-    # Set rundata.fgout_data.fgout_grids to be a list of
-    # objects of class clawpack.geoclaw.fgout_tools.FGoutGrid:
-    fgout_grids = rundata.fgout_data.fgout_grids  # empty list initially
-
-    fgout = fgout_tools.FGoutGrid()
-    fgout.fgno = 1
-    fgout.point_style = 2       # will specify a 2d grid of points
-    #fgout.output_format = 'binary32'  # 4-byte, float32
-    fgout.output_format = 'ascii'  # 4-byte, float32
-    fgout.nx = 300
-    fgout.ny = 300
-    fgout.x1 = 0.  # specify edges (fgout pts will be cell centers)
-    fgout.x2 = 3e3
-    fgout.y1 = 0.
-    fgout.y2 = 3e3
-    fgout.tstart = 0.
-    fgout.tend = 100.
-    fgout.nout = 101
-    fgout.q_out_vars = [1,4,8]
-    fgout_grids.append(fgout)    # written to fgout_grids.data
 
 
     #  ----- For developers -----
@@ -475,7 +506,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata.tprint = False      # time step reporting each level
     amrdata.uprint = False      # update/upbnd reporting
 
-    amrdata.max1d = 300
+    amrdata.max1d = 10000
     # More AMR parameters can be set -- see the defaults in pyclaw/data.py
 
     return rundata

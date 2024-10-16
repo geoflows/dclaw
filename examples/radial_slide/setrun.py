@@ -414,34 +414,36 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.rho_s = 2700.0
     dclaw_data.m_crit = 0.64
     dclaw_data.m0 = 0.63
-    dclaw_data.mr = 0.6
-    dclaw_data.kr = 1.e-10
+    dclaw_data.mref = 0.6
+    dclaw_data.kref = 1.e-10
     dclaw_data.phi = 32.0
     dclaw_data.delta = 0.001
     dclaw_data.mu = 0.005
-    dclaw_data.a = 0.01
-
+    dclaw_data.alpha_c = 0.01
+    dclaw_data.c1 = 1
     dclaw_data.sigma_0 = 1.0e3
-    dclaw_data.c1 = 1.0 # do we want to remove this?
 
+    dclaw_data.src2method=0
+    dclaw_data.alphamethod=0
 
-    dclaw_data.segregation=1
+    dclaw_data.segregation=0
     dclaw_data.beta_seg = 0.0
-    dclaw_data.chi_init_val=0.5
+    dclaw_data.chi0=0.5
+    dclaw_data.chie=0.5
 
     dclaw_data.bed_normal = 0
     dclaw_data.theta_input = 0.0
 
     dclaw_data.entrainment = 0
     dclaw_data.entrainment_rate = 0.0
+    dclaw_data.entrainment_method = 1
+    dclaw_data.me = 0.6
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
 
     pinitdclaw_data.init_ptype = 0 # hydrostatic (-1 ==> zero everywhere)
-    pinitdclaw_data.init_pmax_ratio = 0.00e0
-    pinitdclaw_data.init_ptf = 0.0
-    pinitdclaw_data.init_ptf2 = 0.0
+
 
     # == flowgrades.data values ==
     flowgrades_data = rundata.flowgrades_data  # initialized when rundata instantiated

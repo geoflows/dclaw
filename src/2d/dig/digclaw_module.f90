@@ -11,7 +11,6 @@ module digclaw_module
     double precision :: rho_s,rho_f,m_crit,m0,mref,kref,phi,delta,mu,alpha_c
     double precision :: c1,sigma_0,kappa
     double precision :: theta_input,entrainment_rate,me,beta_seg,chi0,chie
-    double precision :: alphainv
 
     integer :: src2method,alphamethod,bed_normal,entrainment,entrainment_method
     integer :: segregation,curvature,init_ptype
@@ -42,6 +41,7 @@ module digclaw_module
     integer ::  i_ent
 
     integer, parameter ::  DIG_PARM_UNIT = 78
+    integer, parameter ::  PINIT_PARM_UNIT = 79
 
 
 contains
@@ -128,6 +128,7 @@ contains
 
          read(iunit,*) bed_normal
          read(iunit,*) theta_input
+         theta_input = deg2rad*theta_input
 
          read(iunit,*) entrainment
          read(iunit,*) entrainment_method
@@ -168,12 +169,12 @@ contains
          write(DIG_PARM_UNIT,*) 'SETDIG:'
          write(DIG_PARM_UNIT,*) '---------'
          write(DIG_PARM_UNIT,*) '    rho_s:', rho_s
-         write(DIG_PARM_UNIT,*) '    rho_s:', rho_s
+         write(DIG_PARM_UNIT,*) '    rho_f:', rho_f
          write(DIG_PARM_UNIT,*) '    m_crit:', m_crit
          write(DIG_PARM_UNIT,*) '    m0:', m0
          write(DIG_PARM_UNIT,*) '    mref:', mref
          write(DIG_PARM_UNIT,*) '    kref:', kref
-         write(DIG_PARM_UNIT,*) '    phi:', phi
+         write(DIG_PARM_UNIT,*) '    phi:', phi/deg2rad
          write(DIG_PARM_UNIT,*) '    delta:', delta
          write(DIG_PARM_UNIT,*) '    mu:', mu
          write(DIG_PARM_UNIT,*) '    alpha_c:', alpha_c
@@ -182,7 +183,7 @@ contains
          write(DIG_PARM_UNIT,*) '    src2method:', src2method
          write(DIG_PARM_UNIT,*) '    alphamethod:', alphamethod
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal
-         write(DIG_PARM_UNIT,*) '    theta_input:', theta_input
+         write(DIG_PARM_UNIT,*) '    theta_input:', theta_input/deg2rad
          write(DIG_PARM_UNIT,*) '    entrainment:', entrainment
          write(DIG_PARM_UNIT,*) '    entrainment_method:', entrainment_method
          write(DIG_PARM_UNIT,*) '    entrainment_rate:', entrainment_rate
@@ -194,6 +195,7 @@ contains
          write(DIG_PARM_UNIT,*) '    mom_autostop:', mom_autostop
          write(DIG_PARM_UNIT,*) '    momlevel:', momlevel
          write(DIG_PARM_UNIT,*) '    curvature:', curvature
+         close(DIG_PARM_UNIT)
 
 
    end subroutine set_dig
@@ -237,13 +239,13 @@ contains
          grad_eta_ave = 0.d0
          eta_cell_count = 1.e-6
 
-
-         write(DIG_PARM_UNIT,*) ' '
-         write(DIG_PARM_UNIT,*) '--------------------------------------------'
-         write(DIG_PARM_UNIT,*) 'SETPINIT:'
-         write(DIG_PARM_UNIT,*) '---------'
-         write(DIG_PARM_UNIT,*) '    init_ptype:',init_ptype
-         close(DIG_PARM_UNIT)
+         open(unit=PINIT_PARM_UNIT,file='fort.pinit',status="unknown",action="write")
+         write(PINIT_PARM_UNIT,*) ' '
+         write(PINIT_PARM_UNIT,*) '--------------------------------------------'
+         write(PINIT_PARM_UNIT,*) 'SETPINIT:'
+         write(PINIT_PARM_UNIT,*) '---------'
+         write(PINIT_PARM_UNIT,*) '    init_ptype:',init_ptype
+         close(PINIT_PARM_UNIT)
 
    end subroutine set_pinit
 
@@ -270,10 +272,13 @@ contains
          hv = 0.d0
          hm = 0.d0
          p  = 0.d0
+         hchi = 0.d0
          u = 0.d0
          v = 0.d0
-         m = 0.d0
-         chi = 0.d0
+         m = 0.d0 ! m and chi of dry state should not matter because in
+         chi = 0.d0 ! riemann solver (and elsewhere) the neighbor of a dry
+         ! cell should be used instead. (nowhere should a physically undefined
+         ! variable be used).
          rho = 0.d0
          return
       endif
@@ -360,8 +365,7 @@ contains
 
       !i/o
       real(kind=8), intent(in)  :: h,u,v,m,p,chi,gz
-      real(kind=8), intent(out) :: alphainv
-      real(kind=8), intent(out) :: tau,m_eq,tanpsi,kperm
+      real(kind=8), intent(out) :: tau,m_eq,tanpsi,kperm,alphainv
       real(kind=8), intent(out) :: rho
 
       !local
@@ -388,13 +392,15 @@ contains
       sig_eff = max(0.d0,rho*gz*h - p)
 
       select case (alphamethod)
-      case(0:1)
+      case(0)
+         ! case 0: old d-claw, constant sig_0, set as user defined sigma_0
          sig_0 = sigma_0
-      case(2)
+      case(1)
+         ! case 1: new method that ensures pressure always decays to hydrostatic
          !sig_0 = alpha*(rho_s-rho_f)*gz*h
          sig_0 = 0.5d0*alpha_c*(rho_s-rho_f)*gz*h/rho
-         alphainv = m*(sig_eff + sig_0)/alpha_c
       end select
+      alphainv = m*(sig_eff + sig_0)/alpha_c
 
       vnorm = sqrt(u**2 + v**2)
 
@@ -433,7 +439,7 @@ contains
 
       return
 
-      end subroutine setvars
+end subroutine setvars
 
 
    ! ========================================================================
@@ -467,7 +473,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       double precision :: uB,vB,mB,chiB,rhoB
       double precision :: uT,vT,mT,chiT,rhoT
       double precision :: theta
-      double precision :: tau,rho
+      double precision :: tau,rho,alphainv
       double precision :: tanpsi,kperm,m_eq
       double precision :: Fx,Fy,FxL,FxR,FyL,FyR,FyC,FxC,dot,vnorm,Fproj
 
@@ -480,7 +486,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             if (bed_normal.eq.1) then
               theta = aux(i_theta,i,j)
-              gz = grav*cos(theta)
+              gz = grav*dcos(theta)
             else
               theta = 0.d0
             endif
@@ -573,13 +579,13 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
 
             !minmod gradients
-            FxC = -gz*h*(EtaR-EtaL)/(2.d0*dx) + gz*h*sin(theta)
+            FxC = -gz*h*(EtaR-EtaL)/(2.d0*dx) + gz*h*dsin(theta)
             FyC = -gz*h*(EtaT-EtaB)/(2.d0*dy)
 
-            FxL = -gz*0.5d0*(h+hL)*(Eta-EtaL)/(dx) + gz*0.5d0*(h+hL)*sin(theta)
+            FxL = -gz*0.5d0*(h+hL)*(Eta-EtaL)/(dx) + gz*0.5d0*(h+hL)*dsin(theta)
             FyL = -gz*0.5d0*(h+hB)*(Eta-EtaB)/(dy)
 
-            FxR = -gz*0.5d0*(h+hR)*(EtaR-Eta)/(dx) + gz*0.5d0*(h+hR)*sin(theta)
+            FxR = -gz*0.5d0*(h+hR)*(EtaR-Eta)/(dx) + gz*0.5d0*(h+hR)*dsin(theta)
             FyR = -gz*0.5d0*(h+hT)*(EtaT-Eta)/(dy)
 
             if (FxL*FxR>0.d0) then

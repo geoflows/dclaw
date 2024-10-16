@@ -26,7 +26,6 @@ alpha_c = 15 # gully channel slope angle
 alpha_f = 5 # fan slope angle
 
 # landslide
-m0 = 0.63  # mass fraction in landslide
 xl1, xl2 = 2100, 2150 # landslide x extent
 yl1, yl2 = 700, 800 # landslide y extent
 depth = 4 # landslide depth
@@ -91,17 +90,6 @@ def eta(x,y):
     return z
 
 
-def mfrac(x,y):
-    """
-    mass fraction
-    Cartesian: x,y in meters
-    """
-    landslide_location = (x>xl1)*(x<=xl2)*(y>yl1)*(y<yl2)
-    mfrac = np.zeros_like(x)
-    mfrac[landslide_location]=m0
-    return mfrac
-
-
 def maketopo():
     """
     Output topography file for the entire domain
@@ -114,8 +102,6 @@ def maketopo():
     yupper= y2
     outfile= "basal_topo.tt3"
     topotools.topo3writer(outfile,basal,xlower,xupper,ylower,yupper,nxpoints,nypoints)
-    outfile= "mass_frac.tt3"
-    topotools.topo3writer(outfile,mfrac,xlower,xupper,ylower,yupper,nxpoints,nypoints)
     outfile= "surface_topo.tt3"
     topotools.topo3writer(outfile,eta,xlower,xupper,ylower,yupper,nxpoints,nypoints)
 
