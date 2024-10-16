@@ -87,18 +87,27 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
          end if
 
          ! determine if flowgrades are used
+         FGFLAG = .false.
          if (mflowgrades > 0) then
+            do mm = 1, meqn
+                qcen(mm) = q(mm, i, j)
+                qlef(mm) = q(mm, i - 1, j)
+                qrig(mm) = q(mm, i + 1, j)
+                qtop(mm) = q(mm, i, j + 1)
+                qbot(mm) = q(mm, i, j - 1)
+            end do
+
+            do mm = i, maux
+                auxcen(mm) = aux(mm, i, j)
+                auxlef(mm) = aux(mm, i - 1, j)
+                auxrig(mm) = aux(mm, i + 1, j)
+                auxtop(mm) = aux(mm, i, j + 1)
+                auxbot(mm) = aux(mm, i, j - 1)
+            end do
+
             call check_flowgrades(meqn, maux, level, &
-                                  q(:, i, j), & ! center
-                                  q(:, i - 1, j), & ! left
-                                  q(:, i + 1, j), & ! right
-                                  q(:, i, j + 1), & ! top
-                                  q(:, i, j - 1), & ! bottom
-                                  aux(:, i, j), & ! center
-                                  aux(:, i - 1, j), & ! left
-                                  aux(:, i + 1, j), & ! right
-                                  aux(:, i, j + 1), & ! top
-                                  aux(:, i, j - 1), & ! bottom
+                                  qcen, qlef, qrig, qtop, qbot, &
+                                  auxcen, auxlef, auxrig, auxtop, auxbot, &
                                   dx, dy, FGFLAG)
             if (FGFLAG) then
                amrflags(i, j) = DOFLAG
