@@ -82,7 +82,6 @@
             p =  q(i_pb,i,j)
             hchi = q(i_hchi,i,j)
             rhoh = hm*rho_s + (h-hm)*rho_f
-            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
 
             !modified gravity: bed-normal weight and acceleration
             if (bed_normal==1) then
@@ -108,11 +107,16 @@
                ! entrainment only needs b_x and b_y.
                ! curvature also needs b_xx,b_yy,and b_xy
             endif
+
             if (curvature==1) then
+               u = hu/h
+               v = hv/h
                dtheta = -(aux(i_theta,i+1,j) - aux(i_theta,i-1,j))/(2.d0*dx)
                gacc = max(u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!max:currently only consider enhancement not reduction of gz (ie. basin not a hump)
                gz = gz + gacc
             endif
+
+            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
 
 !-----------!integrate momentum source term------------------------
             ! need tau:
