@@ -69,8 +69,8 @@ def setrun(claw_pkg='dclaw'):
     clawdata.upper[1] = 2e3
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 60*8 # x
-    clawdata.num_cells[1] = 20*8 # y
+    clawdata.num_cells[0] = 60 # x
+    clawdata.num_cells[1] = 20 # y
 
     # ---------------
     # Size of system:
@@ -260,7 +260,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 1
+    amrdata.amr_levels_max = 3
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
@@ -448,13 +448,13 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.rho_s = 2700.0
     dclaw_data.m_crit = 0.64
     dclaw_data.m0 = 0.63
-    dclaw_data.mref = 0.6
+    dclaw_data.mref = 0.63
     dclaw_data.kref = 1.e-10
     dclaw_data.phi = 32.0
     dclaw_data.delta = 0.001
     dclaw_data.mu = 0.005
-    dclaw_data.alpha_c = 0.01
-    dclaw_data.c1 = 1
+    dclaw_data.alpha_c = 0.05
+    dclaw_data.c1 = 1.0
     dclaw_data.sigma_0 = 1.0e3
 
     dclaw_data.src2method=0
@@ -462,8 +462,8 @@ def setrun(claw_pkg='dclaw'):
 
     dclaw_data.segregation=0
     dclaw_data.beta_seg = 0.0
-    dclaw_data.chi0=0.5
-    dclaw_data.chie=0.5
+    dclaw_data.chi0=0.0
+    dclaw_data.chie=0.0
 
     dclaw_data.bed_normal = 0
     dclaw_data.theta_input = 0.0
@@ -471,7 +471,7 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.entrainment = 0
     dclaw_data.entrainment_rate = 0.0
     dclaw_data.entrainment_method = 1
-    dclaw_data.me = 0.6
+    dclaw_data.me = 0.63
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
@@ -489,7 +489,6 @@ def setrun(claw_pkg='dclaw'):
     # flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
 
     flowgrades_data.keep_fine = True
-    flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 3])
     flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 3])
 
 
