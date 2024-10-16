@@ -119,7 +119,8 @@
             !Manning friction
             if ((friction_forcing).and.(coeffmanning>0.d0)) then
                if (h<=friction_depth) then
-                  beta = 1.0d0-m
+                  !beta = 1.d0-m  ! reduced friction led to high velocities
+                  beta = 1.d0     ! use full Manning friction
                   gamma= beta*sqrt(hu**2 + hv**2)*(gz*coeffmanning**2)/(h**(7.d0/3.d0))
                   dgamma=1.d0 + dt*gamma
                   hu= hu/dgamma
