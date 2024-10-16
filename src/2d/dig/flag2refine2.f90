@@ -364,7 +364,7 @@ subroutine check_flowgrades(meqn, maux, level, &
       if (flowgrademeasure .gt. flowgradevalue(iflow) &
           .and. level .lt. iflowgrademinlevel(iflow)) then
          FGFLAG = .true.
-         cycle mfg_loop
+         exit mfg_loop
       end if
 
    end do mfg_loop! end mflowgrades loop
