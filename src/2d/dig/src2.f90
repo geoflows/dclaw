@@ -115,21 +115,6 @@
                gz = gz + gacc
             endif
 
-
-            !Manning friction
-            if ((friction_forcing).and.(coeffmanning>0.d0)) then
-               if (h<=friction_depth) then
-                  !beta = 1.d0-m  ! reduced friction led to high velocities
-                  beta = 1.d0     ! use full Manning friction
-                  gamma= beta*sqrt(hu**2 + hv**2)*(gz*coeffmanning**2)/(h**(7.d0/3.d0))
-                  dgamma=1.d0 + dt*gamma
-                  hu= hu/dgamma
-                  hv= hv/dgamma
-                  !new u,v below
-                  call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
-               endif
-            endif
-
 !-----------!integrate momentum source term------------------------
             ! need tau:
             call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
@@ -193,14 +178,24 @@
                hm = h*m
                hchi = h*chi
                call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
-               if (h<=dry_tolerance) then
-                  cycle
-               endif
 
             end select
+
+            if (h<=dry_tolerance) then
+            ! put state variables back in q.
+               q(i_h,i,j) = h
+               q(i_hu,i,j) = hu
+               q(i_hv,i,j) = hv
+               q(i_hm,i,j) = hm
+               q(i_pb,i,j) = p
+               q(i_hchi,i,j) = hchi
+               cycle
+            endif
+
             !========================== end src integration ======================
 
             call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
+
 
             !======================mass entrainment===========================
             if (entrainment==1) then
@@ -216,8 +211,27 @@
             endif
 
             !===================================================================
-            ! end of entrainment, put state variables back in q.
+            ! end of entrainment
 
+
+            !===========Manning friction========================================
+            if ((friction_forcing).and.(coeffmanning>0.d0)) then
+               if (h<=friction_depth) then
+                  !beta = 1.d0-m  ! reduced friction led to high velocities
+                  beta = 1.d0     ! use full Manning friction
+                  gamma= beta*sqrt(hu**2 + hv**2)*(gz*coeffmanning**2)/(h**(7.d0/3.d0))
+                  dgamma=1.d0 + dt*gamma
+                  hu= hu/dgamma
+                  hv= hv/dgamma
+                  !new u,v below
+                  call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+               endif
+            endif
+
+            !===================================================================
+            ! end of Manning friction
+
+            ! put state variables back in q.
             q(i_h,i,j) = h
             q(i_hu,i,j) = hu
             q(i_hv,i,j) = hv
