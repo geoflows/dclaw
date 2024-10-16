@@ -83,6 +83,10 @@
             hchi = q(i_hchi,i,j)
             rhoh = hm*rho_s + (h-hm)*rho_f
 
+            if (hm.lt.0.d0) then
+              write(*,*) 'hm negative, h, hm, rhoh: ',h, hm, rhoh
+            endif
+
             !modified gravity: bed-normal weight and acceleration
             if (bed_normal==1) then
                theta = aux(i_theta,i,j)
