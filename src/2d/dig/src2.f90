@@ -49,18 +49,17 @@
       ! check for NANs in solution:
       call check4nans(meqn,mbc,mx,my,q,t,2)
 
-      if (friction_forcing) then
-         coeffmanning = manning_coefficient(1)
-      else
-         coeffmanning = 0.d0
-      endif
-
       ! Current implementation of friction has manning as an array
       ! take the first element for now. If only one value is
       ! provided to geo_data.manning_coefficient
       ! it will be manning_coefficient(1)
       ! DIG: Decide if this should be handled in some other way.
 
+      if (friction_forcing) then
+         coeffmanning = manning_coefficient(1)
+      else
+         coeffmanning = 0.d0
+      endif
 
       gz = grav  !needed later for bed-normal direction gravity
       gx = 0.d0
