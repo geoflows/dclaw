@@ -85,6 +85,14 @@
 
             if (hm.lt.0.d0) then
               write(*,*) 'hm negative, h, hm, rhoh: ',h, hm, rhoh
+              ! This most likely occurs using second order corrections.
+              q(i_h,i,j) = 0.d0
+              q(i_hu,i,j) = 0.d0
+              q(i_hv,i,j) = 0.d0
+              q(i_hm,i,j) = 0.d0
+              q(i_pb,i,j) = 0.d0
+              q(i_hchi,i,j) = 0.d0
+              cycle
             endif
 
             !modified gravity: bed-normal weight and acceleration
