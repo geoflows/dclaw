@@ -5,8 +5,8 @@
 ! Specific for D-Claw: This routine uses flowgrades and if specified
 ! conditions are met, a cell will be flagged for refinement. If
 ! keep_fine = True, conditions will be evaluated at both this level and
-! the finest level (level = mxnest, not the finest level at this
-! location)
+! at finer levels (up to level = mxnest)
+
 ! D-Claw refinement does not consider wave or speed tolerances as these
 ! can be specified by flowgrades.
 !
@@ -28,12 +28,15 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
                         tolsp, q, aux, amrflags)
 
    use amr_module, only: mxnest, t0, DOFLAG, UNSET
-   use amr_module, only: lfine, lstart, node, rnode
+   use amr_module, only: lstart, node, rnode
    use amr_module, only: cornxlo, cornylo, levelptr, mxnest, ndihi, ndilo
    use amr_module, only: ndjhi, ndjlo, store1, store2, storeaux
    use amr_module, only: alloc, hxposs, hyposs
 
    use refinement_module, only: mflowgrades, keep_fine
+
+   use digclaw_module, only: i_h
+   use geoclaw_module, only: dry_tolerance
 
    implicit none
 
@@ -53,21 +56,13 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
    real(kind=8) :: speed, eta, ds
    logical :: FGFLAG
 
-   real(kind=8) :: qcen(meqn)
-   real(kind=8) :: qtop(meqn)
-   real(kind=8) :: qbot(meqn)
-   real(kind=8) :: qlef(meqn)
-   real(kind=8) :: qrig(meqn)
-   real(kind=8) :: auxcen(maux)
-   real(kind=8) :: auxtop(maux)
-   real(kind=8) :: auxbot(maux)
-   real(kind=8) :: auxlef(maux)
-   real(kind=8) :: auxrig(maux)
+   real(kind=8) :: qstencil(meqn,5)
+   real(kind=8) :: auxstencil(maux,5)
 
     !! Flowgrade and keep_fine variables
-   real(kind=8) :: xlow, xhi, ylow, yhi, xxlow, xxhi, yylow, yyhi
+   real(kind=8) :: xlowfg, xhifg, ylowfg, yhifg, xxlow, xxhi, yylow, yyhi
    real(kind=8) :: dxfine, dyfine
-   integer :: nx, ny, loc, locaux, mitot, mjtot, mptr, iflow, ii, jj, mm
+   integer :: nx, ny, q_loc, aux_loc, mitot, mjtot, grid_ptr, iflow, ii, jj, mm
 
    ! Loop over interior points on this grid
    ! (i,j) grid cell is [x_low,x_hi] x [y_low,y_hi], cell cen at (x_c,y_c)
@@ -88,166 +83,210 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
 
          ! determine if flowgrades are used
          FGFLAG = .false.
-         if (mflowgrades > 0) then
+         if ((mflowgrades > 0).and. &
+             ((q(i_h, i, j).gt.dry_tolerance)).and. &
+             (.not. keep_fine)) then
+         ! only check flowgrades if central cell has thickness
+         ! DIG: Discuss
+
+            qstencil(:,:) = 0.d0
+            auxstencil(:,:) = 0.d0
             do mm = 1, meqn
-                qcen(mm) = q(mm, i, j)
-                qlef(mm) = q(mm, i - 1, j)
-                qrig(mm) = q(mm, i + 1, j)
-                qtop(mm) = q(mm, i, j + 1)
-                qbot(mm) = q(mm, i, j - 1)
+                qstencil(mm,1) = q(mm, i, j)
+                qstencil(mm,2) = q(mm, i - 1, j)
+                qstencil(mm,3) = q(mm, i + 1, j)
+                qstencil(mm,4) = q(mm, i, j - 1)
+                qstencil(mm,5) = q(mm, i, j + 1)
             end do
 
-            do mm = i, maux
-                auxcen(mm) = aux(mm, i, j)
-                auxlef(mm) = aux(mm, i - 1, j)
-                auxrig(mm) = aux(mm, i + 1, j)
-                auxtop(mm) = aux(mm, i, j + 1)
-                auxbot(mm) = aux(mm, i, j - 1)
+            do mm = 1, maux
+                auxstencil(mm,1) = aux(mm, i, j)
+                auxstencil(mm,2) = aux(mm, i - 1, j)
+                auxstencil(mm,3) = aux(mm, i + 1, j)
+                auxstencil(mm,4) = aux(mm, i, j - 1)
+                auxstencil(mm,5) = aux(mm, i, j + 1)
             end do
 
             call check_flowgrades(meqn, maux, level, &
-                                  qcen, qlef, qrig, qtop, qbot, &
-                                  auxcen, auxlef, auxrig, auxtop, auxbot, &
+                                  qstencil, auxstencil, &
                                   dx, dy, FGFLAG)
             if (FGFLAG) then
                amrflags(i, j) = DOFLAG
-               !write(*,*) "++++++++++ flagged"
                cycle x_loop
             end if
-         end if
+
+         end if ! if using normal flowgraded and cell is wet.
 
          ! keep fine added by KRB 2022/12/28
+         ! updated by KRB 2024/10/17
+         ! if keep_fine is used, refinement must be based on the highest
+         ! level of refinement only. checking flowgrades on all levels (as is
+         ! done in the code block above) is problematic because if a coarse
+         ! grid at any level advects material beyond the extent of a fine grid,
+         ! then at the next regrid time point, this material will be placed into
+         ! the fine grid.
+
+         ! requirement for use of keep fine is that all flow of concern is on
+         ! mxnest only and the sole purpose of keep fine is amr is for
+         ! 'tracking' the location of fine grids (e.g. shallow flow problems).
+
          if (keep_fine .and. mflowgrades .gt. 0) then
-            ! if level is lower than lfine determine whether a grid exists
-            ! here on lfine and test whether refinement should be maintained.
-            ! ignore ghost cells on the fine grid
 
-            if (level .lt. lfine) then
+            ! if level is lower than mxnest determine whether a grid exists
+            ! here on each level between level+1 and mxnest. For each cell
+            ! within that grid, test whether refinement should be maintained.
+            ! ignore ghost cells on the finer grid
 
-               ! loop through lfine grids
-               mptr = lstart(lfine)
-               do while (mptr > 0)
+            if (level .lt. mxnest) then
 
-                  ! calculate extent of fine grid
-                  nx = node(ndihi, mptr) - node(ndilo, mptr) + 1
-                  ny = node(ndjhi, mptr) - node(ndjlo, mptr) + 1
-                  loc = node(store1, mptr)
-                  locaux = node(storeaux, mptr)
-                  mitot = nx + 2*mbc
-                  mjtot = ny + 2*mbc
+              ! consider flow on mxnest (not highest here, only mxnest)
 
-                  xlow = rnode(cornxlo, mptr)
-                  ylow = rnode(cornylo, mptr)
-                  xhi = xlow + nx*hxposs(lfine)
-                  yhi = ylow + ny*hyposs(lfine)
+              ! get pointer to the start of this mxnest
+              grid_ptr = lstart(mxnest)
 
-                  ! if there is overlap between the fine grid and this
-                  ! location on the coarse grid, flag.
-                  ! (i,j) grid cell is [x1,x2] x [y1,y2].
-                  ! fine grid is [xlow,xhi] x [ylow,yhi]
-                  if (x_hi .gt. xlow .and. x_low .lt. xhi .and. &
-                      y_hi .gt. ylow .and. y_low .lt. yhi) then
+              ! get fine dx and dy values
+              dxfine = hxposs(mxnest)
+              dyfine = hyposs(mxnest)
 
-                     ! this loop includes ghosts, update extent and
-                     mitot = nx + 2*mbc
-                     mjtot = ny + 2*mbc
-                     xlow = rnode(cornxlo, mptr) - mbc*hxposs(lfine)
-                     ylow = rnode(cornylo, mptr) - mbc*hyposs(lfine)
-                     xhi = xlow + mitot*hxposs(lfine)
-                     yhi = ylow + mjtot*hyposs(lfine)
+              do while (grid_ptr /= 0)
 
-                     ! get pointers
-                     loc = node(store1, mptr)
-                     locaux = node(storeaux, mptr)
+                ! calculate extent of fine grid (no ghost cells reflected
+                ! in extent)
+                nx = node(ndihi, grid_ptr) - node(ndilo, grid_ptr) + 1
+                ny = node(ndjhi, grid_ptr) - node(ndjlo, grid_ptr) + 1
 
-                     ! loop through fine grid cells.
-                     do jj = mbc + 1, mjtot - mbc
-                        do ii = mbc + 1, mitot - mbc
-                           ! check overlap between fine and coarse cells
-                           ! ignore ghost cells
-                           xxlow = xlow + hxposs(lfine)*ii
-                           xxhi = xxlow + hxposs(lfine)
-                           yylow = ylow + hyposs(lfine)*jj
-                           yyhi = yylow + hyposs(lfine)
+                xlowfg = rnode(cornxlo, grid_ptr)
+                ylowfg = rnode(cornylo, grid_ptr)
+                xhifg = xlowfg + nx*dxfine
+                yhifg = ylowfg + ny*dyfine
 
-                           ! if fine grid cell is inside of coarse grid cell
-                           ! calculate flowgrade values
-                           if (x_hi .gt. xxlow .and. x_low .lt. xxhi .and. &
-                               y_hi .gt. yylow .and. y_low .lt. yyhi) then
+                ! if there is overlap between the fine grid extent and this
+                ! cell on the coarse grid, consider further.
+                ! (i,j) coarse grid cell is [x_low,x_hi] x [y_low,y_hi].
+                ! fine grid extent is [xlowfg,xhifg] x [ylowfg,yhifg]
+
+                if ((x_hi .gt. xlowfg) .and. &
+                    (x_low .lt. xhifg) .and. &
+                    (y_hi .gt. ylowfg) .and. &
+                    (y_low .lt. yhifg)) then
+
+                   ! If considering further, loop through fine grid cells to
+                   ! find the ones that overlap. indexing into q on the fine
+                   ! grid includes ghost cells, so update the fine grid
+                   ! lower left corner location and the nrows, ncols to
+                   ! include ghost cells. other corners no longer needed.
+
+                   xlowfg = rnode(cornxlo, grid_ptr) - mbc*dxfine
+                   ylowfg = rnode(cornylo, grid_ptr) - mbc*dyfine
+
+                   ! define mitot and mjtot to include ghost cells.
+                   ! iadd and iaddaux modified to reflect this.
+                   mitot = nx + 2*mbc
+                   mjtot = ny + 2*mbc
+
+                   ! get pointers into q and aux
+                   q_loc = node(store1, grid_ptr)
+                   aux_loc = node(storeaux, grid_ptr)
+
+                   ! loop through fine grid cells (consider only the non-
+                   ! ghost cell)
+                   do jj = mbc + 1, mjtot - mbc
+                      do ii = mbc + 1, mitot - mbc
+                         ! check overlap between fine and coarse cells
+                         ! ignore ghost cells
+                         xxlow = xlowfg + dxfine*ii
+                         xxhi = xxlow + dxfine
+                         yylow = ylowfg + dyfine*jj
+                         yyhi = yylow + dyfine
+
+                         ! if fine grid cell overlaps with coarse grid cell
+                         ! consider further.
+                         if ((x_hi .gt. xxlow) .and. &
+                             (x_low .lt. xxhi) .and. &
+                             (y_hi .gt. yylow) .and. &
+                             (y_low .lt. yyhi)) then
+
+                            ! test if central cell has thickness.
+                            if (alloc(iadd(i_h, ii, jj)).gt.dry_tolerance) then
+                              ! only check flowgrades if central cell in stencil has thickness
+                              ! DIG: Discuss
 
                               ! construct arrays of q and aux for the five cell
                               ! stencil surrounding cell ii,jj.
+                              ! stencil may include ghost cell values.
+                              qstencil(:,:) = 0.d0
+                              auxstencil(:,:) = 0.d0
+
                               do mm = 1, meqn
-                                 qcen(mm) = alloc(iadd(mm, ii, jj))
-                                 qlef(mm) = alloc(iadd(mm, ii - 1, jj))
-                                 qrig(mm) = alloc(iadd(mm, ii + 1, jj))
-                                 qtop(mm) = alloc(iadd(mm, ii, jj + 1))
-                                 qbot(mm) = alloc(iadd(mm, ii, jj - 1))
+                                 qstencil(mm,1) = alloc(iadd(mm, ii, jj))
+                                 qstencil(mm,2) = alloc(iadd(mm, ii - 1, jj))
+                                 qstencil(mm,3) = alloc(iadd(mm, ii + 1, jj))
+                                 qstencil(mm,4) = alloc(iadd(mm, ii, jj - 1))
+                                 qstencil(mm,5) = alloc(iadd(mm, ii, jj + 1))
                               end do
 
-                              do mm = i, maux
-                                 auxcen(mm) = alloc(iaddaux(mm, ii, jj))
-                                 auxlef(mm) = alloc(iaddaux(mm, ii - 1, jj))
-                                 auxrig(mm) = alloc(iaddaux(mm, ii + 1, jj))
-                                 auxtop(mm) = alloc(iaddaux(mm, ii, jj + 1))
-                                 auxbot(mm) = alloc(iaddaux(mm, ii, jj - 1))
-                              end do
+                              do mm = 1, maux
+                                 auxstencil(mm,1) = alloc(iaddaux(mm, ii, jj))
+                                 auxstencil(mm,2) = alloc(iaddaux(mm, ii - 1, jj))
+                                 auxstencil(mm,3) = alloc(iaddaux(mm, ii + 1, jj))
+                                 auxstencil(mm,4) = alloc(iaddaux(mm, ii, jj - 1))
+                                 auxstencil(mm,5) = alloc(iaddaux(mm, ii, jj + 1))
 
-                              ! get fine dx and dy values
-                              dxfine = hxposs(lfine)
-                              dyfine = hyposs(lfine)
+                              end do
 
                               ! call check_flowgrades
                               call check_flowgrades(meqn, maux, level, &
-                                                    qcen, qlef, qrig, qtop, qbot, &
-                                                    auxcen, auxlef, auxrig, auxtop, auxbot, &
+                                                    qstencil, auxstencil, &
                                                     dxfine, dyfine, &
                                                     FGFLAG)
 
                               if (FGFLAG) then
                                  amrflags(i, j) = DOFLAG
-                                 !write(*,*) "++++++++++ flagged - keep fine"
                                  cycle x_loop
-                              end if
+                              end if ! end if FGFLAG
 
-                           end if ! end if coarse and fine cell overlap
-                        end do ! endif fine cell loop ii
-                     end do ! endif fine cell loop jj
+                            end if ! end if central fine cell has thickness
+                         end if ! end if coarse and fine cell overlap
+                      end do ! endif fine cell loop ii
+                   end do ! endif fine cell loop jj
+                end if ! endif coarse cell overlaps fine grid
 
-                  end if ! endif coarse cell overlaps fine grid
-                  mptr = node(levelptr, mptr)
-               end do ! end while (mptr > 0)
+                ! update grid pointer to look at next grid at this level.
+                grid_ptr = node(levelptr, grid_ptr)
+              end do ! end while (grid_ptr > 0)
 
-            end if ! (end level .lt. lfine)
-         end if ! (end if keep_fine)
-         ! end keep fine
+            end if ! end level .lt. mxnest
+         end if ! end if keep_fine
+
+
+
 
       end do x_loop
    end do y_loop
 
 contains
 
-   ! Index into q array
-   pure integer function iadd(m, i, j)
-      implicit none
-      integer, intent(in) :: m, i, j
-      iadd = loc + m - 1 + meqn*((j - 1)*(mitot + 2*mbc) + i - 1)
-   end function iadd
+    ! Index into q array
+    ! KRB modified: assumes mitot includes ghost cells
+    pure integer function iadd(m, i, j)
+        implicit none
+        integer, intent(in) :: m, i, j
+        iadd = q_loc + m - 1 + meqn*((j - 1)*(mitot) + i - 1)
+    end function iadd
 
-   ! Index into aux array
-   pure integer function iaddaux(m, i, j)
-      implicit none
-      integer, intent(in) :: m, i, j
-      iaddaux = locaux + m - 1 + maux*(i - 1) + maux*(mitot + 2*mbc)*(j - 1)
-   end function iaddaux
+    ! Index into aux array
+    ! KRB modified: assumes mitot includes ghost cells
+    pure integer function iaddaux(m, i, j)
+        implicit none
+        integer, intent(in) :: m, i, j
+        iaddaux = aux_loc + m - 1 + maux*(i - 1) + maux*(mitot)*(j - 1)
+    end function iaddaux
 
 end subroutine flag2refine2
 
 subroutine check_flowgrades(meqn, maux, level, &
-                            qcen, qlef, qrig, qtop, qbot, &
-                            auxcen, auxlef, auxrig, auxtop, auxbot, &
-                            dx, dy, &
-                            FGFLAG)
+                            qstencil, auxstencil, &
+                            dx, dy, FGFLAG)
 
    use refinement_module, only: flowgradevalue, iflowgradevariable, &
                                 iflowgradetype, iflowgrademinlevel, mflowgrades
@@ -257,26 +296,15 @@ subroutine check_flowgrades(meqn, maux, level, &
    ! Subroutine arguments
    integer, intent(in) :: meqn, maux
 
-   real(kind=8), intent(in) :: qcen(meqn)
-   real(kind=8), intent(in) :: qlef(meqn)
-   real(kind=8), intent(in) :: qrig(meqn)
-   real(kind=8), intent(in) :: qtop(meqn)
-   real(kind=8), intent(in) :: qbot(meqn)
+   real(kind=8), intent(in) :: qstencil(meqn,5)
+   real(kind=8), intent(in) :: auxstencil(maux,5)
 
-   real(kind=8), intent(in) :: auxcen(maux)
-   real(kind=8), intent(in) :: auxlef(maux)
-   real(kind=8), intent(in) :: auxrig(maux)
-   real(kind=8), intent(in) :: auxbot(maux)
-   real(kind=8), intent(in) :: auxtop(maux)
-
-   real(kind=8), intent(in) :: dy, dx
+   real(kind=8), intent(in) :: dx, dy
    logical, intent(inout) :: FGFLAG
 
     !! Locals
    real(kind=8) :: flowgrademeasure
    integer :: iflow
-
-   FGFLAG = .false.
 
    mfg_loop: do iflow = 1, mflowgrades
 
@@ -286,15 +314,16 @@ subroutine check_flowgrades(meqn, maux, level, &
          ! flowgradetype = 1, magnitude
          if (iflowgradetype(iflow) .eq. 1) then
 
-            flowgrademeasure = qcen(i_h)
+            flowgrademeasure = qstencil(i_h,1)
 
             ! flowgradetype != 1, gradient
          else
 
-            bot = qbot(i_h)
-            top = qtop(i_h)
-            lef = qlef(i_h)
-            rig = qrig(i_h)
+            lef = qstencil(i_h,2)
+            rig = qstencil(i_h,3)
+            bot = qstencil(i_h,4)
+            top = qstencil(i_h,5)
+
 
             flowgrademeasure = sqrt(((rig - lef)/(2.0d0*dx))**2 + ((top - bot)/(2.0d0*dy))**2)
 
@@ -306,8 +335,8 @@ subroutine check_flowgrades(meqn, maux, level, &
          ! flowgradetype = 1, magnitude
          if (iflowgradetype(iflow) .eq. 1) then
 
-            if (qcen(i_h) .gt. dry_tolerance) then ! only consider if center cell is wet.
-               flowgrademeasure = sqrt((qcen(i_hu)/qcen(i_h))**2 + (qcen(i_hv)/qcen(i_h))**2)
+            if (qstencil(i_h,1) .gt. dry_tolerance) then ! only consider if center cell is wet.
+               flowgrademeasure = sqrt((qstencil(i_hu,1)/qstencil(i_h,1))**2 + (qstencil(i_hv,1)/qstencil(i_h,1))**2)
             else
                flowgrademeasure = 0.d0
             end if
@@ -315,16 +344,16 @@ subroutine check_flowgrades(meqn, maux, level, &
             ! flowgradetype != 1, gradient
          else
 
-            if ((qcen(i_h) .gt. dry_tolerance) .and. &
-                (qtop(i_h) .gt. dry_tolerance) .and. &
-                (qbot(i_h) .gt. dry_tolerance) .and. &
-                (qlef(i_h) .gt. dry_tolerance) .and. &
-                (qrig(i_h) .gt. dry_tolerance)) then ! only consider if all stencil cells are wet.
+            if ((qstencil(i_h,1) .gt. dry_tolerance) .and. &
+                (qstencil(i_h,2) .gt. dry_tolerance) .and. &
+                (qstencil(i_h,3) .gt. dry_tolerance) .and. &
+                (qstencil(i_h,4) .gt. dry_tolerance) .and. &
+                (qstencil(i_h,5) .gt. dry_tolerance)) then ! only consider if all stencil cells are wet.
 
-               bot = sqrt((qbot(i_hu)/qbot(i_h))**2 + (qbot(i_hv)/qbot(i_h))**2)
-               top = sqrt((qtop(i_hu)/qtop(i_h))**2 + (qtop(i_hv)/qtop(i_h))**2)
-               lef = sqrt((qlef(i_hu)/qlef(i_h))**2 + (qlef(i_hv)/qlef(i_h))**2)
-               rig = sqrt((qrig(i_hu)/qrig(i_h))**2 + (qrig(i_hv)/qrig(i_h))**2)
+               lef = sqrt((qstencil(i_hu,2)/qstencil(i_h,2))**2 + (qstencil(i_hv,2)/qstencil(i_h,2))**2)
+               rig = sqrt((qstencil(i_hu,3)/qstencil(i_h,3))**2 + (qstencil(i_hv,3)/qstencil(i_h,3))**2)
+               bot = sqrt((qstencil(i_hu,4)/qstencil(i_h,4))**2 + (qstencil(i_hv,4)/qstencil(i_h,4))**2)
+               top = sqrt((qstencil(i_hu,5)/qstencil(i_h,5))**2 + (qstencil(i_hv,5)/qstencil(i_h,5))**2)
 
                flowgrademeasure = sqrt(((rig - lef)/(2.0d0*dx))**2 + ((top - bot)/(2.0d0*dy))**2)
             else
@@ -340,24 +369,24 @@ subroutine check_flowgrades(meqn, maux, level, &
          if (iflowgradetype(iflow) .eq. 1) then
 
             ! only calculate surface perturbation if center cell is wet.
-            if (qcen(i_h) .gt. dry_tolerance) then
-               flowgrademeasure = dabs(qcen(i_h) + auxcen(1) - qcen(i_bdif) - sea_level)
+            if (qstencil(i_h,1) .gt. dry_tolerance) then
+               flowgrademeasure = dabs(qstencil(i_h,1) + auxstencil(1,1) - qstencil(i_bdif,1) - sea_level)
             else
                flowgrademeasure = 0.d0
             end if
 
             ! flowgradetype != 1, gradient
          else
-            if ((qcen(i_h) .gt. dry_tolerance) .and. &
-                (qtop(i_h) .gt. dry_tolerance) .and. &
-                (qbot(i_h) .gt. dry_tolerance) .and. &
-                (qlef(i_h) .gt. dry_tolerance) .and. &
-                (qrig(i_h) .gt. dry_tolerance)) then ! only consider if all stencil cells are wet.
+            if ((qstencil(i_h,1) .gt. dry_tolerance) .and. &
+                (qstencil(i_h,2) .gt. dry_tolerance) .and. &
+                (qstencil(i_h,3) .gt. dry_tolerance) .and. &
+                (qstencil(i_h,4) .gt. dry_tolerance) .and. &
+                (qstencil(i_h,5) .gt. dry_tolerance)) then ! only consider if all stencil cells are wet.
 
-               bot = qbot(i_h) + auxbot(1) - qbot(i_bdif)
-               top = qtop(i_h) + auxtop(1) - qtop(i_bdif)
-               lef = qlef(i_h) + auxlef(1) - qlef(i_bdif)
-               rig = qrig(i_h) + auxrig(1) - qrig(i_bdif)
+               lef = qstencil(i_h,2) + auxstencil(1,2) - qstencil(i_bdif,2)
+               rig = qstencil(i_h,3) + auxstencil(1,3) - qstencil(i_bdif,3)
+               bot = qstencil(i_h,4) + auxstencil(1,4) - qstencil(i_bdif,4)
+               top = qstencil(i_h,5) + auxstencil(1,5) - qstencil(i_bdif,5)
 
                flowgrademeasure = sqrt(((rig - lef)/(2.0d0*dx))**2 + ((top - bot)/(2.0d0*dy))**2)
             else
@@ -367,11 +396,10 @@ subroutine check_flowgrades(meqn, maux, level, &
       else
          write (*, *) '+++++ only flowgradevariable = 1,2,3 supported'
          stop
-
       end if
 
-      if (flowgrademeasure .gt. flowgradevalue(iflow) &
-          .and. level .lt. iflowgrademinlevel(iflow)) then
+      if ((flowgrademeasure .gt. flowgradevalue(iflow)) .and. &
+          (level .lt. iflowgrademinlevel(iflow))) then
          FGFLAG = .true.
          exit mfg_loop
       end if
