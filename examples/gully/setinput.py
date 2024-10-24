@@ -10,6 +10,7 @@ import numpy as np
 
 # Create a gully that exits onto a fan
 # landslide located on a side slop of the gully
+dx = 25
 
 x0 = 0 # right side of domain
 x1 = 3000 # location of gully-fan intersection
@@ -21,12 +22,16 @@ y2 = 2000 # top of domain
 yc1 = 1025 # left and right side of channels
 yc2 = 9075
 
+nx = int((x2-x0)/dx)
+ny = int((y2-y0)/dx)
+
+print(nx,ny)
 alpha_g = 45 # gully side slope angle
 alpha_c = 15 # gully channel slope angle
 alpha_f = 5 # fan slope angle
 
 # landslide
-xl1, xl2 = 2100, 2150 # landslide x extent
+xl1, xl2 = 2100, 2200 # landslide x extent
 yl1, yl2 = 700, 800 # landslide y extent
 depth = 4 # landslide depth
 
@@ -75,18 +80,28 @@ def basal(x,y):
     # only add them outside the channl
     side_slopes = (x<=x1)*((y<yc1)|(y>yc2))
     z[gully_area] += np.sin(np.deg2rad(alpha_g))*np.abs(y[gully_area]-y1)
-
+    print(x.shape)
     return z
 
+def thickness(x,y):
+    z = np.zeros_like(x)
+
+    landslide_location = (x>xl1)*(x<=xl2)*(y>yl1)*(y<=yl2)
+    z[landslide_location] = depth
+
+    dx = np.diff(x, axis=1)[0,0]
+    dy = np.diff(y, axis=0)[0,0]
+    volume = np.sum(z)*dx*dy
+
+    print(f'volume: {volume} m**2')
+
+    return z
 
 def eta(x,y):
     """
     Cartesian: x,y in meters
     """
-    z = basal(x,y)
-    landslide_location = (x>xl1)*(x<=xl2)*(y>yl1)*(y<yl2)
-    z[landslide_location] += depth
-
+    z = basal(x,y) + thickness(x,y)
     return z
 
 
@@ -94,16 +109,13 @@ def maketopo():
     """
     Output topography file for the entire domain
     """
-    nxpoints = 501
-    nypoints = 501
-    xlower= x0
-    xupper= x2
-    ylower= y0
-    yupper= y2
-    outfile= "basal_topo.tt3"
-    topotools.topo3writer(outfile,basal,xlower,xupper,ylower,yupper,nxpoints,nypoints)
-    outfile= "surface_topo.tt3"
-    topotools.topo3writer(outfile,eta,xlower,xupper,ylower,yupper,nxpoints,nypoints)
+
+    for filename, function in [("basal_topo.tt3", basal), ("surface_topo.tt3", eta),
+    ("thickness.tt3", thickness)]:
+        topography = topotools.Topography(topo_func=function)
+        topography.x = np.linspace(x0,x2,nx*2+1)
+        topography.y = np.linspace(y0,y2,ny*2+1)
+        topography.write(filename, topo_type=3)
 
 if __name__=='__main__':
     maketopo()

@@ -38,7 +38,7 @@
 
       ! local:
       real(kind=8) ::  s(3), r(meqn,3), beta(3)
-      real(kind=8) ::  h,u,v,m,p,rho,gamma,g
+      real(kind=8) ::  h,u,v,m,p,chi,rho,gamma,g
       real(kind=8) ::  delf1,delf2,delf3,delf4,delf5,delf6
       real(kind=8) ::  dxdcm,dxdcp,topo1,topo3,eta
 
@@ -86,6 +86,7 @@
               v = qr(mv,i-1)/h
               m = qr(i_hm,i-1)/h
               p = qr(i_pb,i-1)
+              chi = qr(i_hchi,i-1)/h
               eta = h + aux2(1,i-1) - qr(i_bdif,i-1)
               topo1 = aux1(1,i-1)
               topo3 = aux3(1,i-1)
@@ -95,6 +96,7 @@
               v = ql(mv,i)/h
               m = ql(i_hm,i)/h
               p = ql(i_pb,i)
+              chi = ql(i_hchi,i/h)
               eta = h + aux2(1,i) - ql(i_bdif, i)
               topo1 = aux1(1,i)
               topo3 = aux3(1,i)
@@ -106,6 +108,13 @@
          ! check if cell that transverse waves go into are both too high:
          ! Note: prior to v5.8.0 this checked against max rather than min
          if (eta < min(topo1,topo3)) cycle  ! go to next i
+
+         ! DIG - Right now, with only erosion in q(i_bdif), entrainment will only
+         ! lower topo, and thus the check that waves into up/down cells is permitted
+         ! if both are lower than this cell's eta is conservative. Should deposition
+         ! be added, need to adjust aux1,2,3 in step2.
+         ! However, this would require a D-Claw specific step2 that adjusts
+         ! aux(1) by q(i_bdif)
 
          ! if we get here, we want to do the splitting (no dry cells),
          ! so compute the necessary quantities:
@@ -169,14 +178,14 @@ c        Set-up eigenvectors
          r(3,1) = s(1)
          r(4,1) = m
          r(5,1) = gamma*rho*g
-         r(6,1) = 0.0d0
+         r(6,1) = chi
 
          r(1,3) = 1.d0
          r(2,3) = u    ! v5.8.0: fixed bug, u not s(2)=v
          r(3,3) = s(3)
          r(4,3) = m
          r(5,3) = gamma*rho*g
-         r(6,3) = 0.0d0
+         r(6,3) = chi
 
          r(1,2) = 0.d0
          r(2,2) = 1.d0

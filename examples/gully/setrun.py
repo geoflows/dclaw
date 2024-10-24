@@ -17,6 +17,29 @@ try:
 except:
     raise Exception("*** Must first set CLAW environment variable")
 
+
+amr = True
+order = 1
+transverse = 0
+limiter = 4
+
+# 100 -> 50 -> 25
+if amr:
+    factor = 1
+    mxnest = 3
+    refinement_ratios = [2,2]
+else:
+    factor = 4
+    mxnest = 1
+    refinement_ratios = [1]
+
+if order == 1:
+    cfl_desired=0.45
+    cfl_max = 0.50
+elif order == 2:
+    cfl_desired=0.75
+    cfl_max = 0.85
+
 #------------------------------
 def setrun(claw_pkg='dclaw'):
 #------------------------------
@@ -69,8 +92,8 @@ def setrun(claw_pkg='dclaw'):
     clawdata.upper[1] = 2e3
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 60 # x
-    clawdata.num_cells[1] = 20 # y
+    clawdata.num_cells[0] = 60*factor # x
+    clawdata.num_cells[1] = 20*factor # y
 
     # ---------------
     # Size of system:
@@ -160,8 +183,8 @@ def setrun(claw_pkg='dclaw'):
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
     # D-Claw requires CFL<0.5
-    clawdata.cfl_desired = 0.75
-    clawdata.cfl_max = 0.85
+    clawdata.cfl_desired = cfl_desired
+    clawdata.cfl_max = cfl_max
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -171,7 +194,7 @@ def setrun(claw_pkg='dclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 2
+    clawdata.order = order
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -180,7 +203,7 @@ def setrun(claw_pkg='dclaw'):
     #  0 or 'none'      ==> donor cell (only normal solver used)
     #  1 or 'increment' ==> corner transport of waves
     #  2 or 'all'       ==> corner transport of 2nd order corrections too
-    clawdata.transverse_waves = 2
+    clawdata.transverse_waves = transverse
 
     # Number of waves in the Riemann solution:
     clawdata.num_waves = 5
@@ -193,7 +216,7 @@ def setrun(claw_pkg='dclaw'):
     #   2 or 'superbee' ==> superbee
     #   3 or 'mc'       ==> MC limiter
     #   4 or 'vanleer'  ==> van Leer
-    clawdata.limiter = [4, 4, 4, 4, 4] # TODO VERIFY THAT 4 in old and new are the same
+    clawdata.limiter = [limiter, limiter, limiter, limiter, limiter] # TODO VERIFY THAT 4 in old and new are the same
 
     clawdata.use_fwaves = True    # True ==> use f-wave version of algorithms
     # TODO This is not in old setrun.py
@@ -260,13 +283,13 @@ def setrun(claw_pkg='dclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 3
+    amrdata.amr_levels_max = mxnest
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
-    amrdata.refinement_ratios_x = [4,2]
-    amrdata.refinement_ratios_y = [4,2]
-    amrdata.refinement_ratios_t = [4,2]
+    amrdata.refinement_ratios_x = refinement_ratios
+    amrdata.refinement_ratios_y = refinement_ratios
+    amrdata.refinement_ratios_t = refinement_ratios
 
     # Specify type of each aux variable in amrdata.auxtype.
     # This must be a list of length maux, each element of which is one of:
@@ -295,11 +318,11 @@ def setrun(claw_pkg='dclaw'):
 
     # width of buffer zone around flagged points:
     # (typically the same as regrid_interval so waves don't escape):
-    amrdata.regrid_buffer_width  = 2
+    amrdata.regrid_buffer_width  = 3
 
     # clustering alg. cutoff for (# flagged pts) / (total # of cells refined)
     # (closer to 1.0 => more small grids may be needed to cover flagged cells)
-    amrdata.clustering_cutoff = 0.700000
+    amrdata.clustering_cutoff = 0.70
 
     # print info about each regridding up to this level:
     amrdata.verbosity_regrid = 1
@@ -312,7 +335,12 @@ def setrun(claw_pkg='dclaw'):
     # to specify regions of refinement append lines of the form
     #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
 
-    rundata.regiondata.regions.append([3,3,0,1,xl1, xl2, yl1, yl2])
+    rundata.regiondata.regions.append([3,3,0,1,xl1-50, xl2+50, yl1-50, yl2+50])
+
+    # for testing and comparison with/without amr, set mxnest region to entire domain.
+    rundata.regiondata.regions.append([mxnest,mxnest,0,clawdata.tfinal,clawdata.lower[0], clawdata.upper[0], clawdata.lower[1], clawdata.upper[1]])
+
+
 
     # ---------------
     # NEW flagregions
@@ -348,7 +376,7 @@ def setrun(claw_pkg='dclaw'):
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = -9999.
     geo_data.dry_tolerance = 1.e-3
-    geo_data.friction_forcing = True # TODO change?
+    geo_data.friction_forcing = True
     geo_data.manning_coefficient =.025
     geo_data.friction_depth = 1e6
 
@@ -368,8 +396,8 @@ def setrun(claw_pkg='dclaw'):
     # == setqinit.data values ==
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
-    etafile = 'surface_topo.tt3'
-    qinitdclaw_data.qinitfiles.append([3, 8, etafile])
+    hfile = 'thickness.tt3'
+    qinitdclaw_data.qinitfiles.append([3, 1, hfile])
 
     # == fgmax_grids.data values ==
     # set num_fgmax_val = 1 to save only max depth,

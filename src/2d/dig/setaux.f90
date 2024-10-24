@@ -292,10 +292,11 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
       ! discretized slopes. Journal of Geophysical Research:
       ! Earth Surface, 124, 1464–1484. https://doi.org/10.1029/2018JF004802
 
+      ! DIG Discuss: this is a potential reason to keep around (aux(i_phi))
       if (friction_correction) then
         do j=1-mbc+1,my+mbc-1
             do i=1-mbc+1,mx+mbc-1
-              b_x = (aux(1,i+1,j)-aux(1,i-1,j))/(2.d0*dx)
+              b_x = (aux(1,i+1,j)-aux(1,i-1,j))/(2.d0*dx) 
               b_y = (aux(1,i,j+1)-aux(1,i,j-1))/(2.d0*dy)
               gradang = atan(sqrt(b_x**2+b_y**2))
               kappa=1.d0
