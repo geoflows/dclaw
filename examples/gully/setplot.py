@@ -15,8 +15,15 @@ from clawpack.visclaw import geoplot
 from clawpack.visclaw import colormaps
 from clawpack.visclaw import gridtools
 
-xlimits = [2000, 4000]
-ylimits = [500, 1500]
+from setinput import rotate
+
+if rotate:
+    xlimits = [2000, 4000]
+    ylimits = [500, 1500]
+else:
+    ylimits = [2000, 4000]
+    xlimits = [500, 1500]
+
 
 import os,sys
 

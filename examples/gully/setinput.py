@@ -7,45 +7,63 @@ from clawpack.clawutil.data import ClawData
 from scipy.interpolate import interp1d
 import numpy as np
 
+rotate = False
 
 # Create a gully that exits onto a fan
 # landslide located on a side slop of the gully
 dx = 25
 
-x0 = 0 # right side of domain
-x1 = 3000 # location of gully-fan intersection
-x2 = 6000 # right side of fan
 
-y0 = 0 # bottom of domain
-y1 = 1000 # center of channel
-y2 = 2000 # top of domain
-yc1 = 1025 # left and right side of channels
-yc2 = 9075
+if rotate:
+    x0 = 0 # right side of domain
+    x1 = 3000 # location of gully-fan intersection
+    x2 = 6000 # right side of fan
+
+    y0 = 0 # bottom of domain
+    y1 = 1000 # center of channel
+    y2 = 2000 # top of domain
+    yc1 = 1025 # left and right side of channels
+    yc2 = 9075
+
+else:
+    y0 = 0 # right side of domain
+    y1 = 3000 # location of gully-fan intersection
+    y2 = 6000 # right side of fan
+
+    x0 = 0 # bottom of domain
+    x1 = 1000 # center of channel
+    x2 = 2000 # top of domain
+    xc1 = 1025 # left and right side of channels
+    xc2 = 9075
 
 nx = int((x2-x0)/dx)
 ny = int((y2-y0)/dx)
 
-print(nx,ny)
 alpha_g = 45 # gully side slope angle
 alpha_c = 15 # gully channel slope angle
 alpha_f = 5 # fan slope angle
 
 # landslide
-xl1, xl2 = 2100, 2200 # landslide x extent
-yl1, yl2 = 700, 800 # landslide y extent
+if rotate:
+    xl1, xl2 = 2100, 2200 # landslide x extent
+    yl1, yl2 = 700, 800 # landslide y extent
+else:
+    yl1, yl2 = 2100, 2200 # landslide x extent
+    xl1, xl2 = 700, 800 # landslide y extent
+
 depth = 4 # landslide depth
 
 def make_plots():
 
     basal = topotools.Topography('basal_topo.tt3',3)
-    basal.plot()
+    basal.plot(long_lat=False)
     title('Basal topo')
     fname = 'basal_topo.png'
     savefig(fname)
     print('Created ',fname)
 
     eta = topotools.Topography('surface_topo.tt3',3)
-    eta.plot()
+    eta.plot(long_lat=False)
     title('Surface topo eta')
     fname = 'surface_topo.png'
     savefig(fname)
@@ -54,6 +72,8 @@ def make_plots():
     h = eta.Z - basal.Z
     figure()
     pcolormesh(eta.X,eta.Y,h,cmap=colormaps.white_red)
+    xlim(x0, x2)
+    ylim(y0, y2)
     axis('equal')
     colorbar()
     title('Landslide depth')
@@ -69,18 +89,31 @@ def basal(x,y):
     z = np.zeros_like(x)
 
     # slope down at the fan slope to the right of x1
-    fan_area = x>x1
-    z[fan_area] -= np.sin(np.deg2rad(alpha_f))*(x[fan_area]-x1)
+    if rotate:
+        fan_area = x>x1
+        z[fan_area] -= np.sin(np.deg2rad(alpha_f))*(x[fan_area]-x1)
 
-    # slope up at the channel slope to the left of x1
-    gully_area = x<=x1
-    z[gully_area] -= np.sin(np.deg2rad(alpha_c))*(x[gully_area]-x1)
+        # slope up at the channel slope to the left of x1
+        gully_area = x<=x1
+        z[gully_area] -= np.sin(np.deg2rad(alpha_c))*(x[gully_area]-x1)
 
-    # add the channel side slopes
-    # only add them outside the channl
-    side_slopes = (x<=x1)*((y<yc1)|(y>yc2))
-    z[gully_area] += np.sin(np.deg2rad(alpha_g))*np.abs(y[gully_area]-y1)
-    print(x.shape)
+        # add the channel side slopes
+        # only add them outside the channl
+        side_slopes = (x<=x1)*((y<yc1)|(y>yc2))
+        z[gully_area] += np.sin(np.deg2rad(alpha_g))*np.abs(y[gully_area]-y1)
+    else:
+        fan_area = y>y1
+        z[fan_area] -= np.sin(np.deg2rad(alpha_f))*(y[fan_area]-y1)
+
+        # slope up at the channel slope to the left of y1
+        gully_area = y<=y1
+        z[gully_area] -= np.sin(np.deg2rad(alpha_c))*(y[gully_area]-y1)
+
+        # add the channel side slopes
+        # only add them outside the channl
+        side_slopes = (y<=y1)*((x<xc1)|(x>xc2))
+        z[gully_area] += np.sin(np.deg2rad(alpha_g))*np.abs(x[gully_area]-x1)
+
     return z
 
 def thickness(x,y):

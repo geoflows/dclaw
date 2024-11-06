@@ -9,8 +9,8 @@ import os, sys
 import numpy as np
 from clawpack.geoclaw import fgout_tools, fgmax_tools
 
-# get information about the extent of the landslide from setinput.py
-from setinput import xl1, xl2, yl1, yl2
+# get information about the extent of the domain and landslide from setinput.py
+from setinput import x0, x2, y0, y2, xl1, xl2, yl1, yl2
 
 try:
     CLAW = os.environ['CLAW']
@@ -30,8 +30,8 @@ except:
 # setplot.py, and Makefile) that differ only in the numerical options.
 
 amr = True
-order = 1
-transverse = 0
+order = 2
+transverse = 2
 limiter = 4
 amr_test_no = 0
 
@@ -206,15 +206,15 @@ def setrun(claw_pkg='dclaw'):
 
     # Lower and upper edge of computational domain:
     # x-dimension
-    clawdata.lower[0] = 0
-    clawdata.upper[0] = 6e3
+    clawdata.lower[0] = x0
+    clawdata.upper[0] = x2
     # y-dimension
-    clawdata.lower[1] = 0
-    clawdata.upper[1] = 2e3
+    clawdata.lower[1] = y0
+    clawdata.upper[1] = y2
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 60*factor # x
-    clawdata.num_cells[1] = 20*factor # y
+    clawdata.num_cells[0] = int((x2-x0)/100)*factor # x
+    clawdata.num_cells[1] = int((y2-y0)/100)*factor # y
 
     # ---------------
     # Size of system:
