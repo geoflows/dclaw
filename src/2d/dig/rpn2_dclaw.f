@@ -165,13 +165,6 @@ c        !set normal direction
          chiHL = qr(i_hchi,i-1)
          chiHR = ql(i_hchi,i)
 
-         if (hL.ge.drytol) then
-            chiL = chiHL/hL
-         endif
-         if (hR.ge.drytol) then
-            chiR = chiHR/hR
-         endif
-
          !test for wall problem vs. inundation problem
          do mw=1,waves
             wall(mw) = 1.d0
