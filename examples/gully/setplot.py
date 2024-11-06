@@ -74,7 +74,7 @@ def setplot(plotdata=None):
     # Figure for state variables
     #-----------------------------------------
     plotfigure = plotdata.new_plotfigure(name='Computational domain', figno=0)
-    plotfigure.kwargs = {'figsize':(8,7)}
+    plotfigure.kwargs = {'figsize':(8,7),'dpi':600}
     plotfigure.show = True
 
     # Panel 1: Hillshade and Depth

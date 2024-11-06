@@ -18,12 +18,27 @@ except:
     raise Exception("*** Must first set CLAW environment variable")
 
 
+# This setrun has been set up to make it easy to compare results under a
+# variety of numerical options:
+# - with/without AMR (amr = True/False)
+# - with order = 1 or order = 2
+# - with transverse = 1, 2, 3
+# - with each type of limiter, limiter = 0, 1, 2, 3, 4
+# - multiple amr test options, which control the gridding and timestepping (see
+#   below).
+# One might create two applications with the same setup (setinput.py,setrun.py,
+# setplot.py, and Makefile) that differ only in the numerical options.
+
 amr = True
 order = 1
 transverse = 0
 limiter = 4
+amr_test_no = 0
 
-# 100 -> 50 -> 25
+
+# Use either one level with 25 m grid cells (AMR = False)
+# or three levels with 100 -> 50 -> 25 m grid cells.
+# keep track of the entire refinement factor (needed for timestep control below)
 if amr:
     factor = 1
     mxnest = 3
@@ -33,6 +48,112 @@ else:
     mxnest = 1
     refinement_ratios = [1]
 
+
+
+# amr_test_no = 0
+# ---------------
+# use standard output and nonuniform time.
+# this is the value to use for applications not testing behavior with/without
+# amr.
+
+if amr_test_no == 0:
+    output_style = 1
+    uniform_time = False
+    dt_initial = 0.1
+    kratio = refinement_ratios
+    force_full_region = False
+    max1d = 150
+
+# amr_test_no = 1
+# ---------------
+# this is the simplest test for equivalence between results with and without
+# amr.
+# - the entire simulation domain is forced to have grids at all levels
+# - max1d is large so that each level only has one grid
+# - all timesteps on all levels are the same (no refinement in time)
+
+if amr_test_no == 1:
+    output_style = 3
+    uniform_time = True
+    aligned_steps = True
+    force_full_region = True
+    max1d = 1000
+
+
+# amr_test_no = 2
+# ---------------
+# this differs from amr_test_no = 1 in that it relaxes the alignment of all
+# timesteps and allows different levels to take different sized timesteps. the
+# finest level (level 1 without amr and level 3 with amr) will take equivalent
+# timesteps.
+# - the entire simulation domain is forced to have grids at all levels
+# - max1d is large so that each level only has one grid
+# - timesteps on each level differ (refinement in time)
+
+if amr_test_no == 2:
+    output_style = 3
+    uniform_time = True
+    aligned_steps = False
+    force_full_region = True
+    max1d = 1000
+
+
+# amr_test_no = 3
+# ---------------
+# this differs from amr_test_no = 2 in that it does not require that the AMR
+# case has a fine grid over the entire domain. It thus adds regridding but
+# keeps only one grid on each level.
+# - Only flagged regions have refinement.
+# - max1d is large so that each level only has one grid
+# - timesteps on each level differ (refinement in time)
+
+if amr_test_no == 3:
+    output_style = 3
+    uniform_time = True
+    aligned_steps = False
+    force_full_region = False
+    max1d = 1000
+
+
+# amr_test_no = 4
+# ---------------
+# this differs from amr_test_no = 3 in that max1d is reduced such that there
+# are multiple grids on each level.
+# - Only flagged regions have refinement.
+# - max1d is small so that each level has multiple grids
+# - timesteps on each level differ (refinement in time)
+
+if amr_test_no == 4:
+    output_style = 3
+    uniform_time = True
+    aligned_steps = False
+    force_full_region = False
+    max1d = 50
+
+
+# set dt variable based on whether using uniform time.
+if uniform_time:
+    dt_variable = False
+else:
+    dt_variable = True
+variable_dt_refinement_ratios = dt_variable
+
+# Timestep control.
+# depending on whether timesteps are aligned, set values for dt_initial, total_steps, output_step_interval, and kratio.
+total_time = 100
+if amr_test_no>0:
+    if aligned_steps:
+        dt_initial = 0.5
+        total_steps = int(total_time/dt_initial)
+        output_step_interval = 10
+        kratio = [1,1,1]
+    else:
+        dt_initial = 1.0 / factor
+        total_steps = int( total_time / dt_initial)
+        output_step_interval = 5*factor
+        kratio = refinement_ratios
+
+# set target and max CFL conditions based on Order.
 if order == 1:
     cfl_desired=0.45
     cfl_max = 0.50
@@ -132,11 +253,11 @@ def setrun(claw_pkg='dclaw'):
     # Note that the time integration stops after the final output time.
     # The solution at initial time t0 is always written in addition.
 
-    clawdata.output_style = 1
+    clawdata.output_style = output_style
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 10
+        clawdata.num_output_times = 20
         clawdata.tfinal = 100.
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
@@ -146,8 +267,8 @@ def setrun(claw_pkg='dclaw'):
 
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
-        clawdata.output_step_interval = 1
-        clawdata.total_steps = 3
+        clawdata.output_step_interval = output_step_interval
+        clawdata.total_steps = total_steps
         clawdata.output_t0 = True
 
     clawdata.output_format = 'ascii'
@@ -171,11 +292,11 @@ def setrun(claw_pkg='dclaw'):
 
     # if dt_variable==1: variable time steps used based on cfl_desired,
     # if dt_variable==0: fixed time steps dt = dt_initial will always be used.
-    clawdata.dt_variable = True
+    clawdata.dt_variable = dt_variable
 
     # Initial time step for variable dt.
     # If dt_variable==0 then dt=dt_initial for all steps:
-    clawdata.dt_initial = 0.0001
+    clawdata.dt_initial = dt_initial
 
     # Max time step to be allowed if variable dt used:
     clawdata.dt_max = 1e+99
@@ -289,7 +410,7 @@ def setrun(claw_pkg='dclaw'):
     # dx = dy = 2', 10", 2", 1/3":
     amrdata.refinement_ratios_x = refinement_ratios
     amrdata.refinement_ratios_y = refinement_ratios
-    amrdata.refinement_ratios_t = refinement_ratios
+    amrdata.refinement_ratios_t = kratio
 
     # Specify type of each aux variable in amrdata.auxtype.
     # This must be a list of length maux, each element of which is one of:
@@ -325,7 +446,7 @@ def setrun(claw_pkg='dclaw'):
     amrdata.clustering_cutoff = 0.70
 
     # print info about each regridding up to this level:
-    amrdata.verbosity_regrid = 1
+    amrdata.verbosity_regrid = mxnest
 
 
     # ---------------
@@ -335,10 +456,11 @@ def setrun(claw_pkg='dclaw'):
     # to specify regions of refinement append lines of the form
     #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
 
-    rundata.regiondata.regions.append([3,3,0,1,xl1-50, xl2+50, yl1-50, yl2+50])
+    rundata.regiondata.regions.append([3,3,0,1,xl1-200, xl2+200, yl1-200, yl2+200])
 
     # for testing and comparison with/without amr, set mxnest region to entire domain.
-    rundata.regiondata.regions.append([mxnest,mxnest,0,clawdata.tfinal,clawdata.lower[0], clawdata.upper[0], clawdata.lower[1], clawdata.upper[1]])
+    if force_full_region:
+        rundata.regiondata.regions.append([mxnest,mxnest,0,1e9,clawdata.lower[0], clawdata.upper[0], clawdata.lower[1], clawdata.upper[1]])
 
 
 
@@ -382,7 +504,7 @@ def setrun(claw_pkg='dclaw'):
 
     # Refinement settings
     refinement_data = rundata.refinement_data
-    refinement_data.variable_dt_refinement_ratios = True
+    refinement_data.variable_dt_refinement_ratios = variable_dt_refinement_ratios
 
     # == settopo.data values ==
     topofiles = rundata.topo_data.topofiles
@@ -457,8 +579,8 @@ def setrun(claw_pkg='dclaw'):
     fgout.y1 = clawdata.lower[1]
     fgout.y2 = clawdata.upper[1]
     fgout.tstart = 0.
-    fgout.tend = clawdata.tfinal
-    fgout.nout = 101
+    fgout.tend = 5
+    fgout.nout = 6
     fgout.q_out_vars = [1,4,8]
     #fgout_grids.append(fgout)    # written to fgout_grids.data
 
@@ -533,17 +655,14 @@ def setrun(claw_pkg='dclaw'):
     amrdata.tprint = False      # time step reporting each level
     amrdata.uprint = False      # update/upbnd reporting
 
-    amrdata.max1d = 10000
+    amrdata.max1d = max1d
     # More AMR parameters can be set -- see the defaults in pyclaw/data.py
 
     return rundata
 
 
-
-
     # end of function setrun
     # ----------------------
-
 
 
 if __name__ == '__main__':
