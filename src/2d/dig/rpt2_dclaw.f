@@ -96,7 +96,7 @@
               v = ql(mv,i)/h
               m = ql(i_hm,i)/h
               p = ql(i_pb,i)
-              chi = ql(i_hchi,i/h)
+              chi = ql(i_hchi,i)/h
               eta = h + aux2(1,i) - ql(i_bdif, i)
               topo1 = aux1(1,i)
               topo3 = aux3(1,i)
