@@ -108,7 +108,7 @@ c
 c
       logical limit, relimit
 
-      relimit = .true.
+      relimit = .false.
 c
       limit = .false.
       do 5 mw=1,mwaves
@@ -146,7 +146,7 @@ c   # Set fadd for the donor-cell upwind method (Godunov)
          if (coordinate_system.eq.2) then
               if (ixy.eq.1) then
                    dxdc=earth_radius*deg2rad
-              else  
+              else
                   dxdc=earth_radius*cos(aux2(3,i))*deg2rad
 !                  if (ixy.eq.2) dxdc=earth_radius*cos(aux2(3,i))*deg2rad  !why test again
               endif
@@ -197,8 +197,24 @@ c        # i-1 and i.  Compute these and overwrite dtdx1d:
 c
          dtdx1d(i-1) = 0.5d0 * (dtdx1d(i-1) + dtdx1d(i))
 c
+c        Check for wet-dry interface.
+c        Only include if all cells relevant for 2nd order corrections are wet. c        Without accounting for wave propagation direction, this means that two
+c        cells on either side of the interface must be wet (as these four cells c        define the considered interface flux and the two fluxes on either
+c        side).
+c        DIG: Migrate this to limiter and ensure that upwind is accounted for
+c        Only three cells should be necessary.
+
+         hleft2 = q1d(1, i-2)
+         hleft = q1d(1,i-1)
+         hright = q1d(1,i)
+         hright2 = q1d(1, i+1)
+
+
          do 120 m=1,meqn
             cqxx(m,i) = 0.d0
+
+            if (hleft*hright*hleft2*hright2.gt.0.d0) then ! wet-dry check
+
             do 119 mw=1,mwaves
 c
 c              # second order corrections:
@@ -206,8 +222,13 @@ c              # second order corrections:
      &            * (1.d0 - dabs(s(mw,i))*dtdx1d(i-1)) * fwave(m,mw,i)
 c
   119          continue
+
+            endif
+
             faddm(m,i) = faddm(m,i) + 0.5d0 * cqxx(m,i)
             faddp(m,i) = faddp(m,i) + 0.5d0 * cqxx(m,i)
+
+
   120       continue
 c
 c
