@@ -84,7 +84,7 @@
             rhoh = hm*rho_s + (h-hm)*rho_f
 
             if (hm.lt.0.d0) then
-              write(*,*) 'SRC2: warning: hm negative, h, hm, rhoh: ',h, hm, rhoh
+              !write(*,*) 'SRC2: warning: hm negative, h, hm, rhoh: ',h, hm, rhoh
               ! This most likely occurs using second order corrections.
               !stop
               cycle
