@@ -31,7 +31,7 @@ except:
 
 amr = True
 order = 2
-transverse = 2
+transverse = 1
 limiter = 4
 amr_test_no = 0
 
@@ -284,7 +284,7 @@ def setrun(claw_pkg='dclaw'):
     # The current t, dt, and cfl will be printed every time step
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
-    clawdata.verbosity = 3
+    clawdata.verbosity = 1
 
     # --------------
     # Time stepping:

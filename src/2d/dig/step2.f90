@@ -71,7 +71,7 @@ subroutine step2(maxm,meqn,maux,mbc,mx,my, &
 
     ! Parameters
     ! Relimit fluxes to maintain positivity
-    logical, parameter :: relimit = .false.
+    logical, parameter :: relimit = .true.
 
     cflgrid = 0.d0
     dtdx = dt/dx
@@ -177,9 +177,15 @@ subroutine step2(maxm,meqn,maux,mbc,mx,my, &
                     dtdxij = dtdx / aux(mcapa,i,j)
                     dtdyij = dtdy / aux(mcapa,i,j)
                 endif
+                !total gross mass outflux from cell i
+                phi = 1.d0
                 p = max(0.d0,dtdxij*fm(1,i+1,j)) + max(0.d0,dtdyij*gm(1,i,j+1)) &
                   - min(0.d0,dtdxij*fp(1,i,j)) - min(0.d0,dtdyij*gp(1,i,j))
-                phi = min(1.d0,abs(qold(1,i,j) / (p+dry_tolerance)))
+                if (p<=0.d0) then
+                    phi = 1.d0
+                else
+                    phi = min(1.d0,abs(qold(1,i,j)/p))
+                endif
 
                 if (phi < 1.d0) then
                     do m=1,meqn
@@ -207,6 +213,52 @@ subroutine step2(maxm,meqn,maux,mbc,mx,my, &
                 endif
             enddo
         enddo
+
+        do i=1,mx
+            do j=1,my
+                if (mcapa > 0) then
+                    dtdxij = dtdx / aux(mcapa,i,j)
+                    dtdyij = dtdy / aux(mcapa,i,j)
+                endif
+                phi = 1.d0
+                !total gross solid mass outflux from cell i
+                p = max(0.d0,dtdxij*fm(4,i+1,j)) + max(0.d0,dtdyij*gm(4,i,j+1)) &
+                  - min(0.d0,dtdxij*fp(4,i,j)) - min(0.d0,dtdyij*gp(4,i,j))
+                if (p<=0.d0) then
+                    phi = 1.d0
+                else
+                    phi = min(1.d0,abs(qold(4,i,j)/p))
+                endif
+
+                if (phi < 1.d0) then
+                    phi = max(0.d0,phi-1.d-12)
+                    do m=1,meqn
+                        if (fp(4,i,j) < 0.d0) then
+                            cm = fp(m,i,j) - fm(m,i,j)
+                            fm(m,i,j) = phi * fm(m,i,j)
+                            fp(m,i,j) = fm(m,i,j) + cm
+                        endif
+                        if (gp(4,i,j) < 0.d0) then
+                            cm = gp(m,i,j) - gm(m,i,j)
+                            gm(m,i,j) = phi * gm(m,i,j)
+                            gp(m,i,j) = gm(m,i,j) + cm
+                        endif
+                        if (fm(4,i+1,j) > 0.d0) then
+                            cm = fp(m,i+1,j) - fm(m,i+1,j)
+                            fp(m,i+1,j) = phi * fp(m,i+1,j)
+                            fm(m,i+1,j) = fp(m,i+1,j) - cm
+                        endif
+                        if (gm(4,i,j+1) > 0.d0) then
+                            cm = gp(m,i,j+1) - gm(m,i,j+1)
+                            gp(m,i,j+1) = phi * gp(m,i,j+1)
+                            gm(m,i,j+1) = gp(m,i,j+1) - cm
+                        endif
+                    end do
+                endif
+            enddo
+        enddo
+
+        
     endif
 
 end subroutine step2

@@ -267,6 +267,7 @@ contains
       double precision :: mmin,mmax,chimin,chimax,pmax,pmin
 
       if (h.le.dry_tolerance) then
+         if (h<0.d0) write(*,*) 'QFIX: dry state encountered h,hm:', h, hm
          h =  0.d0
          hu = 0.d0
          hv = 0.d0
@@ -289,6 +290,7 @@ contains
       chi = hchi/h
 
       !mlo = 1.d-3
+      if (hm<0.d0) write(*,*) 'QFIX: negative solid h,hm:', h, hm
       mmin = 0.0d0
       mmax = 1.d0
       m = max(m,mmin)
