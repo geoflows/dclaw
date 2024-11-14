@@ -153,6 +153,14 @@
 
             select case (src2method)
 
+            case(-1)
+            !ignore source integration of m and p
+            !solve shallow water equations with possible friction and passive advection of m
+            !could be used for sediment transport/entrainment with shallow water
+               hu = h*u
+               hv = h*v
+               hm = h*m
+               hchi = h*chi
             case(0:1)
                call mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
                hu = h*u

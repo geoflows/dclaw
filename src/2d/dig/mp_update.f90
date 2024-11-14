@@ -87,17 +87,19 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        quad0=0
        quad1=0
        ! if at critical point dq/dt = 0
-       if ((abs(p_exc0/gz*h0)<1.d-12).and.(m==0.d0.or.abs(m-m_eq)<1.d-12)) then
-          dtk = dtr
-          return
-       endif
-
        if (m==0.d0) then
           p_exc = p_exc0*exp(-kp0*dtr)
           call qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
           dtk = dtr
           return
        endif
+
+       if ((abs(p_exc0/(gz*h0))<1.d-12).and.(m==0.d0.or.abs(m-m_eq)<1.d-12)) then
+          dtk = dtr
+          return
+       endif
+
+
 
        !determine coefficients for update
        ! dm/dt = (2*k*rho^2/mu(rhoh)^2)*p_exc*m
