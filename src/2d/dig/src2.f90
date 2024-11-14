@@ -173,7 +173,7 @@
             ! sum(dtk) = dt
             ! explicit integration for each dt
                dtremaining = dt
-               itercountmax=10
+               itercountmax=100
                itercount=0
 
                do while (dtremaining>1.d-99)
