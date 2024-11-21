@@ -146,7 +146,9 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - Default Value
          - Type
        * - ``src2method``
-         - Method used to integrate the source term. 0 = traditional method,
+         - Method used to integrate the source term. 
+          -1 = ignore m and p coevolution- for shallow water with friction and advection of m
+           0 = traditional method,
            1 = intermediate method, 2 = new method. DIG: TODO UPDATE
          - 0
          - int
@@ -304,7 +306,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
             "sigma_0", description="baseline stress for definition of compressibility"
         )
 
-        self.data_write("src2method", description = "0=orig,1=intermediate,2=new" ) # DIG: update text
+        self.data_write("src2method", description = "-1=swe, 0=orig,1=intermediate,2=new" ) # DIG: update text
         self.data_write("alphamethod", description = "0=,1=,2=") # DIG: update text
 
         self.data_write(

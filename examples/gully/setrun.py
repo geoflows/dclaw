@@ -9,13 +9,157 @@ import os, sys
 import numpy as np
 from clawpack.geoclaw import fgout_tools, fgmax_tools
 
-# get information about the extent of the landslide from setinput.py
-from setinput import xl1, xl2, yl1, yl2
+# get information about the extent of the domain and landslide from setinput.py
+from setinput import x0, x2, y0, y2, xl1, xl2, yl1, yl2
 
 try:
     CLAW = os.environ['CLAW']
 except:
     raise Exception("*** Must first set CLAW environment variable")
+
+
+# This setrun has been set up to make it easy to compare results under a
+# variety of numerical options:
+# - with/without AMR (amr = True/False)
+# - with order = 1 or order = 2
+# - with transverse = 1, 2, 3
+# - with each type of limiter, limiter = 0, 1, 2, 3, 4
+# - multiple amr test options, which control the gridding and timestepping (see
+#   below).
+# One might create two applications with the same setup (setinput.py,setrun.py,
+# setplot.py, and Makefile) that differ only in the numerical options.
+
+amr = True
+order = 2
+transverse = 1
+limiter = 4
+amr_test_no = 0
+
+
+# Use either one level with 25 m grid cells (AMR = False)
+# or three levels with 100 -> 50 -> 25 m grid cells.
+# keep track of the entire refinement factor (needed for timestep control below)
+if amr:
+    factor = 1
+    mxnest = 3
+    refinement_ratios = [2,2]
+else:
+    factor = 4
+    mxnest = 1
+    refinement_ratios = [1]
+
+
+
+# amr_test_no = 0
+# ---------------
+# use standard output and nonuniform time.
+# this is the value to use for applications not testing behavior with/without
+# amr.
+
+if amr_test_no == 0:
+    output_style = 1
+    uniform_time = False
+    dt_initial = 0.1
+    kratio = refinement_ratios
+    force_full_region = False
+    max1d = 150
+
+# amr_test_no = 1
+# ---------------
+# this is the simplest test for equivalence between results with and without
+# amr.
+# - the entire simulation domain is forced to have grids at all levels
+# - max1d is large so that each level only has one grid
+# - all timesteps on all levels are the same (no refinement in time)
+
+if amr_test_no == 1:
+    output_style = 3
+    uniform_time = True
+    aligned_steps = True
+    force_full_region = True
+    max1d = 1000
+
+
+# amr_test_no = 2
+# ---------------
+# this differs from amr_test_no = 1 in that it relaxes the alignment of all
+# timesteps and allows different levels to take different sized timesteps. the
+# finest level (level 1 without amr and level 3 with amr) will take equivalent
+# timesteps.
+# - the entire simulation domain is forced to have grids at all levels
+# - max1d is large so that each level only has one grid
+# - timesteps on each level differ (refinement in time)
+
+if amr_test_no == 2:
+    output_style = 3
+    uniform_time = True
+    aligned_steps = False
+    force_full_region = True
+    max1d = 1000
+
+
+# amr_test_no = 3
+# ---------------
+# this differs from amr_test_no = 2 in that it does not require that the AMR
+# case has a fine grid over the entire domain. It thus adds regridding but
+# keeps only one grid on each level.
+# - Only flagged regions have refinement.
+# - max1d is large so that each level only has one grid
+# - timesteps on each level differ (refinement in time)
+
+if amr_test_no == 3:
+    output_style = 3
+    uniform_time = True
+    aligned_steps = False
+    force_full_region = False
+    max1d = 1000
+
+
+# amr_test_no = 4
+# ---------------
+# this differs from amr_test_no = 3 in that max1d is reduced such that there
+# are multiple grids on each level.
+# - Only flagged regions have refinement.
+# - max1d is small so that each level has multiple grids
+# - timesteps on each level differ (refinement in time)
+
+if amr_test_no == 4:
+    output_style = 3
+    uniform_time = True
+    aligned_steps = False
+    force_full_region = False
+    max1d = 50
+
+
+# set dt variable based on whether using uniform time.
+if uniform_time:
+    dt_variable = False
+else:
+    dt_variable = True
+variable_dt_refinement_ratios = dt_variable
+
+# Timestep control.
+# depending on whether timesteps are aligned, set values for dt_initial, total_steps, output_step_interval, and kratio.
+total_time = 100
+if amr_test_no>0:
+    if aligned_steps:
+        dt_initial = 0.5
+        total_steps = int(total_time/dt_initial)
+        output_step_interval = 10
+        kratio = [1,1,1]
+    else:
+        dt_initial = 1.0 / factor
+        total_steps = int( total_time / dt_initial)
+        output_step_interval = 5*factor
+        kratio = refinement_ratios
+
+# set target and max CFL conditions based on Order.
+if order == 1:
+    cfl_desired=0.45
+    cfl_max = 0.50
+elif order == 2:
+    cfl_desired=0.75
+    cfl_max = 0.85
 
 #------------------------------
 def setrun(claw_pkg='dclaw'):
@@ -62,15 +206,15 @@ def setrun(claw_pkg='dclaw'):
 
     # Lower and upper edge of computational domain:
     # x-dimension
-    clawdata.lower[0] = 0
-    clawdata.upper[0] = 6e3
+    clawdata.lower[0] = x0
+    clawdata.upper[0] = x2
     # y-dimension
-    clawdata.lower[1] = 0
-    clawdata.upper[1] = 2e3
+    clawdata.lower[1] = y0
+    clawdata.upper[1] = y2
 
     # Number of grid cells: Coarsest grid
-    clawdata.num_cells[0] = 60*8 # x
-    clawdata.num_cells[1] = 20*8 # y
+    clawdata.num_cells[0] = int((x2-x0)/100)*factor # x
+    clawdata.num_cells[1] = int((y2-y0)/100)*factor # y
 
     # ---------------
     # Size of system:
@@ -109,11 +253,11 @@ def setrun(claw_pkg='dclaw'):
     # Note that the time integration stops after the final output time.
     # The solution at initial time t0 is always written in addition.
 
-    clawdata.output_style = 1
+    clawdata.output_style = output_style
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 10
+        clawdata.num_output_times = 20
         clawdata.tfinal = 100.
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
@@ -123,8 +267,8 @@ def setrun(claw_pkg='dclaw'):
 
     elif clawdata.output_style == 3:
         # Output every iout timesteps with a total of ntot time steps:
-        clawdata.output_step_interval = 1
-        clawdata.total_steps = 3
+        clawdata.output_step_interval = output_step_interval
+        clawdata.total_steps = total_steps
         clawdata.output_t0 = True
 
     clawdata.output_format = 'ascii'
@@ -140,7 +284,7 @@ def setrun(claw_pkg='dclaw'):
     # The current t, dt, and cfl will be printed every time step
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
-    clawdata.verbosity = 3
+    clawdata.verbosity = 1
 
     # --------------
     # Time stepping:
@@ -148,11 +292,11 @@ def setrun(claw_pkg='dclaw'):
 
     # if dt_variable==1: variable time steps used based on cfl_desired,
     # if dt_variable==0: fixed time steps dt = dt_initial will always be used.
-    clawdata.dt_variable = True
+    clawdata.dt_variable = dt_variable
 
     # Initial time step for variable dt.
     # If dt_variable==0 then dt=dt_initial for all steps:
-    clawdata.dt_initial = 0.0001
+    clawdata.dt_initial = dt_initial
 
     # Max time step to be allowed if variable dt used:
     clawdata.dt_max = 1e+99
@@ -160,8 +304,8 @@ def setrun(claw_pkg='dclaw'):
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
     # D-Claw requires CFL<0.5
-    clawdata.cfl_desired = 0.75
-    clawdata.cfl_max = 0.85
+    clawdata.cfl_desired = cfl_desired
+    clawdata.cfl_max = cfl_max
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -171,7 +315,7 @@ def setrun(claw_pkg='dclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 2
+    clawdata.order = order
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -180,7 +324,7 @@ def setrun(claw_pkg='dclaw'):
     #  0 or 'none'      ==> donor cell (only normal solver used)
     #  1 or 'increment' ==> corner transport of waves
     #  2 or 'all'       ==> corner transport of 2nd order corrections too
-    clawdata.transverse_waves = 2
+    clawdata.transverse_waves = transverse
 
     # Number of waves in the Riemann solution:
     clawdata.num_waves = 5
@@ -193,7 +337,7 @@ def setrun(claw_pkg='dclaw'):
     #   2 or 'superbee' ==> superbee
     #   3 or 'mc'       ==> MC limiter
     #   4 or 'vanleer'  ==> van Leer
-    clawdata.limiter = [4, 4, 4, 4, 4] # TODO VERIFY THAT 4 in old and new are the same
+    clawdata.limiter = [limiter, limiter, limiter, limiter, limiter] # TODO VERIFY THAT 4 in old and new are the same
 
     clawdata.use_fwaves = True    # True ==> use f-wave version of algorithms
     # TODO This is not in old setrun.py
@@ -260,13 +404,13 @@ def setrun(claw_pkg='dclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 1
+    amrdata.amr_levels_max = mxnest
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
-    amrdata.refinement_ratios_x = [4,2]
-    amrdata.refinement_ratios_y = [4,2]
-    amrdata.refinement_ratios_t = [4,2]
+    amrdata.refinement_ratios_x = refinement_ratios
+    amrdata.refinement_ratios_y = refinement_ratios
+    amrdata.refinement_ratios_t = kratio
 
     # Specify type of each aux variable in amrdata.auxtype.
     # This must be a list of length maux, each element of which is one of:
@@ -295,14 +439,14 @@ def setrun(claw_pkg='dclaw'):
 
     # width of buffer zone around flagged points:
     # (typically the same as regrid_interval so waves don't escape):
-    amrdata.regrid_buffer_width  = 2
+    amrdata.regrid_buffer_width  = 3
 
     # clustering alg. cutoff for (# flagged pts) / (total # of cells refined)
     # (closer to 1.0 => more small grids may be needed to cover flagged cells)
-    amrdata.clustering_cutoff = 0.700000
+    amrdata.clustering_cutoff = 0.70
 
     # print info about each regridding up to this level:
-    amrdata.verbosity_regrid = 1
+    amrdata.verbosity_regrid = mxnest
 
 
     # ---------------
@@ -312,7 +456,13 @@ def setrun(claw_pkg='dclaw'):
     # to specify regions of refinement append lines of the form
     #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
 
-    rundata.regiondata.regions.append([3,3,0,1,xl1, xl2, yl1, yl2])
+    rundata.regiondata.regions.append([3,3,0,1,xl1-200, xl2+200, yl1-200, yl2+200])
+
+    # for testing and comparison with/without amr, set mxnest region to entire domain.
+    if force_full_region:
+        rundata.regiondata.regions.append([mxnest,mxnest,0,1e9,clawdata.lower[0], clawdata.upper[0], clawdata.lower[1], clawdata.upper[1]])
+
+
 
     # ---------------
     # NEW flagregions
@@ -348,13 +498,13 @@ def setrun(claw_pkg='dclaw'):
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = -9999.
     geo_data.dry_tolerance = 1.e-3
-    geo_data.friction_forcing = True # TODO change?
+    geo_data.friction_forcing = True
     geo_data.manning_coefficient =.025
     geo_data.friction_depth = 1e6
 
     # Refinement settings
     refinement_data = rundata.refinement_data
-    refinement_data.variable_dt_refinement_ratios = True
+    refinement_data.variable_dt_refinement_ratios = variable_dt_refinement_ratios
 
     # == settopo.data values ==
     topofiles = rundata.topo_data.topofiles
@@ -368,8 +518,8 @@ def setrun(claw_pkg='dclaw'):
     # == setqinit.data values ==
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
-    etafile = 'surface_topo.tt3'
-    qinitdclaw_data.qinitfiles.append([3, 8, etafile])
+    hfile = 'thickness.tt3'
+    qinitdclaw_data.qinitfiles.append([3, 1, hfile])
 
     # == fgmax_grids.data values ==
     # set num_fgmax_val = 1 to save only max depth,
@@ -429,8 +579,8 @@ def setrun(claw_pkg='dclaw'):
     fgout.y1 = clawdata.lower[1]
     fgout.y2 = clawdata.upper[1]
     fgout.tstart = 0.
-    fgout.tend = clawdata.tfinal
-    fgout.nout = 101
+    fgout.tend = 5
+    fgout.nout = 6
     fgout.q_out_vars = [1,4,8]
     #fgout_grids.append(fgout)    # written to fgout_grids.data
 
@@ -448,13 +598,13 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.rho_s = 2700.0
     dclaw_data.m_crit = 0.64
     dclaw_data.m0 = 0.63
-    dclaw_data.mref = 0.6
+    dclaw_data.mref = 0.63
     dclaw_data.kref = 1.e-10
     dclaw_data.phi = 32.0
     dclaw_data.delta = 0.001
     dclaw_data.mu = 0.005
-    dclaw_data.alpha_c = 0.01
-    dclaw_data.c1 = 1
+    dclaw_data.alpha_c = 0.05
+    dclaw_data.c1 = 1.0
     dclaw_data.sigma_0 = 1.0e3
 
     dclaw_data.src2method=0
@@ -462,8 +612,8 @@ def setrun(claw_pkg='dclaw'):
 
     dclaw_data.segregation=0
     dclaw_data.beta_seg = 0.0
-    dclaw_data.chi0=0.5
-    dclaw_data.chie=0.5
+    dclaw_data.chi0=0.0
+    dclaw_data.chie=0.0
 
     dclaw_data.bed_normal = 0
     dclaw_data.theta_input = 0.0
@@ -471,7 +621,7 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.entrainment = 0
     dclaw_data.entrainment_rate = 0.0
     dclaw_data.entrainment_method = 1
-    dclaw_data.me = 0.6
+    dclaw_data.me = 0.63
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
@@ -489,7 +639,6 @@ def setrun(claw_pkg='dclaw'):
     # flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
 
     flowgrades_data.keep_fine = True
-    flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 3])
     flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 3])
 
 
@@ -506,17 +655,14 @@ def setrun(claw_pkg='dclaw'):
     amrdata.tprint = False      # time step reporting each level
     amrdata.uprint = False      # update/upbnd reporting
 
-    amrdata.max1d = 10000
+    amrdata.max1d = max1d
     # More AMR parameters can be set -- see the defaults in pyclaw/data.py
 
     return rundata
 
 
-
-
     # end of function setrun
     # ----------------------
-
 
 
 if __name__ == '__main__':

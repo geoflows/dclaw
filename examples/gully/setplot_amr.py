@@ -15,16 +15,13 @@ from clawpack.visclaw import geoplot
 from clawpack.visclaw import colormaps
 from clawpack.visclaw import gridtools
 
-from setinput import rotate
-
-if rotate:
-    xlimits = [2000, 4000]
-    ylimits = [500, 1500]
-else:
-    ylimits = [2000, 4000]
-    xlimits = [500, 1500]
+from setinput import xl1, xl2, yl1, yl2
 
 
+xlimits = [2000, 4000]
+ylimits = [500, 1500]
+xlimits = [xl1-200, xl2+200]
+ylimits = [yl1-200, yl2+200]
 import os,sys
 
 #--------------------------
@@ -81,83 +78,96 @@ def setplot(plotdata=None):
     # Figure for state variables
     #-----------------------------------------
     plotfigure = plotdata.new_plotfigure(name='Computational domain', figno=0)
-    plotfigure.kwargs = {'figsize':(8,7),'dpi':600}
+    plotfigure.kwargs = {'figsize':(8,7)}
     plotfigure.show = True
 
-    # Panel 1: Hillshade and Depth
-    plotaxes = plotfigure.new_plotaxes('depth')
-    plotaxes.title = 'Depth'
-    plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(221)"
-    plotaxes.xlimits = xlimits
-    plotaxes.ylimits = ylimits
-    plotaxes.afteraxes = aa
-    plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
-    plotitem.show = True
-    plotitem.plot_var = dplot.eta
-    plotitem.add_colorbar = False
-    plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
-    plotitem.plot_var = dplot.depth
-    plotitem.add_colorbar = True
-    plotitem.colorbar_kwargs = {
-        "shrink": 0.5,
-        "location": "bottom",
-        "orientation": "horizontal",
-    }
-    plotitem.colorbar_label = "Depth (m)"
-    plotitem.imshow_cmap = "Purples"
-    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.001, vmax=4, clip=True)
-    plotitem.patchedges_show=True
+    for i in [0, 1, 2]:
+        amr_data = [0,0,0]
+        amr_data[i] = 1
 
+        plotind = i*3
 
-    # Panel 2 : Hillshade and Velocity
-    plotaxes = plotfigure.new_plotaxes('velocity')
-    plotaxes.title = ''
-    plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(222)"
-    plotaxes.xlimits = xlimits
-    plotaxes.ylimits = ylimits
-    plotaxes.afteraxes = aa_notime
-    plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
-    plotitem.show = True
-    plotitem.plot_var = dplot.eta
-    plotitem.add_colorbar = False
-    plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
-    plotitem.plot_var = dplot.velocity_magnitude
-    plotitem.add_colorbar = True
-    plotitem.colorbar_kwargs = {
-        "shrink": 0.5,
-        "location": "bottom",
-        "orientation": "horizontal",
-    }
-    plotitem.colorbar_label = "Velocity (m/s)"
-    plotitem.imshow_cmap = "Greens"
-    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.1, vmax=10, clip=True)
+        # Panel 1: Hillshade and Depth
+        plotaxes = plotfigure.new_plotaxes(f'depth_{i}')
+        plotaxes.title = 'Depth'
+        plotaxes.scaled = True
+        plotaxes.axescmd = f"subplot(3,3,{plotind+1})"
+        plotaxes.xlimits = xlimits
+        plotaxes.ylimits = ylimits
+        plotaxes.afteraxes = aa
+        plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
+        plotitem.show = True
+        plotitem.plot_var = dplot.eta
+        plotitem.add_colorbar = False
+        plotitem.amr_data_show = amr_data
 
-    # Panel 2 : Hillshade and M
-    plotaxes = plotfigure.new_plotaxes('solidfrac')
-    plotaxes.title = ''
-    plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(223)"
-    plotaxes.xlimits = xlimits
-    plotaxes.ylimits = ylimits
-    plotaxes.afteraxes = aa_notime
-    plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
-    plotitem.show = True
-    plotitem.plot_var = dplot.eta
-    plotitem.add_colorbar = False
-    plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
-    plotitem.plot_var = dplot.solid_frac
-    plotitem.add_colorbar = True
-    plotitem.colorbar_kwargs = {
-        "shrink": 0.5,
-        "location": "bottom",
-        "orientation": "horizontal",
-    }
-    plotitem.colorbar_label = "Solid fraction (-)"
-    plotitem.imshow_cmap = "pink_r"
-    plotitem.imshow_norm = mpl.colors.Normalize(vmin=0, vmax=1)
+        plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
+        plotitem.plot_var = dplot.depth
+        plotitem.add_colorbar = True
+        plotitem.colorbar_kwargs = {
+            "shrink": 0.5,
+            "location": "bottom",
+            "orientation": "horizontal",
+        }
+        plotitem.colorbar_label = "Depth (m)"
+        plotitem.imshow_cmap = "Purples"
+        plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.001, vmax=4, clip=True)
+        plotitem.patchedges_show=True
+        plotitem.amr_data_show = amr_data
 
+        # Panel 2 : Hillshade and Velocity
+        plotaxes = plotfigure.new_plotaxes(f'velocity_{i}')
+        plotaxes.title = ''
+        plotaxes.scaled = True
+        plotaxes.axescmd = f"subplot(3,3,{plotind+2})"
+        plotaxes.xlimits = xlimits
+        plotaxes.ylimits = ylimits
+        plotaxes.afteraxes = aa_notime
+        plotitem.amr_data_show = amr_data
+
+        plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
+        plotitem.show = True
+        plotitem.plot_var = dplot.eta
+        plotitem.add_colorbar = False
+        plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
+        plotitem.plot_var = dplot.velocity_magnitude
+        plotitem.add_colorbar = True
+        plotitem.colorbar_kwargs = {
+            "shrink": 0.5,
+            "location": "bottom",
+            "orientation": "horizontal",
+        }
+        plotitem.colorbar_label = "Velocity (m/s)"
+        plotitem.imshow_cmap = "Greens"
+        plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.1, vmax=10, clip=True)
+        plotitem.amr_data_show = amr_data
+
+        # Panel 2 : Hillshade and M
+        plotaxes = plotfigure.new_plotaxes(f'solidfrac_{i}')
+        plotaxes.title = ''
+        plotaxes.scaled = True
+        plotaxes.axescmd = f"subplot(3,3,{plotind+3})"
+        plotaxes.xlimits = xlimits
+        plotaxes.ylimits = ylimits
+        plotaxes.afteraxes = aa_notime
+        plotitem.amr_data_show = amr_data
+
+        plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
+        plotitem.show = True
+        plotitem.plot_var = dplot.eta
+        plotitem.add_colorbar = False
+        plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
+        plotitem.plot_var = dplot.solid_frac
+        plotitem.add_colorbar = True
+        plotitem.colorbar_kwargs = {
+            "shrink": 0.5,
+            "location": "bottom",
+            "orientation": "horizontal",
+        }
+        plotitem.colorbar_label = "Solid fraction (-)"
+        plotitem.imshow_cmap = "pink_r"
+        plotitem.imshow_norm = mpl.colors.Normalize(vmin=0, vmax=1)
+        plotitem.amr_data_show = amr_data
 
     # eventually add segregation and entrained depth
 

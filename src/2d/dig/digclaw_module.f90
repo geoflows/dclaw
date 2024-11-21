@@ -265,8 +265,12 @@ contains
 
       !Locals
       double precision :: mmin,mmax,chimin,chimax,pmax,pmin
+      logical :: debug
+
+      debug = .true.
 
       if (h.le.dry_tolerance) then
+         if (debug.and.h<0.d0) write(*,*) '****WARNING******** QFIX: dry state encountered, h:', h, hm
          h =  0.d0
          hu = 0.d0
          hv = 0.d0
@@ -289,6 +293,7 @@ contains
       chi = hchi/h
 
       !mlo = 1.d-3
+      if (debug.and.hm<-dry_tolerance) write(*,*) '****WARNING******** QFIX: negative solid h,hm:', h, hm, m
       mmin = 0.0d0
       mmax = 1.d0
       m = max(m,mmin)

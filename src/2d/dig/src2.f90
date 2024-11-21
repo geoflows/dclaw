@@ -49,18 +49,17 @@
       ! check for NANs in solution:
       call check4nans(meqn,mbc,mx,my,q,t,2)
 
-      if (friction_forcing) then
-         coeffmanning = manning_coefficient(1)
-      else
-         coeffmanning = 0.d0
-      endif
-
       ! Current implementation of friction has manning as an array
       ! take the first element for now. If only one value is
       ! provided to geo_data.manning_coefficient
       ! it will be manning_coefficient(1)
       ! DIG: Decide if this should be handled in some other way.
 
+      if (friction_forcing) then
+         coeffmanning = manning_coefficient(1)
+      else
+         coeffmanning = 0.d0
+      endif
 
       gz = grav  !needed later for bed-normal direction gravity
       gx = 0.d0
@@ -83,7 +82,13 @@
             p =  q(i_pb,i,j)
             hchi = q(i_hchi,i,j)
             rhoh = hm*rho_s + (h-hm)*rho_f
-            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+
+            if (hm.lt.0.d0) then
+              !write(*,*) 'SRC2: warning: hm negative, h, hm, rhoh: ',h, hm, rhoh
+              ! This most likely occurs using second order corrections.
+              !stop
+              cycle
+            endif
 
             !modified gravity: bed-normal weight and acceleration
             if (bed_normal==1) then
@@ -109,26 +114,16 @@
                ! entrainment only needs b_x and b_y.
                ! curvature also needs b_xx,b_yy,and b_xy
             endif
+
             if (curvature==1) then
+               u = hu/h
+               v = hv/h
                dtheta = -(aux(i_theta,i+1,j) - aux(i_theta,i-1,j))/(2.d0*dx)
                gacc = max(u**2*b_xx + v**2*b_yy + 2.0*u*v*b_xy + u**2*dtheta,0.d0)!max:currently only consider enhancement not reduction of gz (ie. basin not a hump)
                gz = gz + gacc
             endif
 
-
-            !Manning friction
-            if ((friction_forcing).and.(coeffmanning>0.d0)) then
-               if (h<=friction_depth) then
-                  !beta = 1.d0-m  ! reduced friction led to high velocities
-                  beta = 1.d0     ! use full Manning friction
-                  gamma= beta*sqrt(hu**2 + hv**2)*(gz*coeffmanning**2)/(h**(7.d0/3.d0))
-                  dgamma=1.d0 + dt*gamma
-                  hu= hu/dgamma
-                  hv= hv/dgamma
-                  !new u,v below
-                  call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
-               endif
-            endif
+            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
 
 !-----------!integrate momentum source term------------------------
             ! need tau:
@@ -158,6 +153,14 @@
 
             select case (src2method)
 
+            case(-1)
+            !ignore source integration of m and p
+            !solve shallow water equations with possible friction and passive advection of m
+            !could be used for sediment transport/entrainment with shallow water
+               hu = h*u
+               hv = h*v
+               hm = h*m
+               hchi = h*chi
             case(0:1)
                call mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
                hu = h*u
@@ -170,7 +173,7 @@
             ! sum(dtk) = dt
             ! explicit integration for each dt
                dtremaining = dt
-               itercountmax=10
+               itercountmax=100
                itercount=0
 
                do while (dtremaining>1.d-99)
@@ -193,14 +196,24 @@
                hm = h*m
                hchi = h*chi
                call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
-               if (h<=dry_tolerance) then
-                  cycle
-               endif
 
             end select
+
+            if (h<=dry_tolerance) then
+            ! put state variables back in q.
+               q(i_h,i,j) = h
+               q(i_hu,i,j) = hu
+               q(i_hv,i,j) = hv
+               q(i_hm,i,j) = hm
+               q(i_pb,i,j) = p
+               q(i_hchi,i,j) = hchi
+               cycle
+            endif
+
             !========================== end src integration ======================
 
             call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
+
 
             !======================mass entrainment===========================
             if (entrainment==1) then
@@ -216,8 +229,27 @@
             endif
 
             !===================================================================
-            ! end of entrainment, put state variables back in q.
+            ! end of entrainment
 
+
+            !===========Manning friction========================================
+            if ((friction_forcing).and.(coeffmanning>0.d0)) then
+               if (h<=friction_depth) then
+                  !beta = 1.d0-m  ! reduced friction led to high velocities
+                  beta = 1.d0     ! use full Manning friction
+                  gamma= beta*sqrt(hu**2 + hv**2)*(gz*coeffmanning**2)/(h**(7.d0/3.d0))
+                  dgamma=1.d0 + dt*gamma
+                  hu= hu/dgamma
+                  hv= hv/dgamma
+                  !new u,v below
+                  call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+               endif
+            endif
+
+            !===================================================================
+            ! end of Manning friction
+
+            ! put state variables back in q.
             q(i_h,i,j) = h
             q(i_hu,i,j) = hu
             q(i_hv,i,j) = hv

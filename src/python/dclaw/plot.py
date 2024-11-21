@@ -49,7 +49,10 @@ _m0 = 0.6
 _c1 = 1.0
 _bed_normal = 0
 _drytol = 0.001
-_ph_i_bed = 40
+_phi = 40
+
+# TODO update all elements here to reflect new changes to the data model
+# (e.g., mref, kref, etc)
 
 
 # Gravity, adjusted for bed normal.
@@ -826,18 +829,18 @@ def Ffluid(current_data):  # units of force per unit area
 def phi(current_data):
     # angle of internal friction (radians)
     if hasattr(current_data.plotdata, "dclaw_data"):
-        ph_i_bed = current_data.plotdata.dclaw_data.ph_i_bed
+        _p = current_data.plotdata.dclaw_data.phi
     else:
-        ph_i_bed = _ph_i_bed
+        _p = _phi # otherwise use default _phi above.
+
     # results are returned in radians.
-    return np.deg2rad(ph_i_bed)
+    return np.deg2rad(_p)
 
 
 def Fsolid(current_data):  # units of force per unit area
     # resisting force due to solid.
-    ph_i_bed = phi(current_data)
 
-    tau_s = sigma_e(current_data) * np.tan(ph_i_bed + psi(current_data))
+    tau_s = sigma_e(current_data) * np.tan(phi(current_data) + psi(current_data))
     # tau = dmax1(0.d0,mreg*sigbed*tan(atan(mu_bf)+atan(tanpsi)))
     tau_s[tau_s < 0] = 0
     # units

@@ -17,6 +17,6 @@ xgeoclaw
 *.kml
 *.q*
 *.t*
-*.html
-public/
+fgout*.*
+public
 docs/src/autodoc2

@@ -109,8 +109,8 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     ! D-Claw specific initialization of q
     !===========================================
 
-      xhigher = xlower + (mx-0.5d0)*dx
-      yhigher = ylower + (my-0.5d0)*dy
+      xhigher = xlower + (mx-0.5d0)*dx ! DIG: higher is cell center but lower is cell edge. Correct?
+      yhigher = ylower + (my-0.5d0)*dy ! below, we are comparing against xlow/hi, ylow/hi which are cell edges.
 
       ! loop through qinitfiles and fill in q. topo has already been set.
       do mf =1,mqinitfiles
@@ -200,7 +200,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       do j=1-mbc,my+mbc
          do i=1-mbc,mx+mbc
                if (initm.eq.0) then
-                  if (dabs((q(i_h,i,j) + aux(1,i,j))-veta(i,j)).lt.1d-6) then
+                  if (dabs((q(i_h,i,j) + aux(1,i,j)) - veta(i,j)).lt.1d-6) then
                     q(i_hm,i,j) = 0.d0 ! If eta is sea level (stored in veta), assume m is zero
                     ! DIG: This may need to change if treatment of sea level does not use veta.
                     ! potentially have a m0fill and m0perm
@@ -216,7 +216,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                     q(i_hchi,i,j) = chi0*q(i_h,i,j)
                   else
                     q(i_hchi,i,j) = q(i_h,i,j)*q(i_hchi,i,j)
-                  endif 
+                  endif
                endif
                if (initu.eq.1) then
                   q(i_hu,i,j) = q(i_h,i,j)*q(i_hu,i,j)
