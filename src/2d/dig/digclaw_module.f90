@@ -402,8 +402,10 @@ contains
          sig_0 = sigma_0
       case(1)
          ! case 1: new method that ensures pressure always decays to hydrostatic
-         !sig_0 = alpha*(rho_s-rho_f)*gz*h
-         sig_0 = 0.5d0*alpha_c*(rho_s-rho_f)*gz*h/rho
+         ! sig_0 has a theoretical lower bound such that alphainv.ge.0.
+         ! define sigma_0 so that it is just above the bound (use 0.51 instead
+         ! of 0.50).
+         sig_0 = 0.51d0*alpha_c*rho_f*(rho_s-rho_f)*gz*h/rho
       end select
       alphainv = m*(sig_eff + sig_0)/alpha_c
 
