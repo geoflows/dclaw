@@ -87,21 +87,6 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        quad0=0
        quad1=0
 
-       ! if m == 0 return
-       if (m==0.d0) then
-          ! relax to hydrostatic, call qfix_cmass and return
-          p_exc = p_exc0*exp(-kp0*dtr)
-          call qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
-          dtk = dtr
-          return
-       endif
-
-       ! if at critical point dq/dt = 0, return
-       if ((abs(p_exc0/(gz*h0))<1.d-12).and.(abs(m-m_eq)<1.d-12)) then
-          dtk = dtr
-          return
-       endif
-
        !determine coefficients for update
        ! dm/dt = (2*k*rho^2/mu(rhoh)^2)*p_exc*m = km0 * p_exc * m
        ! dp_p_exc/dt = -kp0*p_exc + c_d see George & Iverson 2014
@@ -121,6 +106,21 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
        kp0 = max(kp0,0.d0) ! shouldn't happen with alphamethod=1 but prevent
        ! small rounding error
+
+              ! if m == 0 return
+       if (m==0.d0) then
+          ! relax to hydrostatic, call qfix_cmass and return
+          p_exc = p_exc0*exp(-kp0*dtr)
+          call qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
+          dtk = dtr
+          return
+       endif
+
+       ! if at critical point dq/dt = 0, return
+       if ((abs(p_exc0/(gz*h0))<1.d-12).and.(abs(m-m_eq)<1.d-12)) then
+          dtk = dtr
+          return
+       endif
 
        ! if vnorm or alphainv are zero, or if only tanpsi is zero (but not
        ! pe_exc0)-> only pressure relaxes, then return
