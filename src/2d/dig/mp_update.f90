@@ -117,7 +117,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        endif
 
        ! if at critical point dq/dt = 0, return
-       if ((abs(p_exc0/(gz*h0))<1.d-12).and.(abs(m-m_eq)<1.d-12)) then
+       if ((abs(p_exc0/(rho_f*gz*h0))<1.d-12).and.(abs(m-m_eq)<1.d-12)) then
           dtk = dtr
           return
        endif
@@ -171,15 +171,13 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              p_eq_c = rho_f*gz*h_c
        endif
 
-       ! need to verify that p=p_eq goes through the critical point. if not,
-       ! then quadrants may be wrong and div0 errors b/c of lines like
-       ! dtm = (m_c-m_0)/(km0*p_exc0*m_0)
+       !
 
        !determine quadrant of initial solution in state space
 
        if ((m<m_c).and.(p>=p_eq_c)) then
           quad0=1
-       elseif ((m>=m_c).and.(p>p_eq_c)) then
+       elseif ((m>=m_c).and.(p>p_eq_c)) then 
           quad0=2
        elseif  ((m>m_c).and.(p<=p_eq_c)) then
           quad0=3
