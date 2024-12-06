@@ -178,8 +178,8 @@ def setrun(claw_pkg='dclaw'):
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
     # D-Claw requires CFL<0.5
-    clawdata.cfl_desired = 0.75
-    clawdata.cfl_max = 0.85
+    clawdata.cfl_desired = 0.4
+    clawdata.cfl_max = 0.5
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -423,8 +423,8 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.c1 = 1
     dclaw_data.sigma_0 = 1.0e3
 
-    dclaw_data.src2method=0
-    dclaw_data.alphamethod=0
+    dclaw_data.src2method=2
+    dclaw_data.alphamethod=1
 
     dclaw_data.segregation=0
     dclaw_data.beta_seg = 0.0
