@@ -146,7 +146,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - Default Value
          - Type
        * - ``src2method``
-         - Method used to integrate the source term. 
+         - Method used to integrate the source term.
           -1 = ignore m and p coevolution- for shallow water with friction and advection of m
            0 = traditional method,
            1 = intermediate method, 2 = new method. DIG: TODO UPDATE
@@ -162,7 +162,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - 0
          - int
 
-    TODO: Make comments on how, if at all src2method and alphamethod may be combined. 
+    TODO: Make comments on how, if at all src2method and alphamethod may be combined.
 
     The following parameters are used to control whether and how bed
     normal coordinates, segregation, and entrainment are implemented.
@@ -283,12 +283,19 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
     def write(self, out_file="dclaw.data", data_source="setrun.py"):
         """Write the contents of ``DClawInputData`` to a file."""
 
-        self.open_data_file(out_file, data_source)
-
+        # check for any parameter conflicts.
         if self.bed_normal == 1:
             raise ValueError(
                 "bed_normal=1 not currently supported because of dx dy not accessible in riemann solver"
             )
+
+        if self.src2method == 2 and self.alphamethod <1:
+            raise ValueError(
+            "D-Claw parameter conflict: if src2method == 2 then alphamethod must = 1"
+            )
+
+
+        self.open_data_file(out_file, data_source)
 
         self.data_write("rho_s", description="solid grain density (kg/m^3)")
         self.data_write("rho_f", description="pore-fluid density  (kg/m^3)")

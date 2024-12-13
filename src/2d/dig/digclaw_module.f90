@@ -293,7 +293,7 @@ contains
       chi = hchi/h
 
       !mlo = 1.d-3
-      if (debug.and.hm<-dry_tolerance) write(*,*) '****WARNING******** QFIX: negative solid h,hm:', h, hm, m
+      if (debug.and.hm<-dry_tolerance) write(*,*) '****WARNING******** QFIX: negative solid h,hm,m:', h, hm, m
       mmin = 0.0d0
       mmax = 1.d0
       m = max(m,mmin)
@@ -402,8 +402,11 @@ contains
          sig_0 = sigma_0
       case(1)
          ! case 1: new method that ensures pressure always decays to hydrostatic
-         !sig_0 = alpha*(rho_s-rho_f)*gz*h
-         sig_0 = 0.5d0*alpha_c*(rho_s-rho_f)*gz*h/rho
+         ! sig_0 has a theoretical lower bound such that alphainv.ge.0.
+         ! define sigma_0 so that it is just above the bound (use 0.51 instead
+         ! of 0.50).
+         sig_0 = 0.50d0*alpha_c*rho_f*(rho_s-rho_f)*gz*h/rho
+         !sig_0 = 0.51d0*alpha_c*(rho_s-rho_f)*gz*h
       end select
       alphainv = m*(sig_eff + sig_0)/alpha_c
 
@@ -440,7 +443,7 @@ contains
       ! Note:  for water (m=0) sig_eff=0.0 and so tau=0.
       !        However, for dilute suspensions,
       !        we make o(m) not O(m))
-      tau = tau*0.5d0*(1.d0 + tanh(50.d0*(m-0.05d0)))
+      tau = tau*0.5d0*(1.d0 + tanh(100.d0*(m-0.1d0)))
 
       return
 

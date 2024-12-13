@@ -58,7 +58,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        !local
        real(kind=8) :: h0,p0,m_0,p_eq0,p_exc0,vnorm,m_eq
        real(kind=8) :: kappa,S,rho,rho0,tanpsi,D,tau,sigbed,kperm
-       real(kind=8) :: km,kp,alphainv,c_d,p_exc,dtr,dtm,dtp,dts,p_excm,p_exc_ave
+       real(kind=8) :: km,alphainv,c_d,p_exc,dtr,dtm,dtp,dts,p_excm,p_exc_ave
        real(kind=8) :: km0,kp0,alphainv0,c_d0
        real(kind=8) :: hu,hv,hm
        real(kind=8) :: rho_c,h_c,p_eq_c,m_c,rho_c1,h_c1,p_eq_c1,m_c1,m_lower,m_upper
@@ -86,33 +86,44 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
        quad0=0
        quad1=0
-       ! if at critical point dq/dt = 0
+
+       !determine coefficients for update
+       ! dm/dt = (2*k*rho^2/mu(rhoh)^2)*p_exc*m = km0 * p_exc * m
+       ! dp_p_exc/dt = -kp0*p_exc + c_d see George & Iverson 2014
+       ! equations from 2014 recast in terms of p_exc.
+
+       km0 = ((2.d0*kperm*rho0**2)/(mu*rhoh**2))
+       c_d0 = -3.d0*vnorm*(alphainv*rho0/(rhoh))*tanpsi
+       kp0 = (kperm/(h0*mu))*(3.d0*alphainv*rho0/rhoh - 1.5d0*rho_f*gz*h0*(rho0-rho_f)/rhoh)
+
+       ! kp0 is guaranteed to be greater or equal to zero if alphamethod = 1
+       ! but not if alphamethod = 0 (old style).
+       if (debug.and.kp0<0.d0) then
+          write(*,*) '------------SRC WARNING: kp0<0 ---------->>>>>>>>'
+          write(*,*) 'kp0<0:', kp0
+          write(*,*) '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+       endif
+
+       kp0 = max(kp0,1.d-3) ! shouldn't happen with alphamethod=1 but prevent
+       ! small rounding error
+
+              ! if m == 0 return
        if (m==0.d0) then
+          ! relax to hydrostatic, call qfix_cmass and return
           p_exc = p_exc0*exp(-kp0*dtr)
           call qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
           dtk = dtr
           return
        endif
 
-       if ((abs(p_exc0/(gz*h0))<1.d-12).and.(m==0.d0.or.abs(m-m_eq)<1.d-12)) then
+       ! if at critical point dq/dt = 0, return
+       if ((abs(p_exc0/(rho_f*gz*h0))<1.d-12).and.(abs(m-m_eq)<1.d-12)) then
           dtk = dtr
           return
        endif
 
-
-
-       !determine coefficients for update
-       ! dm/dt = (2*k*rho^2/mu(rhoh)^2)*p_exc*m
-       ! dp_eq/dt = -plamda*p_eq + c_d see George & Iverson 2014
-       km0 = ((2.d0*kperm*rho0**2)/(mu*rhoh**2))
-       c_d0 = -3.d0*vnorm*(alphainv*rho0/(rhoh))*tanpsi
-       kp0 = (kperm/(h0*mu))*(3.d0*alphainv*rho0/rhoh - 1.5d0*rho_f*gz*h0*(rho0-rho_f)/rhoh) !(kp>0)
-       if (debug.and.kp0<0.d0) then
-          write(*,*) '------------SRC WARNING: kp0<0 ---------->>>>>>>>'
-          write(*,*) 'kp0<0:', kp0
-          write(*,*) '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-       endif
-       kp0 = max(kp0,1.d0) !shouldn't happen but prevent small rounding error
+       ! if vnorm or alphainv are zero, or if only tanpsi is zero (but not
+       ! pe_exc0)-> only pressure relaxes, then return
        if (c_d0==0.d0) then
           p_exc = p_exc0*exp(-kp0*dtr)
           m = m_0*exp(km0*p_exc*dtr)
@@ -128,43 +139,48 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        h_c = rhoh/rho_c
        p_eq_c = rho_f*gz*h_c
        shear = 2.d0*vnorm/h0
-       if (shear>0.d0) then
-          convtol = 1.d-16
-          itermax = 100
-          do iter=1,itermax
-             m_c0 = m_c
-             p_eq_c0 = p_eq_c
+
+       ! shear should be guaranteed to be positive b/c of c_d0 check above.
+
+       convtol = 1.d-16
+       itermax = 100
+       do iter=1,itermax
+          m_c0 = m_c
+          p_eq_c0 = p_eq_c
+          rho_c = m_c*(rho_s-rho_f) + rho_f
+          h_c = rhoh/rho_c
+          p_eq_c = rho_f*gz*h_c
+          sig_c = max(rhoh*gz-p_eq_c,0.d0)
+          Nd = rho_s*(shear*delta)**2 + sig_c
+          Nn = mu*shear
+          m_c = m_crit*(sqrt(Nd)/(sqrt(Nd)+sqrt(Nn)))
+          normc = (1.d2*(m_c - m_c0))**2 + (1.d-3*(p_eq_c-p_eq_c0))**2
+          if (normc<convtol) then
+             exit
+          endif
+          if (iter>10.and.debug) then
+             write(*,*) '--------------------------------------------------'
+             write(*,*) 'SRC2 WARNING: fixed point iterations:', iter
+             write(*,*) 'norm for convergence:', normc
+          endif
+       enddo
+       if ((iter>=itermax).and.(normc>1.d0)) then
+             m_c = m_crit
              rho_c = m_c*(rho_s-rho_f) + rho_f
              h_c = rhoh/rho_c
              p_eq_c = rho_f*gz*h_c
-             sig_c = max(rhoh*gz-p_eq_c,0.d0)
-             Nd = rho_s*(shear*delta)**2 + sig_c
-             Nn = mu*shear
-             m_c = m_crit*(sqrt(Nd)/(sqrt(Nd)+sqrt(Nn)))
-             normc = (1.d2*(m_c - m_c0))**2 + (1.d-3*(p_eq_c-p_eq_c0))**2
-             if (normc<convtol) then
-                exit
-             endif
-             if (iter>10.and.debug) then
-                write(*,*) '--------------------------------------------------'
-                write(*,*) 'SRC2 WARNING: fixed point iterations:', iter
-                write(*,*) 'norm for convergence:', normc
-             endif
-          enddo
-          if ((iter>=itermax).and.(normc>1.d0)) then
-                m_c = m_crit
-                rho_c = m_c*(rho_s-rho_f) + rho_f
-                h_c = rhoh/rho_c
-                p_eq_c = rho_f*gz*h_c
-          endif
-
+       else !update from m_c from final iteration for consistent quadrant definition
+            rho_c = m_c*(rho_s-rho_f) + rho_f
+            h_c = rhoh/rho_c
+            p_eq_c = rho_f*gz*h_c
        endif
+       !
 
        !determine quadrant of initial solution in state space
 
        if ((m<m_c).and.(p>=p_eq_c)) then
           quad0=1
-       elseif ((m>=m_c).and.(p>p_eq_c)) then
+       elseif ((m>=m_c).and.(p>p_eq_c)) then 
           quad0=2
        elseif  ((m>m_c).and.(p<=p_eq_c)) then
           quad0=3
@@ -172,15 +188,28 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
           quad0=4
        endif
 
+       ! dig: div0
+       ! at this point it is not guaranteed that p_exc is nonzero.
+       ! it may also not be guaranteed that kp0 is nonzero
+
+       ! nullclines:
+       ! p = p_eq is the m-nullcline
+       ! m = m_eq is not the p-nullcline. rather p-nullcline is where tanpsi
+       ! pressure change is balanced by relaxation.
+       ! p-nullcline located in UL (q1) and LR (q3) in between p=p_eq and m=m_eq
+
        select case (quad0)
 
        case(1) !UL quadrant, variable material and p_exc
           debugloop = 1000
-          !statically loose
+          !loose
           !integration should only cross right boundary (m=m_c)
           !p can increase or decrease if below/above p-nullcline (which is left of m=m_eq, above p=p_eq)
           !m can increase or decrease if above/below m-nullcline (p=p_eq)
-          if (p_exc0<-1.d-3*rhoh*gz) then !p increasing, m decreasing, below m-nullcline
+
+          ! first consider region 1A - in UL quadrant, and just below the m-nullcline
+          ! in this region, p is increasing and m is decreasing
+          if (p_exc0<-1.d-3*rhoh*gz) then
              debugloop=debugloop + 100
              if (c_d0>0.d0) then !don't exceed p_exc = 0 until next substep
                 dtp = -(1.d0/kp0)*log(-c_d0/(kp0*p_exc0-c_d0))
@@ -193,11 +222,16 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dts) +c_d0)
              !m = m_0*exp(dts*km0*0.5d0*(p_exc0+p_exc))
              m = m_0*exp(dts*km0*p_exc)
-          elseif ((-kp0*p_exc0+c_d0)>0.d0) then !p_exc is increasing/below nullcline
+
+          ! next consider region 1B - in UL quadrant, below the p-nullcline
+          ! this includes the portion of UL that is the m-nullcline.
+          ! in this region, p increases
+          ! m increases except in the sliver at or below the m-nullcline
+          elseif ((-kp0*p_exc0+c_d0)>0.d0) then
              debugloop=debugloop + 200
              !bound time step
              ! to max allowed (lithostatic,rhoh*g) if nullcline exceeds it
-             if ((c_d/kp)>(rhoh*gz-p_eq_c)) then
+             if ((c_d/kp0)>(rhoh*gz-p_eq_c)) then
                 debugloop=debugloop + 10
                 dtp = min(dtr,-(1.d0/kp0)*log((-kp0*rhoh*gz+kp0*p_eq_c+c_d)/(-kp0*p_exc0+c_d0)))
              !bound time step so not to exceed nullcline
@@ -205,6 +239,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
                 debugloop=debugloop + 20
                 dtp = dtr
              endif
+
              p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dtp) +c_d0)
              p_exc_ave = 0.5d0*(p_exc+p_exc0)
              if (p_exc_ave<=0.d0) then !should only occur if p_exc0<0 and dt small
@@ -214,12 +249,26 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              else
                 debugloop=debugloop + 2
                 m_upper = m_eq - max(0.d0,(1.d0/3.d0)*kp0*h0*(p_exc_ave)/(vnorm*alphainv))
-                dtm = min(dtp,(m_eq-m_0)/(km0*p_exc_ave*m_0))
+                !if ((km0*p_exc_ave*m_0).le.0.d0) then
+                  !write(*,*) 'D,p_exc,p_exc0,m_eqn:', km0*p_exc_ave*m_0,p_exc,p_exc0,m_eq
+               !endif
+                if ((km0*p_exc_ave*m_0).lt.1.d-99) then
+                  dtm = dtp
+               else
+                  dtm = min(dtp,(m_eq-m_0)/(km0*p_exc_ave*m_0))
+               endif
                 !dts = min(dts,(m_eq-m_0)/(km0*p_exc*m_0)) !use new/higher p_exc
                 !m = m_0 + km0*m_0*0.5d0*(p_exc+p_exc0)*dts
              endif
              m = m_0 + km0*m_0*p_exc_ave*dtm
              dts = dtm
+
+          ! finally, consider region 1C - to the right and including the
+          ! p-nullcline in UL.
+          ! m will increase and p will decrease except at the nullcline
+          ! break this region up into two portions, depending on whether to the
+          ! right or left of m=m_eq.
+
           else !-kp0*p_exc0+c_d0)<0
              debugloop=debugloop + 300
              !p_exc is decreasing/above nullcline or static on nullcline
@@ -231,7 +280,11 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
                 !p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dtp) +c_d0)
                 !dts = min(dtp,(m_c-m_0)/(km0*0.5d0*(p_exc0+p_exc)*m_0))
                 !m = m_0 + km0*m_0*0.5d0*(p_exc0+p_exc)*dts
-                dtm = (m_c-m_0)/(km0*p_exc0*m_0)
+                if ((km0*p_exc0*m_0)>1.d-99) then
+                  dtm = (m_c-m_0)/(km0*p_exc0*m_0)
+                else
+                  dtm = dtp
+                endif
                 dts = min(dtm,dtp)
                 dts = max(dts,0.d0)
                 m = m_0 + km0*m_0*p_exc0*dts
@@ -240,8 +293,15 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
                  debugloop=debugloop + 20
                 ! true solution should remain right of m_eq
                 ! FE gives lowest slope of dp/dm
-                dts = min(dtr,(m_c-m_0)/(km0*p_exc0*m_0))
-                dtp = min(dtr,-(1.d0/kp0)*log((c_d0)/(-kp0*p_exc0+c_d0)))
+                dts = dtr
+                dtp = dtr
+                if ((km0*p_exc0*m_0)>1.d-99) then
+                  dts = min(dtr,(m_c-m_0)/(km0*p_exc0*m_0))
+                endif
+                if ((c_d0)/(-kp0*p_exc0+c_d0)>1.d-99) then
+                  dtp = min(dtr,-(1.d0/kp0)*log((c_d0)/(-kp0*p_exc0+c_d0)))
+                endif
+
                 !if (dtp<dts) write(*,*) 'ERROR: QUAD 1: WRONG DIRECTION ACROSS m=m_eq'
                 dts = min(dts,dtp)
                 dts = max(dts,0.d0)
@@ -254,13 +314,22 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
           dtr = dtr-dts
 
        case(2) !UR quadrant, dense or equilibrium material, p>p_eq_c>p_eq
-          !intertially contracting
           !integration can only cross lower boundary (p=p_eq_c>p_eq)
           !m>m_c>m_eq
           !p is strictly decreasing, m strictly increasing
           debugloop = 2000
-          dtp = min(dtr,-(1.d0/kp0)*log((c_d0)/(-kp0*p_exc0+c_d0)))
-          dtm = min(dtp,(1.d0-m_0)/(km0*p_exc0*m_0))
+          dtp = dtr
+          if (c_d0/(-kp0*p_exc0+c_d0)>1.d-99) then
+            dtp = min(dtr,-(1.d0/kp0)*log((c_d0)/(-kp0*p_exc0+c_d0)))
+          endif
+          ! bookmark: continue joint review from here.
+           !write(*,*) 'p_eq_c-p_eq_0,m_0-m_c,h_c-h0', p_eq_c-p_eq0,m_0-m_c,h_c-h0
+           !write(*,*) 'rho0,rho_c,rho_c-rho0', rho0,rho_c,rho_c-rho0
+          dtm = dtp
+          if (km0*p_exc0*m_0>1.d-99) then
+            dtm = min(dtp,(1.d0-m_0)/(km0*p_exc0*m_0)) ! dig div0
+          endif
+          
           p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dtp) +c_d0)
           !m = m_0 + km0*m_0*0.5d0*(p_exc0+p_exc)*min(dts,dtm)
           m = m_0 + km0*m_0*p_exc*dtm
@@ -276,8 +345,14 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              debugloop=debugloop + 100
              !don't descend below p_exc = 0 until next substep
              !if dm/dt hits m=1.d0, follow boundary
-             dtp = min(dtr,-(1.d0/kp0)*log(c_d0/(-kp0*p_exc0+c_d0)))
-             dtm = min(dtp,(1.d0-m_0)/(km0*p_exc0*m_0))
+             dtp = dtr
+             if ((c_d0/(-kp0*p_exc0+c_d0))>1.d-99) then
+               dtp = min(dtr,-(1.d0/kp0)*log(c_d0/(-kp0*p_exc0+c_d0)))
+             endif
+             dtm = dtp
+             if ((km0*p_exc0*m_0)>1.d-99) then
+               dtm = min(dtp,(1.d0-m_0)/(km0*p_exc0*m_0)) ! dig div0
+             endif
              !integrate dp_exc/dt = -kp0 p_exc + c_d with coefficients at t=0.
              p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dtp) +c_d0)
              m = m_0 + km0*m_0*0.5d0*(p_exc0+p_exc)*dtm
@@ -286,7 +361,10 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              debugloop=debugloop + 200
              if (c_d0/kp0<-p_eq0) then !assymptotic limit of p<0
                 debugloop=debugloop + 10
-                dtp = min(dtr,-(1.d0/kp0)*log((c_d0+kp0*p_eq0)/(-kp0*p_exc0+c_d0)))
+                dtp = dtr
+                if (((c_d0+kp0*p_eq0)/(-kp0*p_exc0+c_d0))>1.d-99) then
+                  dtp = min(dtr,-(1.d0/kp0)*log((c_d0+kp0*p_eq0)/(-kp0*p_exc0+c_d0)))
+                endif
              else
                 debugloop=debugloop + 20
                 dtp = dtr
@@ -314,17 +392,25 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
                 debugloop=debugloop + 10
                 !no limit needed for pressure timestep (p_exc0 < p_exc-->c_d/kp <0 ), limit based on m>m_c
                 dtp = dtr
-                dtm = (m_c-m_0)/(km0*p_exc0*m_0)
+                dtm = dtr
+                if ((km0*p_exc0*m_0)>1.d-99) then
+                  dtm = (m_c-m_0)/(km0*p_exc0*m_0)
+               endif
                 dts = min(dtp,dtm)
                 dts = max(dts,0.d0)
                 p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dts) +c_d0)
                 m = m_0 + km0*m_0*p_exc0*dts
              else !left of m_eq, p_exc0 < p_exc-->c_d/kp > 0, bound by 0 with dtp
                 debugloop=debugloop + 20
-                dtm = (m_c-m_0)/(km0*p_exc0*m_0)
-                dtp = -(1.d0/kp0)*log(-c_d0/(kp0*p_exc0-c_d0))
+                dtm = dtr
+                dtp = dtr
+                if ((km0*p_exc0*m_0)>1.d-99) then
+                  dtm = (m_c-m_0)/(km0*p_exc0*m_0)
+                endif
+                if ((-c_d0/(kp0*p_exc0-c_d0))>1.d-99) then
+                  dtp = -(1.d0/kp0)*log(-c_d0/(kp0*p_exc0-c_d0))
+                endif
                 dts = min(dtp,dtm)
-                dts = min(dtr,dts)
                 dts = max(dts,0.d0)
                 !integrate dp_exc/dt = -kp0 p_exc + c_d with coefficients at t=0.
                 p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dts) +c_d0)
@@ -340,7 +426,11 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
           ! m is strictly decreasing, p strictly increasing
           debugloop = 4000
           !don't exceed p_exc = 0 until next substep
-          dtp = min(dtr,-(1.d0/kp0)*log(-c_d0/(kp0*p_exc0-c_d0)))
+          dtp = dtr
+          if ((-c_d0/(kp0*p_exc0-c_d0))>1.d-99) then
+            dtp = min(dtr,-(1.d0/kp0)*log(-c_d0/(kp0*p_exc0-c_d0)))
+          endif
+          
           dtm = dtp
           !integrate dp_exc/dt = -kp0 p_exc + c_d with coefficients at t=0.
           p_exc = (1.d0/kp0)*((kp0*p_exc0 - c_d0)*exp(-kp0*dtp) +c_d0)

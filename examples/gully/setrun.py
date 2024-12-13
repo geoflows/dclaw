@@ -30,8 +30,8 @@ except:
 # setplot.py, and Makefile) that differ only in the numerical options.
 
 amr = True
-order = 2
-transverse = 1
+order = 1
+transverse = 0
 limiter = 4
 amr_test_no = 0
 
@@ -607,8 +607,8 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.c1 = 1.0
     dclaw_data.sigma_0 = 1.0e3
 
-    dclaw_data.src2method=0
-    dclaw_data.alphamethod=0
+    dclaw_data.src2method=2
+    dclaw_data.alphamethod=1
 
     dclaw_data.segregation=0
     dclaw_data.beta_seg = 0.0
