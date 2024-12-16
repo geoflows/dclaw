@@ -267,7 +267,7 @@ contains
       double precision :: mmin,mmax,chimin,chimax,pmax,pmin
       logical :: debug
 
-      debug = .true.
+      debug = .false.
 
       if (h.le.dry_tolerance) then
          if (debug.and.h<0.d0) write(*,*) '****WARNING******** QFIX: dry state encountered, h:', h, hm
