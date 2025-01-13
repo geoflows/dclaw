@@ -446,7 +446,7 @@ c                   adjust time steps for this and finer levels
                     go to 106
                  endif
 
-                 if (ntogo(level) .gt. 100) then
+                 if (ntogo(level) .gt. 1000) then
                      write(6,*) "**** Too many dt reductions ****"
                      write(6,*) "**** Stopping calculation   ****"
                      write(6,*) "**** ntogo = ",ntogo(level)
