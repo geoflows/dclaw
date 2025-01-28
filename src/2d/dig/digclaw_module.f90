@@ -11,6 +11,8 @@ module digclaw_module
     double precision :: rho_s,rho_f,m_crit,m0,mref,kref,phi,delta,mu,alpha_c
     double precision :: c1,sigma_0,kappa
     double precision :: theta_input,entrainment_rate,me,beta_seg,chi0,chie
+    double precision :: manning_max
+    logical :: dd_manning
 
     integer :: src2method,alphamethod,bed_normal,entrainment,entrainment_method
     integer :: segregation,curvature,init_ptype
@@ -122,6 +124,8 @@ contains
          read(iunit,*) alpha_c
          read(iunit,*) c1
          read(iunit,*) sigma_0
+         read(iunit,*) dd_manning
+         read(iunit,*) manning_max
 
          read(iunit,*) src2method
          read(iunit,*) alphamethod
@@ -180,6 +184,8 @@ contains
          write(DIG_PARM_UNIT,*) '    alpha_c:', alpha_c
          write(DIG_PARM_UNIT,*) '    c1:', c1
          write(DIG_PARM_UNIT,*) '    sigma_0:', sigma_0
+         write(DIG_PARM_UNIT,*) '    dd_manning:', dd_manning
+         write(DIG_PARM_UNIT,*) '    manning_max:', manning_max
          write(DIG_PARM_UNIT,*) '    src2method:', src2method
          write(DIG_PARM_UNIT,*) '    alphamethod:', alphamethod
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal

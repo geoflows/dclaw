@@ -133,6 +133,32 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - float
          - Pa
 
+
+    Optionally, D-Claw may use a depth-dependent Manning friction value. The value provided to
+    ``geo_data.manning_coefficient`` is used for flows greater than 6 cm. For flows less 
+    than 4 cm the Manning coefficient will be the value specified by ``manning_max`` if 
+    ``dd_manning == True`` (a smooth transition is used between the two values for flow depth 
+    between 4 and 6 cm. 
+
+    .. list-table::
+       :widths: 10 30 10 10
+       :header-rows: 1
+
+       * - Attribute Name
+         - Description
+         - Default Value
+         - Type
+       * - ``dd_manning``
+         - Flag to indicate whether depth dependent Manning coefficient is used (if 
+           ``True`` then it is used).
+         - ``False``
+         - bool
+       * - ``manning_max``
+         - Maximum Manning coeficient used when :math:`h` approaches the dry tolerance. 
+         - 0.06
+         - float
+
+
     Two parameters control the numerical method used for integrating the source
     term (``src2method``) and the equation used to calculate :math:`\alpha`,
     the debris compressibility.
@@ -152,7 +178,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
            1 = intermediate method, 2 = new method. DIG: TODO UPDATE
          - 0
          - int
-       * - ```alphamethod```
+       * - ``alphamethod``
          - Method used to calculate :math:`\alpha`, the debris
            compressibility.
            0 = traditional method, in which :math:`\sigma_0` is a constant as
@@ -260,6 +286,9 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("c1", 1.0)
         self.add_attribute("sigma_0", 1.0e3)
 
+        self.add_attribute("dd_manning", False)
+        self.add_attribute("manning_max", 0.06)
+
         self.add_attribute("src2method", 0)
         self.add_attribute("alphamethod", 0)
 
@@ -312,6 +341,11 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write(
             "sigma_0", description="baseline stress for definition of compressibility"
         )
+        self.data_write("dd_manning", description="Depth dependent Manning flag (False = Not used)")
+        self.data_write(
+            "manning_max", description="Maximum manning coefficient"
+        )
+
 
         self.data_write("src2method", description = "-1=swe, 0=orig,1=intermediate,2=new" ) # DIG: update text
         self.data_write("alphamethod", description = "0=,1=,2=") # DIG: update text

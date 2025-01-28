@@ -15,6 +15,7 @@
       use digclaw_module, only: mu,rho_f,rho_s
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
       use digclaw_module, only: qfix,setvars
+      use digclaw_module, only: dd_manning,manning_max
       implicit none
 
       ! Input parameters
@@ -57,6 +58,7 @@
 
       if (friction_forcing) then
          coeffmanning = manning_coefficient(1)
+         ! if depth dependent manning, will reset coefficient later based on depth.
       else
          coeffmanning = 0.d0
       endif
@@ -234,7 +236,14 @@
 
             !===========Manning friction========================================
             if ((friction_forcing).and.(coeffmanning>0.d0)) then
+
                if (h<=friction_depth) then
+
+                  if (dd_manning) then
+                     coeffmanning = manning_max + (manning_coefficient(1)-manning_max)*0.5D0*(1.d0+tanh(300.d0*(h-0.05d0)))
+                  endif 
+
+
                   !beta = 1.d0-m  ! reduced friction led to high velocities
                   beta = 1.d0     ! use full Manning friction
                   gamma= beta*sqrt(hu**2 + hv**2)*(gz*coeffmanning**2)/(h**(7.d0/3.d0))
