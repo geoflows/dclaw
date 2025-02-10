@@ -23,13 +23,23 @@ D-Claw has been used in [many scientific publications](src/used_by.md). If you u
 If you use D-Claw in a publication, cite it as follows:
 
 
-```
-
+``` none
+George, D.L. and Barnhart, K.R., 2025, D-Claw - A library 
+for simulation of granular-fluid flows, version 1.0.0: 
+U.S. Geological Survey software release, 
+https://doi.org/10.5066/P13GUXUT.
 ```
 
 Bibtex:
-```
-
+``` none
+@misc{george_2025,
+        title = {D-Claw - A library for simulation of 
+        	     granular-fluid flows, version 1.0.0},
+        author = {George, D.L. and Barnhart, K.R.},
+        url = {https://code.usgs.gov/claw/dclaw},
+        year = {2025},
+        doi = {10.5066/P13GUXUT}
+    }
 ```
 
 
@@ -44,5 +54,6 @@ src/installation.md
 src/examples.md
 src/setrun.md
 src/used_by.md
+src/version_control.md
 src/autodoc2/index.rst
 ```

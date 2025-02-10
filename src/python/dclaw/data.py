@@ -30,6 +30,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         dclaw_data.rho_f = 1000.0 # for example, for fluid
         dclaw_data.rho_s = 2700.0 # and solid densities.
 
+
     The attributes fall into a few categories. First are the attributes
     that pertain to parameter values in the core set of equations. If
     the parameter is defined in the theory section, a symbol is listed.
@@ -173,9 +174,10 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - Type
        * - ``src2method``
          - Method used to integrate the source term.
-          -1 = ignore m and p coevolution- for shallow water with friction and advection of m
-           0 = traditional method,
-           1 = intermediate method, 2 = new method. DIG: TODO UPDATE
+              -1 = ignore m and p coevolution- for shallow water with friction and advection of m
+               0 = traditional method,
+               1 = intermediate method, 
+               2 = new method
          - 0
          - int
        * - ``alphamethod``
@@ -187,6 +189,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
            as :math:`\sigma_0 = 0.5 \alpha (\rho_s-\rho_f)g_z h/\rho`
          - 0
          - int
+
 
     TODO: Make comments on how, if at all src2method and alphamethod may be combined.
 

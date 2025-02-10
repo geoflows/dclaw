@@ -18,11 +18,13 @@
 # -- Project information -----------------------------------------------------
 
 project = 'dclaw'
-author = ''
+author = 'Dave George and Katy Barnhart'
 
 # The full version, including alpha/beta/rc tags
-release = ''
+release = '1.0.0'
 
+html_favicon = "_static/usgs.ico"
+html_logo = "_static/usgs-logo-green.svg"
 
 # -- General configuration ---------------------------------------------------
 master_doc = 'index'

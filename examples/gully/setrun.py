@@ -606,6 +606,7 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.alpha_c = 0.05
     dclaw_data.c1 = 1.0
     dclaw_data.sigma_0 = 1.0e3
+    dclaw_data.dd_manning = True
 
     dclaw_data.src2method=2
     dclaw_data.alphamethod=1

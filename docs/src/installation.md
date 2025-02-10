@@ -1,3 +1,4 @@
+(install-dclaw)=
 # Install D-Claw
 
 Installing D-Claw requires getting the source code for Clawpack and D-Claw, having a fortran compiler, installing a few python packages, and setting environment variables.

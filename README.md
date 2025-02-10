@@ -1,2 +1,28 @@
-# dclaw
-software for granular-fluid flows
+# D-Claw
+
+A library for the simulation of granular-fluid flows.
+
+## Summary
+
+D-Claw is a software library for the simulation of dense granular flows over spatially variable topography. D-Claw builds on [clawpack](https://www.clawpack.org/), is written in Fortran, and has a python wrapper. See the [documentation](https://ghsc.code-pages.usgs.gov/claw/dclaw/) for installation instructions, a user guide, and examples.
+
+
+D-Claw is supported on Linux/Unix only.
+
+
+## License
+D-Claw uses the [BSD 3-Clause License](LICENSE.md). 
+
+## Contact
+Point of contact: 
+- Dave George, dgeorge@usgs.gov
+- Katy Barnhart, krbarnhart@usgs.gov
+
+## Suggested citation
+
+George, D.L. and Barnhart, K.R., 2025, D-Claw - A library for simulation of granular-fluid flows, version 1.0.0: U.S. Geological Survey software release, https://doi.org/10.5066/P13GUXUT.
+
+## Other information
+- [DISCLAIMER.md](DISCLAIMER.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
