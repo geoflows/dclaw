@@ -4,7 +4,7 @@ This page describes the equations solved by D-Claw. A user interested in the det
 
 ## State variables and auxiliary variables
 
-D-Claw considers the flow of material under gravity ({math}`\vec{g} = (g_x,g_y,g_z)^\mathrm{T}`) with thickness {math}`h`, x- and y- directed velocities {math}`u` and {math}`v`, solid volume fraction {math}`m`, and basal pore pressure {math}`p_b` over an arbitrary surface {math}`b`. Optionally, entrainment and segregation are implemented. The depth of entrained material is given by {math}`\Delta b` (positive indicating entrainment has occurred). Segregation considers two species fractions {math}`A` and {math}`B` with {math}`\chi` representing the fraction of species {math}`A`.
+D-Claw considers the flow of material under gravity ({math}`\vec{g} = (g_x,g_y,g_z)^\mathrm{T}`) with thickness {math}`h`, x- and y- directed velocities {math}`u` and {math}`v`, solid-volume fraction {math}`m`, and basal pore-fluid pressure {math}`p_b` over an arbitrary surface {math}`b`. Optionally, entrainment of erodible sediment and particle size segregation are implemented. The depth of eroded and entrained material is given by {math}`\Delta b` (positive indicating entrainment has occurred). Segregation considers two species fractions {math}`A` and {math}`B` with {math}`\chi` representing the fraction of species {math}`A`.
 
 The variables which vary in space and time are:
 
@@ -19,22 +19,22 @@ The variables which vary in space and time are:
     - Flow depth
     - meters
 *   - {math}`hu`
-    - Flow depth times x-directed velocity
+    - Flow x-momentum: depth times x-directed velocity
     - meters squared per second
 *   - {math}`hv`
-    - Flow depth times y-directed velocity
+    - Flow y-momentum: depth times y-directed velocity
     - meters squared per second
 *   - {math}`hm`
-    - Flow depth times solid volume fraction
+    - Solid volume: depth times solid-volume fraction
     - meters
 *   - {math}`p_b`
-    - Basal pore pressure
+    - Basal pore-fluid pressure
     - kilograms per meter per time squared
 *   - {math}`h\chi`
-    - Depth times species A fraction
+    - Species A volume: depth times species A fraction
     - meters
 *   - {math}`\Delta b`
-    - Depth of material entrained
+    - Depth of erosion (material entrained)
     - meters
 :::
 
@@ -48,7 +48,7 @@ The variables which vary in space only are
     - Description
     - Units
 *   - {math}`b`
-    - Topobathymetric surface
+    - Topobathymetric surface elevation
     - meters
 *   - {math}`\Theta`
     - Slope angle in x-direction (used only if bed-normal coordinates are enabled)
@@ -61,7 +61,7 @@ The variables which vary in space only are
 
 ## Core equations
 
-D-Claw solves the following set of equations. See Iverson and George (2014) and George and Iverson (2014) for derivation, explanation, and references.
+D-Claw solves the following set of partial differential equations. See Iverson and George (2014) and George and Iverson (2014) for derivation, explanation, and references.
 
 
 ```{math}
@@ -158,16 +158,18 @@ For brevity, the variables {math}`\varrho` in and {math}`\varrho` are defined.
 
 where {math}`a` and {math}`\sigma_0` are constants (typically set to {math}`a=0.01-0.3`, and {math}`\sigma_0=1000` Pa).
 
-:::{admonition} todo
-Add new {math}`\sigma_0` constraint
-:::
+An optional definition for {math}`\sigma_0` (see setrun documentation) utilizes, instead of a fixed constant, a diagnostic function:
+```{math}
+\sigma_0 = \frac{a}{2}\rho_f g_z h \frac{(\rho_s-\rho_f)}{\rho}.
+```
+Selecting this option for the definition of {math}`\sigma_0` may provide enhanced stability of numerical simulations but is still undergoing beta testing.
 
-{math}`D` is proportional to the excess pressure
+The dilation rate,{math}`D`, is postulated to be proportional to the excess fluid pressure (see Iverson and George, 2014)
 
 ```{math}
 D = -\frac{2k}{h\mu}\left ( p_b - \rho_f g_z h \right )
 ```
-where {math}`k` is the hydraulic permeability which varies based on {math}`m`, and {math}`\mu`  is the effective shear viscosity of the pore-fluid.
+where {math}`k` is the hydraulic permeability (a function of {math}`m`), and {math}`\mu`  is the effective shear viscosity of the pore-fluid.
 
 A form for {math}`k` is
 ```{math}
@@ -239,7 +241,7 @@ Add what is in segeval
 
 ### Entrainment
 
-Multiple options for entrainment are present in D-Claw. A user specifies a spatially variable value of the thickness of material available for entrainment, {math}`h_e`. An entrainment rate, {math}`\frac{\partial h_e}{\partial t}` is calculated if {math}`h_e` is less than the thickness of material that has already been entrained, {math}`\Delta b`. The entrainable material is assumed to have a constant solid volume fraction, {math}`m_e`.
+Multiple options for entrainment are present in D-Claw. A user specifies a spatially variable value of the thickness of erodible material that is initially available for entrainment, {math}`h_e`. An entrainment rate, {math}`\frac{\partial h_e}{\partial t}` is calculated if {math}`h_e` is more than the thickness of material that has already been entrained, {math}`\Delta b` (i.e., erodible material remains at a given location). The available erodible material is assumed to have a constant solid volume fraction, {math}`m_e`.
 
 The options for {math}`\frac{\partial h_e}{\partial t}` are:
 
