@@ -19,13 +19,13 @@ The variables which vary in space and time are:
     - Flow depth
     - meters
 *   - {math}`hu`
-    - Flow momentum: depth times x-directed velocity
+    - Flow x-momentum: depth times x-directed velocity
     - meters squared per second
 *   - {math}`hv`
-    - Flow momentum: depth times y-directed velocity
+    - Flow y-momentum: depth times y-directed velocity
     - meters squared per second
 *   - {math}`hm`
-    - Solid volume: depth times solid volume fraction
+    - Solid volume: depth times solid-volume fraction
     - meters
 *   - {math}`p_b`
     - Basal pore-fluid pressure
@@ -34,7 +34,7 @@ The variables which vary in space and time are:
     - Species A volume: depth times species A fraction
     - meters
 *   - {math}`\Delta b`
-    - Depth of erosion
+    - Depth of erosion (material entrained)
     - meters
 :::
 
