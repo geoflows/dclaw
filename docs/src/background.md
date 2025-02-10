@@ -11,7 +11,7 @@ The D-Claw model is the combination of
 - Numerical methods (see George and Iverson, 2014 and Clawpack references listed below)
 - Software implementation
 
-Any individual simulation run with the D-claw model requires the specification of parameter values (physical and numerical), and spatially variable initial and boundary conditions. Each simulation is typically called an "application" and is run in an application directory
+Any individual simulation run with the D-Claw model requires the specification of parameter values (physical and numerical), and spatially variable initial and boundary conditions. Each simulation is typically called an "application" and is run in an application directory
 
 ## Filestructure
 

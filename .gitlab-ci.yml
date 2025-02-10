@@ -2,7 +2,7 @@ image: python:3.11
 
 stages:
   - build
-  - pages
+  - docs
 
 default:
   tags:
@@ -27,7 +27,7 @@ build:
 # Docs: Sphinx docs
 
 pages:
-  stage: deploy
+  stage: docs
 #  when: manual
   script:
     - source "venv-311/bin/activate"
