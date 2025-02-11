@@ -6,7 +6,7 @@ stages:
 
 default:
   tags:
-    - build
+    - chs-shared
 
 
 # Build: Spinx docs dependencies
