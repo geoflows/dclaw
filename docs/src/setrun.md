@@ -3,7 +3,7 @@
 ## Introduction
 The `setrun.py` file is the parameter file used to specify a D-Claw simulation. Many elements of the `setrun.py` are not unique to D-Claw but are inherited from Clawpack. See [this page](https://www.clawpack.org/setrun_geoclaw.html) for a detailed description of these elements.
 
-The data model for the D-Claw specific parts of the setrun are defines by assigning values to attributes of the following five classes:
+The data model for the D-Claw specific parts of the setrun are defined by assigning values to attributes of the following five classes:
 
 - [DClawInputData](#dclaw.data.DClawInputData)
 - [QinitDClawData](#dclaw.data.QinitDClawData)
@@ -32,27 +32,27 @@ The elements of **q** are defined as in the following table. See the [theory](th
     - meters
     - 1
 *   - {math}`hu`
-    - Flow depth times x-directed velocity
+    - Flow x-momentum: depth times x-directed velocity
     - meters squared per second
     - 2
 *   - {math}`hv`
-    - Flow depth times y-directed velocity
+    - Flow y-momentum: depth times y-directed velocity
     - meters squared per second
     - 3
 *   - {math}`hm`
-    - Flow depth times solid volume fraction
+    - Flow solid volume: depth times solid-volume fraction
     - meters
     - 4
 *   - {math}`p_b`
-    - Basal pore pressure
+    - Basal pore-fluid pressure
     - kilograms per meter per time squared
     - 5
 *   - {math}`h\chi`
-    - Depth times species A fraction
+    - Species volume: depth times species A fraction
     - meters
     - 6
 *   - {math}`\Delta b`
-    - Depth of material entrained
+    - Depth of erosion (material entrained)
     - meters
     - 7
 *   - {math}`\eta`

@@ -1,14 +1,14 @@
 # Background
 
-D-Claw is a single-layer, depth-averaged, two-phase model that simulates the evolution of granular fluid mixtures over arbitrary topography while satisfying mass and momentum conservation (George and Iverson, 2014; Iverson and George, 2014). The D-Claw software was developed as an extension of the GeoClaw model (Berger et al., 2011; George, 2008; LeVeque, 2002; LeVeque et al., 2011; Mandli et al., 2016) for clear water flows, including earthquake-generated tsunami propagation and inundation, overland flow, and dam-breach inundation (George, 2011). In the absence of solid granular material (solid volume fraction equal to zero), the D-Claw equations reduce to the nonlinear shallow water equations—the governing equations for GeoClaw. 
+D-Claw is a single-layer, depth-averaged, two-phase model that simulates the evolution of granular-fluid mixtures over arbitrary topography based on conservation of mass and momentum (George and Iverson, 2014; Iverson and George, 2014). The D-Claw software was originally developed as an extension of the GeoClaw software (Berger et al., 2011; George, 2008; LeVeque, 2002; LeVeque et al., 2011; Mandli et al., 2016) for clear-water flows, including coseismic tsunami propagation and inundation, overland flow, and dam-breach outburst flood inundation (George, 2011). In the absence of solid granular material (solid volume fraction equal to zero), the D-Claw equations reduce to the nonlinear shallow water equations—the governing equations for GeoClaw. 
 
-D-Claw is written in fortran and has a python wrapper. An interested user of D-Claw should expect to read the Clawpack documentation. 
+D-Claw is written in fortran and has a python wrapper. It installs and runs as a submodule of the Clawpack software, which must be installed in additon to D-Claw. An interested user of D-Claw should expect to read the Clawpack documentation. 
 
 ## Model, Numerics, Application
 
 The D-Claw model is the combination of
-- Mathematical equations (see Iverson & George, 2014 and [the documentation page on theory](#theory))
-- Numerical methods (see George and Iverson, 2014 and Clawpack references listed below)
+- Mathematical governing equations (see Iverson & George, 2014 and [the documentation page on theory](#theory))
+- Numerical algortithms (see George and Iverson, 2014 and Clawpack references listed below)
 - Software implementation
 
 Any individual simulation run with the D-Claw model requires the specification of parameter values (physical and numerical), and spatially variable initial and boundary conditions. Each simulation is typically called an "application" and is run in an application directory

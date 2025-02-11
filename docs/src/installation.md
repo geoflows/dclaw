@@ -7,7 +7,7 @@ Installing D-Claw requires getting the source code for Clawpack and D-Claw, havi
 
 ### Platform
 
-D-Claw is supported on Linux/Unix. Windows users should expect to use Windows Subsystem for Linux.
+D-Claw is supported on Linux/Unix (including Mac OSX). Windows users should expect to use Windows Subsystem for Linux.
 
 ### Python libraries
 
@@ -44,7 +44,7 @@ git submodule update
 source pull_all.sh
 git clone https://github.com/geoflows/dclaw.git
 ```
-
+This will place the D-Claw source code in a subfolder (`dclaw/`) of the parent Clawpack directory (`clawpack/`) along with other clawpack submodules (for example, GeoClaw, AMRClaw etc).
 ## Set environment variables
 
 Running D-Claw, or any Clawpack application requires that the following two environment variables be set.
