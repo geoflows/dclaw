@@ -54,7 +54,7 @@ The variables which vary in space only are
     - Slope angle in x-direction (used only if bed-normal coordinates are enabled)
     - degrees
 *   - {math}`h_e`
-    - Initial thickness of material that can be entrained.
+    - Initial thickness of erodible material that can be entrained.
     - meters
 :::
 
@@ -210,7 +210,7 @@ The elements of D-Claw described in this section are experimental and may change
 
 ### Segregation
 
-Fully representing the influence of segregation on flow dynamics requires (1) an expression of how flow behavior results in the segregation of different particle species and (2) an expression of how flow behavior is affected by resulting particle species ratios.
+Fully representing the influence of particle-size segregation on flow dynamics requires (1) an expression of how flow behavior results in the segregation of different particle species and (2) an expression of how flow behavior is affected by resulting particle species ratios.
 
 To treat the first element, the influence of flow behavior on the segregation of particle species, D-Claw implements a model developed by Gray and Kokelaar (2010). This model considers the segregation of two particle species (species {math}`A` and {math}`B`) in a depth-averaged flow with a linear velocity profile defined as
 
@@ -241,7 +241,7 @@ Add what is in segeval
 
 ### Entrainment
 
-Multiple options for entrainment are present in D-Claw. A user specifies a spatially variable value of the thickness of erodible material that is initially available for entrainment, {math}`h_e`. An entrainment rate, {math}`\frac{\partial h_e}{\partial t}` is calculated if {math}`h_e` is more than the thickness of material that has already been entrained, {math}`\Delta b` (i.e., erodible material remains at a given location). The available erodible material is assumed to have a constant solid volume fraction, {math}`m_e`.
+Multiple options for entrainment are present in D-Claw. A user specifies a spatially variable value of the thickness of erodible material that is initially available for entrainment, {math}`h_e`. An entrainment rate, {math}`\frac{\partial h_e}{\partial t}` is calculated if {math}`h_e-\Delta b \gt 0` (i.e., erodible material remains at a given location). The available erodible material is assumed to have a constant solid volume fraction, {math}`m_e`.
 
 The options for {math}`\frac{\partial h_e}{\partial t}` are:
 
