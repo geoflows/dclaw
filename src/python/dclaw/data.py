@@ -162,7 +162,9 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
 
     Two parameters control the numerical method used for integrating the source
     term (``src2method``) and the equation used to calculate :math:`\alpha`,
-    the debris compressibility.
+    the debris compressibility (``alphamethod``). All combinations except for 
+    ``src2method=alphamethod=0`` should be considered experimental.
+
 
     .. list-table::
        :widths: 10 30 10 10
@@ -174,24 +176,47 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - Type
        * - ``src2method``
          - Method used to integrate the source term.
-              -1 = ignore m and p coevolution- for shallow water with friction and advection of m
-               0 = traditional method,
-               1 = intermediate method, 
-               2 = new method
          - 0
          - int
        * - ``alphamethod``
          - Method used to calculate :math:`\alpha`, the debris
            compressibility.
-           0 = traditional method, in which :math:`\sigma_0` is a constant as
-           specified in the ``setrun.py``.
-           1 = new method, in which :math:`\sigma_0` is dynamically determined
-           as :math:`\sigma_0 = 0.5 \alpha (\rho_s-\rho_f)g_z h/\rho`
          - 0
          - int
 
 
-    TODO: Make comments on how, if at all src2method and alphamethod may be combined.
+    .. list-table::
+       :widths: 10 30 
+       :header-rows: 1
+
+       * - ``src2method``
+         - Description
+       * - -1 
+         - Ignore :math:`m` and :math:`p` coevolution. This option is experimental and may 
+           used for be for shallow water with friction and advection of :math:`m`.
+       * - 0
+         - Traditional method for source term integration.
+       * - 1
+         - Experimental method intermediate between methods 0 and 2.
+       * - 2
+         - New, experimental, method for source term integration. Requires 
+           ``alphamethod==1``.
+
+
+
+    .. list-table::
+       :widths: 10 30 
+       :header-rows: 1
+
+       * - ``alphamethod``
+         - Description
+       * - 0
+         - Traditional method, in which :math:`\sigma_0` is a constant as
+           specified in the ``setrun.py``.
+       * - 1
+         - New method, in which :math:`\sigma_0` is dynamically determined
+           as :math:`\sigma_0 = 0.5 \alpha (\rho_s-\rho_f)g_z h/\rho`.
+
 
     The following parameters are used to control whether and how bed
     normal coordinates, segregation, and entrainment are implemented.

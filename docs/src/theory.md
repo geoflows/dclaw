@@ -195,7 +195,7 @@ with {math}`\sigma_e = \rho g_z h - p_b`, the basal effective normal stress.
 c_1 \tan\psi = m - \frac{m_\mathrm{crit}}{1+\sqrt{N}}
 ```
 
-:math:`\c_1` is a dimensionless constant (typically 1), {math}`m_\mathrm{crit}` is the critical-state solid fraction, and {math}`N` is a dimensionless variable defined as
+{math}`c_1` is a dimensionless constant (typically 1), {math}`m_\mathrm{crit}` is the critical-state solid fraction, and {math}`N` is a dimensionless variable defined as
 
 ```{math}
 N = \frac{\mu \dot{\gamma}}{\rho_s \dot{\gamma}^2 \delta^2 + \sigma_e}.
