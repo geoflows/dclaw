@@ -42,7 +42,7 @@ cd clawpack
 git submodule init
 git submodule update
 source pull_all.sh
-git clone https://github.com/geoflows/dclaw.git
+git clone https://code.usgs.gov/claw/dclaw.git
 ```
 This will place the D-Claw source code in a subfolder (`dclaw/`) of the parent Clawpack directory (`clawpack/`) along with other clawpack submodules (for example, GeoClaw, AMRClaw etc).
 ## Set environment variables
