@@ -1,3 +1,7 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/fipatch.f90 
+!!
 ! :::::::::::::::::::::::::::: FILPATCH :::::::::::::::::::::::::;
 !
 !  fill the portion of valbig from rows  nrowst

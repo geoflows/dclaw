@@ -1,3 +1,7 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/rpt2.f90 
+!!
 ! =====================================================
       subroutine rpt2(ixy,imp,maxm,meqn,mwaves,maux,mbc,mx,
      &                ql,qr,aux1,aux2,aux3,asdq,bmasdq,bpasdq)

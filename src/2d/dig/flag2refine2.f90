@@ -1,3 +1,7 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/flag2refine.f90 
+!!
 ! ::::::::::::::::::::: flag2refine ::::::::::::::::::::::::::::::::::
 !
 ! User routine to control flagging of points for refinement.
