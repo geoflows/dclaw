@@ -1,4 +1,7 @@
-
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/qinit.f90 
+!!
 subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
     use geoclaw_module, only: sea_level,grav,coordinate_system,dry_tolerance
