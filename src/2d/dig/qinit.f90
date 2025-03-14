@@ -186,8 +186,11 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       enddo
 
       ! adjust q values.
+      initu = 0
+      initv = 0
       initm = 0
       initchi = 0
+      initpv = 0
       do mf =1,mqinitfiles
          if (iqinit(mf).eq.i_hu) initu=1
          if (iqinit(mf).eq.i_hv) initv = 1

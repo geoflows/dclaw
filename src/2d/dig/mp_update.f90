@@ -58,7 +58,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        !local
        real(kind=8) :: h0,p0,m_0,p_eq0,p_exc0,vnorm,m_eq
        real(kind=8) :: kappa,S,rho,rho0,tanpsi,D,tau,sigbed,kperm
-       real(kind=8) :: km,alphainv,c_d,p_exc,dtr,dtm,dtp,dts,p_excm,p_exc_ave
+       real(kind=8) :: km,alphainv,p_exc,dtr,dtm,dtp,dts,p_excm,p_exc_ave
        real(kind=8) :: km0,kp0,alphainv0,c_d0
        real(kind=8) :: hu,hv,hm
        real(kind=8) :: rho_c,h_c,p_eq_c,m_c,rho_c1,h_c1,p_eq_c1,m_c1,m_lower,m_upper
@@ -231,9 +231,9 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              debugloop=debugloop + 200
              !bound time step
              ! to max allowed (lithostatic,rhoh*g) if nullcline exceeds it
-             if ((c_d/kp0)>(rhoh*gz-p_eq_c)) then
+             if ((c_d0/kp0)>(rhoh*gz-p_eq_c)) then
                 debugloop=debugloop + 10
-                dtp = min(dtr,-(1.d0/kp0)*log((-kp0*rhoh*gz+kp0*p_eq_c+c_d)/(-kp0*p_exc0+c_d0)))
+                dtp = min(dtr,-(1.d0/kp0)*log((-kp0*rhoh*gz+kp0*p_eq_c+c_d0)/(-kp0*p_exc0+c_d0)))
              !bound time step so not to exceed nullcline
              else
                 debugloop=debugloop + 20
