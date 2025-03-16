@@ -223,7 +223,7 @@
                b_remaining = aux(i_ent,i,j)-b_eroded
                select case(entrainment_method)
                case(0)
-                  call ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,b_x,b_y,b_eroded,b_remaining)
+                  call ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,b_eroded,b_remaining)
                   q(i_bdif,i,j) = b_eroded
                case(1)
                   !do nothing yet
