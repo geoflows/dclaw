@@ -1,3 +1,7 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/qinit_module.f90 
+!!
 module qinit_module
 
     ! Updated to include D-Claw files as e.g. set_qinit_dig

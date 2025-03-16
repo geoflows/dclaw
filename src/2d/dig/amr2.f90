@@ -1,4 +1,7 @@
-!
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/amr.f90 
+!!
 !  Use adaptive mesh refinement to solve the hyperbolic 2-d equation:
 !
 !              u  +  f(u)    + g(u)   = 0

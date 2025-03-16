@@ -1,4 +1,7 @@
-!
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/update.f90 
+!!
 ! :::::::::::::::::::::::::: UPDATE :::::::::::::::::::::::::::::::::
 ! update - update all grids at level 'level'.
 !          this routine assumes cell centered variables.

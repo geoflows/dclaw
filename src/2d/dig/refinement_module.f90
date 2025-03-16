@@ -1,3 +1,7 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/refinement_module.f90 
+!!
 ! Module containing refinement flagging criteria
 module refinement_module
 

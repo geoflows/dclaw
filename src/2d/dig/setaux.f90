@@ -1,3 +1,7 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/setaux.f90 
+!!
 ! Set auxiliary arrays
 !
 ! Routine that sets the values found in the aux array including topography and
