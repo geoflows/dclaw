@@ -245,8 +245,12 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - Whether to use entrainment (1) or not (0).
          - 0
          - int
+       * - ``entrainment_method``
+         - Entrainment method used. See the :ref:`entrainment section <entrainment-theory>` on the theory page for explaination.
+         - 1
+         - int
        * - ``entrainment_rate``
-         - A coefficient for use of entrainment. TODO
+         - A coefficient for use of entrainment. See documentation for entraiment method used.
          - 0.2
          - float
        * - ``me``

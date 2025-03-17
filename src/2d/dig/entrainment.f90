@@ -45,8 +45,6 @@
                 gamma= rho*beta*(vnorm**2)*(beta*gz*coeff**2)/(tanh(h+1.d-2)**(1.0d0/3.0d0))
                 t1bot = visc + gamma + tau
 
-                !DIG: this needs to be sorted out...don't remember what's going on here
-                !DIG: fix
                 t2top = min(t1bot,(1.d0-beta*entrainment_rate)*tau)
 
                 ! calculate pressure ratio

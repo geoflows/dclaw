@@ -227,27 +227,72 @@ As the mixture shears, species {math}`A` moves to the surface of the flow, and i
 \frac{\partial}{\partial x} \left (\beta h \chi u \left( 1-\chi\right) \right)=0
 ```
 
-:::{admonition} todo
-Reconcile this with
-G&K, solver, and plot.py.
-is chi the fraction of the faster or slower species?
+The representation of the feedback between the value of {math}`\chi` and flow behavior is highly experimental (c.f., Jones et al., 2023). At present the value for {math}`k` given above is modified as follows:
+
+```{math}
+k = k_{chi} k_r\exp{\frac{m-m_r}{0.04}}
+```
+where
+
+```{math}
+\log_{10} kr_chi = 4(\chi-0.5))
+```
+
+:::{admonition} Warning
+The implementation of the feedback between segregation and flow behavior is likely to change.
 :::
 
-The representation of the feedback between the value of {math}`\chi` and flow behavior is highly experimental (c.f., Jones et al., 2023).
-
-:::{admonition} todo
-Add what is in segeval
-:::
-
+(entrainment-theory)=
 ### Entrainment
 
 Multiple options for entrainment are present in D-Claw. A user specifies a spatially variable value of the thickness of erodible material that is initially available for entrainment, {math}`h_e`. An entrainment rate, {math}`\frac{\partial h_e}{\partial t}` is calculated if {math}`h_e-\Delta b \gt 0` (i.e., erodible material remains at a given location). The available erodible material is assumed to have a constant solid volume fraction, {math}`m_e`.
 
 The options for {math}`\frac{\partial h_e}{\partial t}` are:
 
-:::{admonition} todo
-Add what is in entrainment
+:::{list-table}
+:widths: 20 10
+:header-rows: 1
+
+*   - Name
+    - Value of `entrainment_method`
+*   - Old-style entrainment
+    - 0
+*   - New-style entrainment (not yet implemented)
+    - 1
 :::
+
+#### Old-style entrainment
+
+With `entrainment_method==0` the following is done to calculate the depth of entrainment `dh` associated with a time step `dt`.
+
+See `entrainment.f90` for additional details and context.
+
+```fortran
+!! me, constant value for solid volume fraction of entrainable material
+!! rho_s, solid density
+!! rho_f, fluid density
+!! coeff, manning coefficient
+!! h, flow depth
+!! m, solid volume fraction
+!! vnorm, (u**2+v**2)**0.5 where u, v are x- and y-directed velocity
+!! b_remaining, remaining depth of material that may be eroded.
+
+! calculate entrained material density
+rhoe = me*rho_s + (1.d0-me)*rho_f
+
+! calculate top and bottom shear stress.
+beta = max(1.d0-m, 0.1d0)
+visc = beta*vnorm*2.d0*mu*(1.d0-m)/(tanh(h+1.d-2))
+gamma= rho*beta*(vnorm**2)*(beta*gz*coeff**2)/(tanh(h+1.d-2)**(1.0d0/3.0d0))
+t1bot = visc + gamma + tau
+dh = entrainment_rate(t1bot-t2top)/(rhoe*beta*vnorm)
+t2top = min(t1bot,(1.d0-beta*entrainment_rate)*tau)
+
+! calculate dh
+dh = entrainment_rate*dt*(t1bot-t2top)/(rhoe*beta*vnorm)
+dh = min(dh,b_remaining)
+```
+
 
 ## References
 
