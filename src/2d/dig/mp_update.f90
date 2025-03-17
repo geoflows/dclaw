@@ -547,11 +547,13 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       ! integrate pressure response to dilation/contraction
       vnorm = sqrt(hu**2 + hv**2)/h
       p = p - dt*3.d0*vnorm*tanpsi*alphainv/h
+      call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
 
       ! integrate pressure relaxation to hydrostatic
       zeta = 3.d0*alphainv/(h*2.d0)  + (rho-rho_f)*rho_f*gz/(4.d0*rho)
       krate=-zeta*2.d0*kperm/(h*max(mu,1.d-16))
       p_eq = rho_f*h*gz
+
       p = p_eq + (p-p_eq)*exp(krate*dt)
 
       !integrate changes in hm
