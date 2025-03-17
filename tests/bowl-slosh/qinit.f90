@@ -69,13 +69,13 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
             xintlow = dmax1(xlower,xlowqinit(mf))
             xinthi  = dmin1(xhigher,xhiqinit(mf))
-            istart  = max(1-mbc,int(0.5 + (xintlow-xlower)/dx)-mbc)
-            iend    = min(mx+mbc,int(1.0 + (xinthi-xlower)/dx)+mbc)
+            istart  = max(1-mbc,int(0.5d0 + (xintlow-xlower)/dx)-mbc)
+            iend    = min(mx+mbc,int(1.0d0 + (xinthi-xlower)/dx)+mbc)
 
             yintlow = dmax1(ylower,ylowqinit(mf))
             yinthi  = dmin1(yhigher,yhiqinit(mf))
-            jstart  = max(1-mbc,int(0.5 + (yintlow-ylower)/dy)-mbc)
-            jend    = min(my+mbc,int(1.0 + (yinthi-ylower)/dy)+mbc)
+            jstart  = max(1-mbc,int(0.5d0 + (yintlow-ylower)/dy)-mbc)
+            jend    = min(my+mbc,int(1.0d0 + (yinthi-ylower)/dy)+mbc)
 
             do i=istart,iend
                x = xlower + (i-0.5d0)*dx
@@ -107,13 +107,18 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                         qinitwork(i1:i2), 1)
                          ! qinitwork(i0qinit(mf):i0qinit(mf)+mqinit(mf)-1) ,1)
 
-                     dq=dq/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     if (coordinate_system == 2) then
+                        dq=dq/((xipc-ximc)*(yjpc-yjmc)*aux(2,i,j))
+                     else
+                        dq=dq/((xipc-ximc)*(yjpc-yjmc))
+                     endif
+
 
                      if (iqinit(mf).le.meqn) then
                         q(iqinit(mf),i,j) = q(iqinit(mf),i,j) + dq
                      else
                         if (dq-aux(1,i,j).gt.0.d0) then
-                          q(1,i,j) = dmax1(q(1,i,j),dq-aux(1,i,j))
+                          q(i_h,i,j) = dmax1(q(i_h,i,j),dq-aux(1,i,j))
                         endif
                      endif
 
@@ -124,38 +129,52 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
          endif
       enddo
 
+      ! adjust q values.
+      initu = 0
+      initv = 0
       initm = 0
       initchi = 0
+      initpv = 0
       do mf =1,mqinitfiles
-         if (iqinit(mf).eq.2) initu=1
-         if (iqinit(mf).eq.3) initv = 1
-         if (iqinit(mf).eq.4) initm = 1
-         if (iqinit(mf).eq.5) initpv = 1
-         if (iqinit(mf).eq.6) initchi = 1
+         if (iqinit(mf).eq.i_hu) initu=1
+         if (iqinit(mf).eq.i_hv) initv = 1
+         if (iqinit(mf).eq.i_hm) initm = 1
+         if (iqinit(mf).eq.i_pb) initpv = 1
+         if (iqinit(mf).eq.i_hchi) initchi = 1
       enddo
 
       do i=1-mbc,mx+mbc
          do j=1-mbc,my+mbc
                if (initm.eq.0) then
-                  q(4,i,j) = m0*q(1,i,j)
+                  if (dabs((q(i_h,i,j) + aux(1,i,j)) - veta(i,j)).lt.1d-6) then
+                    q(i_hm,i,j) = 0.d0 ! If eta is sea level (stored in veta), assume m is zero
+                    ! DIG: This may need to change if treatment of sea level does not use veta.
+                    ! potentially have a m0fill and m0perm
+                  else
+                    q(i_hm,i,j) = m0*q(i_h,i,j)
+                  endif
                else
-                  q(4,i,j) = q(1,i,j)*q(4,i,j)
+                  q(i_hm,i,j) = q(i_h,i,j)*q(i_hm,i,j)
                endif
-               if (initchi.eq.0) then
-                  q(6,i,j) = 0.5*q(1,i,j)
-               else
-                  q(6,i,j) = q(1,i,j)*q(6,i,j)
+               if (segregation.eq.1) then
+                  ! only initialize chi if segregation is enabled
+                  if (initchi.eq.0) then
+                    q(i_hchi,i,j) = chi0*q(i_h,i,j)
+                  else
+                    q(i_hchi,i,j) = q(i_h,i,j)*q(i_hchi,i,j)
+                  endif
                endif
                if (initu.eq.1) then
-                  q(2,i,j) = q(1,i,j)*q(2,i,j)
+                  q(i_hu,i,j) = q(i_h,i,j)*q(i_hu,i,j)
                endif
                if (initv.eq.1) then
-                  q(3,i,j) = q(1,i,j)*q(3,i,j)
+                  q(i_hv,i,j) = q(i_h,i,j)*q(i_hv,i,j)
                endif
                if (initpv.eq.1) then
-                  q(5,i,j) = q(1,i,j)*q(5,i,j)
+                  q(i_pb,i,j) = q(i_h,i,j)*q(i_pb,i,j)
                endif
-               if (q(1,i,j).le.dry_tolerance) then
+
+               if (q(i_h,i,j).le.dry_tolerance) then
                   do m = 1,meqn
                      q(m,i,j) = 0.d0
                   enddo
@@ -174,8 +193,12 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             !set to hydrostatic
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
-                 if (bed_normal.eq.1) gmod = grav*cos(aux(i_theta,i,j))
-                 q(5,i,j) = rho_f*gmod*q(1,i,j)
+                 if (bed_normal.eq.1) then
+                     gz = grav*dcos(aux(i_theta,i,j))
+                 else
+                     gz=grav
+                 endif
+                 q(i_pb,i,j) = rho_f*gz*q(i_h,i,j)
                enddo
             enddo
             p_initialized = 1
@@ -184,12 +207,23 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             do i=1-mbc,mx+mbc
                do j=1-mbc,my+mbc
                   p_ratioij = init_pmin_ratio
-                  if (q(1,i,j).le.dry_tolerance) then
-                     q(5,i,j) = init_pmin_ratio*rho_f*gmod*q(1,i,j)
+
+                  if (bed_normal.eq.1) then
+                     gz = grav*dcos(aux(i_theta,i,j))
+                  else
+                     gz = grav
+                  endif
+
+                  if (q(i_h,i,j).le.dry_tolerance) then
+                     q(i_pb,i,j) = init_pmin_ratio*rho_f*gz*q(i_h,i,j)
                      cycle
                   endif
-                  call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j), &
-                             q(4,i,j),q(5,i,j),u,v,sv,aux(i_theta,i,j))
+
+
+                  call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j), &
+                       q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j), &
+                          u,v,sv,chi,rho,gz)
+
                   if (bed_normal.eq.1) then
                      gmod = grav*cos(aux(i_theta,i,j))
                      p_ratioij = init_pmin_ratio &
@@ -201,28 +235,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                enddo
             enddo
             p_initialized = 1
-         case(3:4)
-            !p will be updated in b4step2
-            do i=1-mbc,mx+mbc
-               do j=1-mbc,my+mbc
-                 p_ratioij = init_pmin_ratio
-                 if (q(1,i,j).le.dry_tolerance) then
-                     q(5,i,j) = init_pmin_ratio*rho_f*gmod*q(1,i,j)
-                     cycle
-                 endif
-                 call admissibleq(q(1,i,j),q(2,i,j),q(3,i,j), &
-                             q(4,i,j),q(5,i,j),u,v,sv,aux(i_theta,i,j))
-                 if (bed_normal.eq.1) then
-                     gmod = grav*cos(aux(i,j,i_theta))
-                     p_ratioij = init_pmin_ratio &
-                         + (init_pmin_ratio - 1.0)*aux(1,i,j)/q(1,i,j)
-                 endif
-                 rho = sv*rho_s + (1.0-sv)*rho_f
-                     pfail = p_ratioij*rho_dig*gmod*q(1,i,j)
-                     q(5,i,j) = pfail - abs(pfail)
-               enddo
-            enddo
-            p_initialized = 0
+
       end select
       !write(*,*) 'qinit:init,dx,dy:',init_pmin_ratio,dx,dy
 
