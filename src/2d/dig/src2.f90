@@ -4,11 +4,11 @@
       subroutine src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)
    !=========================================================
 
-      use geoclaw_module, only: grav, dry_tolerance,deg2rad,friction_depth
+      use geoclaw_module, only: grav, dry_tolerance,friction_depth
       use geoclaw_module, only: manning_coefficient,friction_forcing
 
       use digclaw_module, only: bed_normal,curvature
-      use digclaw_module, only: entrainment,entrainment_rate,entrainment_method
+      use digclaw_module, only: entrainment,entrainment_method
       use digclaw_module, only: src2method
       use digclaw_module, only: segregation
       use digclaw_module, only: i_ent,i_theta
@@ -38,10 +38,10 @@
       real(kind=8) :: b_x,b_y,b_xx,b_yy,b_xy
       real(kind=8) :: beta,coeffmanning
       real(kind=8) :: b_eroded,b_remaining
-      real(kind=8) :: gamma,zeta,dgamma
+      real(kind=8) :: gamma,dgamma
       real(kind=8) :: dtk,dtremaining,alphainv,gacc
 
-      integer :: i,j,ii,jj,icount,itercount,itercountmax
+      integer :: i,j,itercount,itercountmax
 
       logical :: debug
       debug = .false.

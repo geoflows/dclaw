@@ -44,8 +44,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
     ! in right-half plane as v increases and kperm decreases.
     !====================================================================
 
-       use digclaw_module, only: rho_f,rho_s,sigma_0,mu,setvars,qfix,qfix_cmass,m_crit,delta
-       use geoclaw_module, only: grav
+       use digclaw_module, only: rho_f,rho_s,mu,setvars,qfix,qfix_cmass,m_crit,delta
 
        implicit none
 
@@ -57,11 +56,11 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
        !local
        real(kind=8) :: h0,p0,m_0,p_eq0,p_exc0,vnorm,m_eq
-       real(kind=8) :: kappa,S,rho,rho0,tanpsi,D,tau,sigbed,kperm
-       real(kind=8) :: km,alphainv,p_exc,dtr,dtm,dtp,dts,p_excm,p_exc_ave
-       real(kind=8) :: km0,kp0,alphainv0,c_d0
+       real(kind=8) :: rho,rho0,tanpsi,tau,kperm
+       real(kind=8) :: alphainv,p_exc,dtr,dtm,dtp,dts,p_exc_ave
+       real(kind=8) :: km0,kp0,c_d0
        real(kind=8) :: hu,hv,hm
-       real(kind=8) :: rho_c,h_c,p_eq_c,m_c,rho_c1,h_c1,p_eq_c1,m_c1,m_lower,m_upper
+       real(kind=8) :: rho_c,h_c,p_eq_c,m_c,m_lower,m_upper
        real(kind=8) :: m_c0,p_eq_c0,sig_c,Nd,Nn,normc,shear,convtol,m_eq1
        integer :: debugloop,iter,itermax,quad0,quad1
        logical :: outquad,debug
@@ -245,7 +244,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              if (p_exc_ave<=0.d0) then !should only occur if p_exc0<0 and dt small
                 debugloop=debugloop + 1
                 dtm = dtr
-                m = m_0*exp(km*0.5d0*(p_exc+p_exc0)*dts)
+                m = m_0*exp(km0*0.5d0*(p_exc+p_exc0)*dtm)
              else
                 debugloop=debugloop + 2
                 m_upper = m_eq - max(0.d0,(1.d0/3.d0)*kp0*h0*(p_exc_ave)/(vnorm*alphainv))
@@ -521,9 +520,9 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
    !for less easier integration of p.
    !update m,h based on new value of D. rho h not exact/approx.
 
-      use digclaw_module, only: rho_f,rho_s,sigma_0,mu,setvars,qfix,qfix_cmass,m_crit,delta
+      use digclaw_module, only: rho_f,rho_s,mu,setvars,qfix,qfix_cmass
       use digclaw_module, only: src2method
-      use geoclaw_module, only: grav
+
 
       implicit none
 
@@ -533,7 +532,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       real(kind=8), intent(in)  :: gz
 
       !local
-      real(kind=8) :: m_0,p_eq,p_exc,vnorm,m_eq
+      real(kind=8) :: p_eq,p_exc,vnorm,m_eq
       real(kind=8) :: rho,tanpsi,D,tau,kperm,alphainv
       real(kind=8) :: krate,zeta,hchi,hu,hv,hm
 

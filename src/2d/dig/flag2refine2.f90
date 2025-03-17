@@ -297,8 +297,10 @@ subroutine check_flowgrades(meqn, maux, level, &
    use geoclaw_module, only: dry_tolerance, sea_level
    use digclaw_module, only: i_h, i_hu, i_hv, i_bdif
 
+   implicit none
+
    ! Subroutine arguments
-   integer, intent(in) :: meqn, maux
+   integer, intent(in) :: meqn, maux, level
 
    real(kind=8), intent(in) :: qstencil(meqn,5)
    real(kind=8), intent(in) :: auxstencil(maux,5)
@@ -307,7 +309,7 @@ subroutine check_flowgrades(meqn, maux, level, &
    logical, intent(inout) :: FGFLAG
 
     !! Locals
-   real(kind=8) :: flowgrademeasure
+   real(kind=8) :: flowgrademeasure,lef,rig,bot,top
    integer :: iflow
 
    mfg_loop: do iflow = 1, mflowgrades
