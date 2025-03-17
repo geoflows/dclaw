@@ -135,9 +135,7 @@ def setplot(plotdata=None):
         etatrue = where(eta1>B, eta1, nan)
         plot(x, etatrue, 'r', label="true solution", linewidth=2)
         plot(x, B, 'g', label="bathymetry")
-        ## plot([0],[-1],'kx',label="Level 1")  # shouldn't show up in plots,
-        ## plot([0],[-1],'bo',label="Level 2")  # but will produced desired legend
-        plot([0],[-1],'bo',label="Computed")  ## need to fix plotstyle
+        plot([0],[-1],'kx',label="Computed")  ## For legend
         legend()
     plotaxes.afteraxes = plot_topo_xsec
 
@@ -153,7 +151,7 @@ def setplot(plotdata=None):
 
         ij = where((y <= dy/2.) & (y > -dy/2.))
         x_slice = ravel(x)[ij]
-        eta_slice = ravel(q[-1,:,:])[ij]  # DIG
+        eta_slice = ravel(q[-1,:,:])[ij]
         return x_slice, eta_slice
 
     plotitem.map_2d_to_1d = xsec

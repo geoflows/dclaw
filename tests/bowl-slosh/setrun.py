@@ -127,8 +127,8 @@ def setrun(claw_pkg='dclaw'):
 
     if clawdata.output_style==1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 16
-        clawdata.tfinal = 4.4857014654663745
+        clawdata.num_output_times = 10
+        clawdata.tfinal = 5
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -178,9 +178,9 @@ def setrun(claw_pkg='dclaw'):
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
-    # D-Claw requires CFL<0.5
-    clawdata.cfl_desired = 0.45 
-    clawdata.cfl_max = 0.5
+    clawdata.cfl_desired = 0.75
+    clawdata.cfl_max = 1.0
+
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
@@ -193,7 +193,7 @@ def setrun(claw_pkg='dclaw'):
     # ------------------
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
-    clawdata.order = 1
+    clawdata.order = 2
     
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -202,7 +202,7 @@ def setrun(claw_pkg='dclaw'):
     #  0 or 'none'      ==> donor cell (only normal solver used)
     #  1 or 'increment' ==> corner transport of waves
     #  2 or 'all'       ==> corner transport of 2nd order corrections too
-    clawdata.transverse_waves = 0
+    clawdata.transverse_waves = 2
 
     # Number of waves in the Riemann solution:
     clawdata.num_waves = 5
@@ -285,13 +285,13 @@ def setrun(claw_pkg='dclaw'):
     amrdata = rundata.amrdata
 
     # max number of refinement levels:
-    amrdata.amr_levels_max = 3
+    amrdata.amr_levels_max = 2
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
-    amrdata.refinement_ratios_x = [2,2]
-    amrdata.refinement_ratios_y = [2,2]
-    amrdata.refinement_ratios_t = [2,2]
+    amrdata.refinement_ratios_x = [4,4]
+    amrdata.refinement_ratios_y = [4,4]
+    amrdata.refinement_ratios_t = [4,4]
 
 
 
@@ -335,10 +335,10 @@ def setrun(claw_pkg='dclaw'):
     # ---------------
     # Regions:
     # ---------------
-    #rundata.regiondata.regions = []
+    rundata.regiondata.regions = []
     # to specify regions of refinement append lines of the form
     #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
-    # NO OLD STYLE REGIONS USED HERE
+    rundata.regiondata.regions.append([3,3, 0, 0.1, -2, 2, -2, 2])
 
 
     # ---------------
@@ -373,10 +373,10 @@ def setrun(claw_pkg='dclaw'):
     geo_data.coriolis_forcing = False
 
     # == Algorithm and Initial Conditions ==
-    geo_data.sea_level = 0.0
+    geo_data.sea_level = -10 # must be below the bottom of the bowl for test case
     geo_data.dry_tolerance = 1.e-3
-    geo_data.friction_forcing = True # TODO change?
-    geo_data.manning_coefficient =.025
+    geo_data.friction_forcing = False
+    geo_data.manning_coefficient =.00
     geo_data.friction_depth = 1e6
 
     # Refinement settings
@@ -410,33 +410,23 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.c1 = 1.0 # do we want to remove this?
     dclaw_data.rho_f = 1000.0
     dclaw_data.rho_s = 2700.0
-    dclaw_data.phi_bed = 32.0
+    dclaw_data.phi = 32.0
     dclaw_data.theta_input = 0.0
     dclaw_data.mu = 0.005
-    dclaw_data.m0 = 0.0
+    dclaw_data.m0 = 0.0 # set to 0.0 for bowl-slosh, we are reproducing clear water
     dclaw_data.m_crit = 0.64
-    dclaw_data.kappita = 1.e-8
-    #dclaw_data.kappita_diff = 1
-    #dclaw_data.chi_init_val=0.5 # not currently used.
+    dclaw_data.kref = 1.e-8
     dclaw_data.alpha_c = 0.05
-    dclaw_data.alpha_seg = 0.0
-    #dclaw_data.phi_seg_coeff = 0.0
     dclaw_data.delta = 0.001
     dclaw_data.bed_normal = 0
     dclaw_data.entrainment = 0
     dclaw_data.entrainment_rate = 0.0
     dclaw_data.sigma_0 = 1.0e3
-    #dclaw_data.mom_autostop = True
-    #dclaw_data.momlevel = 1
-    #dclaw_data.mom_perc = 0.0
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
-
     pinitdclaw_data.init_ptype = 0
-    pinitdclaw_data.init_pmax_ratio = 0.00e0
-    pinitdclaw_data.init_ptf = 0.0
-    pinitdclaw_data.init_ptf2 = 0.0
+
     
     # == flowgrades.data values ==
     flowgrades_data = rundata.flowgrades_data  # initialized when rundata instantiated
@@ -452,7 +442,9 @@ def setrun(claw_pkg='dclaw'):
 
     
     #flowgrades_data.keep_fine = True
-    #flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 1])
+    flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 3])
+    flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 3])
+
     #flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 1])
 
     #  ----- For developers ----- 

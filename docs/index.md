@@ -51,6 +51,7 @@ src/background.md
 src/theory.md
 src/installation.md
 src/examples.md
+src/tests.rst
 src/setrun.md
 src/used_by.md
 src/version_control.md
