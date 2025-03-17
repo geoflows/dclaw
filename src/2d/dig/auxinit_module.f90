@@ -94,6 +94,7 @@ contains
          write(GEO_PARM_UNIT,*) '   mauxinitfiles = 0'
          write(GEO_PARM_UNIT,*) '   no initial perturbation = 0'
          write(GEO_PARM_UNIT,*) '   h will be set max(0-b,0)   '
+         close(unit=iunit)
          return
       endif
 
@@ -139,6 +140,8 @@ contains
             call read_auxinit(mxauxinit(i),myauxinit(i),auxinitftype(i),auxinitfname(i), &
                 auxinitwork(i0auxinit(i):i0auxinit(i)+mauxinit(i)-1))
       enddo
+
+      close(unit=iunit)
 
    end subroutine set_auxinit
 
