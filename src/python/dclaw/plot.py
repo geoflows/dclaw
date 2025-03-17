@@ -831,7 +831,7 @@ def phi(current_data):
     if hasattr(current_data.plotdata, "dclaw_data"):
         _p = current_data.plotdata.dclaw_data.phi
     else:
-        _p = _phi # otherwise use default _phi above.
+        _p = _phi  # otherwise use default _phi above.
 
     # results are returned in radians.
     return np.deg2rad(_p)

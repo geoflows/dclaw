@@ -6,12 +6,13 @@ that will be read in by the Fortran code.
 
 """
 
-import os, sys
+import os
+import sys
+
 import numpy as np
 
-
 try:
-    CLAW = os.environ['CLAW']
+    CLAW = os.environ["CLAW"]
 except:
     raise Exception("*** Must first set CLAW environment variable")
 
@@ -19,10 +20,9 @@ from clawpack.amrclaw.data import FlagRegion
 from clawpack.geoclaw import fgout_tools
 
 
-
-#------------------------------
-def setrun(claw_pkg='dclaw'):
-#------------------------------
+# ------------------------------
+def setrun(claw_pkg="dclaw"):
+    # ------------------------------
 
     """
     Define the parameters used for running Clawpack.
@@ -36,30 +36,27 @@ def setrun(claw_pkg='dclaw'):
     """
 
     from clawpack.clawutil import data
-    assert claw_pkg.lower() == 'dclaw',  "Expected claw_pkg = 'dclaw'"
+
+    assert claw_pkg.lower() == "dclaw", "Expected claw_pkg = 'dclaw'"
 
     num_dim = 2
     rundata = data.ClawRunData(claw_pkg, num_dim)
 
-
-    #------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Problem-specific parameters to be written to setprob.data:
-    #------------------------------------------------------------------
+    # ------------------------------------------------------------------
 
-    #probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    #probdata.add_param('variable_eta_init', True)  # now in qinit info
+    # probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
+    # probdata.add_param('variable_eta_init', True)  # now in qinit info
 
-
-    #------------------------------------------------------------------
+    # ------------------------------------------------------------------
     # Standard Clawpack parameters to be written to claw.data:
     #   (or to amr2ez.data for AMR)
-    #------------------------------------------------------------------
+    # ------------------------------------------------------------------
     clawdata = rundata.clawdata  # initialized when rundata instantiated
-
 
     # Set single grid parameters first.
     # See below for AMR parameters.
-
 
     # ---------------
     # Spatial domain:
@@ -68,8 +65,6 @@ def setrun(claw_pkg='dclaw'):
     # Number of space dimensions:
     clawdata.num_dim = num_dim
 
-
-
     # Lower and upper edge of computational domain:
     clawdata.lower[0] = -3e3
     clawdata.upper[0] = 3e3
@@ -77,12 +72,9 @@ def setrun(claw_pkg='dclaw'):
     clawdata.lower[1] = -3e3
     clawdata.upper[1] = 3e3
 
-
     # Number of grid cells: Coarsest grid
     clawdata.num_cells[0] = 240
     clawdata.num_cells[1] = 240
-
-
 
     # ---------------
     # Size of system:
@@ -97,26 +89,23 @@ def setrun(claw_pkg='dclaw'):
     # Index of aux array corresponding to capacity function, if there is one:
     clawdata.capa_index = 0
 
-
-
     # -------------
     # Initial time:
     # -------------
 
     clawdata.t0 = 0.0
 
-
     # Restart from checkpoint file of a previous run?
     # If restarting, t0 above should be from original run, and the
     # restart_file 'fort.chkNNNNN' specified below should be in
     # the OUTDIR indicated in Makefile.
 
-    clawdata.restart = False   # True to restart from prior results
-    clawdata.restart_file = ''
+    clawdata.restart = False  # True to restart from prior results
+    clawdata.restart_file = ""
 
     # -------------
     # Output times:
-    #--------------
+    # --------------
 
     # Specify at what times the results should be written to fort.q files.
     # Note that the time integration stops after the final output time.
@@ -124,10 +113,10 @@ def setrun(claw_pkg='dclaw'):
 
     clawdata.output_style = 1
 
-    if clawdata.output_style==1:
+    if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 10 #240
-        clawdata.tfinal = 100. #240.
+        clawdata.num_output_times = 10  # 240
+        clawdata.tfinal = 100.0  # 240.
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -140,14 +129,11 @@ def setrun(claw_pkg='dclaw'):
         clawdata.total_steps = 3
         clawdata.output_t0 = True
 
+    clawdata.output_format = "ascii"
 
-    clawdata.output_format = 'ascii'
-
-    clawdata.output_q_components = 'all'   # need all
-    clawdata.output_aux_components = 'none'  # eta=h+B is in q
-    clawdata.output_aux_onlyonce = True    # output aux arrays each frame
-
-
+    clawdata.output_q_components = "all"  # need all
+    clawdata.output_aux_components = "none"  # eta=h+B is in q
+    clawdata.output_aux_onlyonce = True  # output aux arrays each frame
 
     # ---------------------------------------------------
     # Verbosity of messages to screen during integration:
@@ -157,8 +143,6 @@ def setrun(claw_pkg='dclaw'):
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
     clawdata.verbosity = 1
-
-
 
     # --------------
     # Time stepping:
@@ -173,7 +157,7 @@ def setrun(claw_pkg='dclaw'):
     clawdata.dt_initial = 0.0001
 
     # Max time step to be allowed if variable dt used:
-    clawdata.dt_max = 1e+99
+    clawdata.dt_max = 1e99
 
     # Desired Courant number if variable dt used, and max to allow without
     # retaking step with a smaller dt:
@@ -184,7 +168,6 @@ def setrun(claw_pkg='dclaw'):
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 5000
 
-
     # ------------------
     # Method to be used:
     # ------------------
@@ -193,7 +176,7 @@ def setrun(claw_pkg='dclaw'):
     clawdata.order = 2
 
     # Use dimensional splitting? (not yet available for AMR)
-    clawdata.dimensional_split = 'unsplit'
+    clawdata.dimensional_split = "unsplit"
 
     # For unsplit method, transverse_waves can be
     #  0 or 'none'      ==> donor cell (only normal solver used)
@@ -212,17 +195,16 @@ def setrun(claw_pkg='dclaw'):
     #   2 or 'superbee' ==> superbee
     #   3 or 'mc'       ==> MC limiter
     #   4 or 'vanleer'  ==> van Leer
-    clawdata.limiter = [4, 4, 4, 4, 4] # TODO VERIFY THAT 4 in old and new are the same
+    clawdata.limiter = [4, 4, 4, 4, 4]  # TODO VERIFY THAT 4 in old and new are the same
 
-    clawdata.use_fwaves = True    # True ==> use f-wave version of algorithms
+    clawdata.use_fwaves = True  # True ==> use f-wave version of algorithms
     # TODO This is not in old setrun.py
 
     # Source terms splitting:
     #   src_split == 0 or 'none'    ==> no source term (src routine never called)
     #   src_split == 1 or 'godunov' ==> Godunov (1st order) splitting used,
     #   src_split == 2 or 'strang'  ==> Strang (2nd order) splitting used,  not recommended.
-    clawdata.source_split = 'godunov'
-
+    clawdata.source_split = "godunov"
 
     # --------------------
     # Boundary conditions:
@@ -237,13 +219,11 @@ def setrun(claw_pkg='dclaw'):
     #   2 => periodic (must specify this at both boundaries)
     #   3 => solid wall for systems where q(2) is normal velocity
 
-    clawdata.bc_lower[0] = 'extrap'
-    clawdata.bc_upper[0] = 'extrap'
+    clawdata.bc_lower[0] = "extrap"
+    clawdata.bc_upper[0] = "extrap"
 
-    clawdata.bc_lower[1] = 'extrap'
-    clawdata.bc_upper[1] = 'extrap'
-
-
+    clawdata.bc_lower[1] = "extrap"
+    clawdata.bc_upper[1] = "extrap"
 
     # --------------
     # Checkpointing:
@@ -268,13 +248,12 @@ def setrun(claw_pkg='dclaw'):
 
     elif abs(clawdata.checkpt_style) == 2:
         # Specify a list of checkpoint times.
-        clawdata.checkpt_times = 3600.*np.arange(1,16,1)
+        clawdata.checkpt_times = 3600.0 * np.arange(1, 16, 1)
 
     elif abs(clawdata.checkpt_style) == 3:
         # Checkpoint every checkpt_interval timesteps (on Level 1)
         # and at the final time.
         clawdata.checkpt_interval = 5
-
 
     # ---------------
     # AMR parameters:
@@ -286,11 +265,9 @@ def setrun(claw_pkg='dclaw'):
 
     # List of refinement ratios at each level (length at least mxnest-1)
     # dx = dy = 2', 10", 2", 1/3":
-    amrdata.refinement_ratios_x = [2,2]
-    amrdata.refinement_ratios_y = [2,2]
-    amrdata.refinement_ratios_t = [2,2]
-
-
+    amrdata.refinement_ratios_x = [2, 2]
+    amrdata.refinement_ratios_y = [2, 2]
+    amrdata.refinement_ratios_t = [2, 2]
 
     # Specify type of each aux variable in amrdata.auxtype.
     # This must be a list of length maux, each element of which is one of:
@@ -309,9 +286,8 @@ def setrun(claw_pkg='dclaw'):
         "center",
     ]
 
-
     # Flag using refinement routine flag2refine rather than richardson error
-    amrdata.flag_richardson = False    # use Richardson?
+    amrdata.flag_richardson = False  # use Richardson?
     amrdata.flag2refine = True
 
     # steps to take on each level L between regriddings of level L+1:
@@ -319,7 +295,7 @@ def setrun(claw_pkg='dclaw'):
 
     # width of buffer zone around flagged points:
     # (typically the same as regrid_interval so waves don't escape):
-    amrdata.regrid_buffer_width  = 2
+    amrdata.regrid_buffer_width = 2
 
     # clustering alg. cutoff for (# flagged pts) / (total # of cells refined)
     # (closer to 1.0 => more small grids may be needed to cover flagged cells)
@@ -328,20 +304,17 @@ def setrun(claw_pkg='dclaw'):
     # print info about each regridding up to this level:
     amrdata.verbosity_regrid = 1
 
-
     # ---------------
     # Regions:
     # ---------------
-    #rundata.regiondata.regions = []
+    # rundata.regiondata.regions = []
     # to specify regions of refinement append lines of the form
     #  [minlevel,maxlevel,t1,t2,x1,x2,y1,y2]
     # NO OLD STYLE REGIONS USED HERE
 
-
     # ---------------
     # NEW flagregions
     # ---------------
-
 
     flagregions = rundata.flagregiondata.flagregions  # initialized to []
 
@@ -371,9 +344,9 @@ def setrun(claw_pkg='dclaw'):
 
     # == Algorithm and Initial Conditions ==
     geo_data.sea_level = 50.0
-    geo_data.dry_tolerance = 1.e-3
-    geo_data.friction_forcing = True # TODO change?
-    geo_data.manning_coefficient =.025
+    geo_data.dry_tolerance = 1.0e-3
+    geo_data.friction_forcing = True  # TODO change?
+    geo_data.manning_coefficient = 0.025
     geo_data.friction_depth = 1e6
 
     # Refinement settings
@@ -385,7 +358,7 @@ def setrun(claw_pkg='dclaw'):
     topofiles = rundata.topo_data.topofiles
     # for topography, append lines of the form
     #    [topotype, fname]
-    topofiles.append([3, 'basal_topo.tt3'])
+    topofiles.append([3, "basal_topo.tt3"])
 
     # == setdtopo.data values ==
     dtopo_data = rundata.dtopo_data
@@ -393,18 +366,18 @@ def setrun(claw_pkg='dclaw'):
     # == setqinit.data values ==
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
-    etafile = 'surface_topo.tt3'
+    etafile = "surface_topo.tt3"
     qinitdclaw_data.qinitfiles.append([3, 8, etafile])
 
-    mfile = 'mass_frac.tt3'
-    #mfile = 'mass_frac0.tt3' # with m0 = 0 below
+    mfile = "mass_frac.tt3"
+    # mfile = 'mass_frac0.tt3' # with m0 = 0 below
     qinitdclaw_data.qinitfiles.append([3, 4, mfile])
 
     # == setauxinit.data values ==
-    #auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
+    # auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
 
     # == fgmax.data values ==
-    #fgmax_files = rundata.fgmax_data.fgmax_files
+    # fgmax_files = rundata.fgmax_data.fgmax_files
     # for fixed grids append to this list names of any fgmax input files
 
     # == setdclaw.data values ==
@@ -415,7 +388,7 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.m_crit = 0.64
     dclaw_data.m0 = 0.63
     dclaw_data.mref = 0.6
-    dclaw_data.kref = 1.e-10
+    dclaw_data.kref = 1.0e-10
     dclaw_data.phi = 32.0
     dclaw_data.delta = 0.001
     dclaw_data.mu = 0.005
@@ -423,13 +396,13 @@ def setrun(claw_pkg='dclaw'):
     dclaw_data.c1 = 1
     dclaw_data.sigma_0 = 1.0e3
 
-    dclaw_data.src2method=2
-    dclaw_data.alphamethod=1
+    dclaw_data.src2method = 2
+    dclaw_data.alphamethod = 1
 
-    dclaw_data.segregation=0
+    dclaw_data.segregation = 0
     dclaw_data.beta_seg = 0.0
-    dclaw_data.chi0=0.5
-    dclaw_data.chie=0.5
+    dclaw_data.chi0 = 0.5
+    dclaw_data.chie = 0.5
 
     dclaw_data.bed_normal = 0
     dclaw_data.theta_input = 0.0
@@ -442,8 +415,7 @@ def setrun(claw_pkg='dclaw'):
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
 
-    pinitdclaw_data.init_ptype = 0 # hydrostatic (-1 ==> zero everywhere)
-
+    pinitdclaw_data.init_ptype = 0  # hydrostatic (-1 ==> zero everywhere)
 
     # == flowgrades.data values ==
     flowgrades_data = rundata.flowgrades_data  # initialized when rundata instantiated
@@ -457,11 +429,9 @@ def setrun(claw_pkg='dclaw'):
     # flowgradetype: 1 = norm(flowgradevariable), 2 = norm(grad(flowgradevariable))
     # flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
 
-
-    #flowgrades_data.keep_fine = True
-    #flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 1])
-    #flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 1])
-
+    # flowgrades_data.keep_fine = True
+    # flowgrades_data.flowgrades.append([1.0e-6, 2, 1, 1])
+    # flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 1])
 
     # == fgout_grids.data values ==
     # NEW IN v5.9.0
@@ -471,50 +441,46 @@ def setrun(claw_pkg='dclaw'):
 
     fgout = fgout_tools.FGoutGrid()
     fgout.fgno = 1
-    fgout.point_style = 2       # will specify a 2d grid of points
-    #fgout.output_format = 'binary32'  # 4-byte, float32
-    fgout.output_format = 'ascii'  # 4-byte, float32
+    fgout.point_style = 2  # will specify a 2d grid of points
+    # fgout.output_format = 'binary32'  # 4-byte, float32
+    fgout.output_format = "ascii"  # 4-byte, float32
     fgout.nx = 300
     fgout.ny = 300
-    fgout.x1 = 0.  # specify edges (fgout pts will be cell centers)
+    fgout.x1 = 0.0  # specify edges (fgout pts will be cell centers)
     fgout.x2 = 3e3
-    fgout.y1 = 0.
+    fgout.y1 = 0.0
     fgout.y2 = 3e3
-    fgout.tstart = 0.
-    fgout.tend = 100.
+    fgout.tstart = 0.0
+    fgout.tend = 100.0
     fgout.nout = 101
-    fgout.q_out_vars = [1,4,8]
-    fgout_grids.append(fgout)    # written to fgout_grids.data
-
+    fgout.q_out_vars = [1, 4, 8]
+    fgout_grids.append(fgout)  # written to fgout_grids.data
 
     #  ----- For developers -----
     # Toggle debugging print statements:
-    amrdata.dprint = False      # print domain flags
-    amrdata.eprint = False      # print err est flags
-    amrdata.edebug = False      # even more err est flags
-    amrdata.gprint = False      # grid bisection/clustering
-    amrdata.nprint = False      # proper nesting output
-    amrdata.pprint = False      # proj. of tagged points
-    amrdata.rprint = False      # print regridding summary
-    amrdata.sprint = False      # space/memory output
-    amrdata.tprint = False      # time step reporting each level
-    amrdata.uprint = False      # update/upbnd reporting
+    amrdata.dprint = False  # print domain flags
+    amrdata.eprint = False  # print err est flags
+    amrdata.edebug = False  # even more err est flags
+    amrdata.gprint = False  # grid bisection/clustering
+    amrdata.nprint = False  # proper nesting output
+    amrdata.pprint = False  # proj. of tagged points
+    amrdata.rprint = False  # print regridding summary
+    amrdata.sprint = False  # space/memory output
+    amrdata.tprint = False  # time step reporting each level
+    amrdata.uprint = False  # update/upbnd reporting
 
     amrdata.max1d = 300
     # More AMR parameters can be set -- see the defaults in pyclaw/data.py
 
     return rundata
 
-
-
-
     # end of function setrun
     # ----------------------
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Set up run-time parameters and write all data files.
     import sys
+
     rundata = setrun(*sys.argv[1:])
     rundata.write()
