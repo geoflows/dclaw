@@ -24,7 +24,7 @@ If you use D-Claw in a publication, cite it as follows:
 
 
 ``` none
-George, D.L., Barnhart, K.R., and Iversion, R.M., 2025,
+George, D.L., Barnhart, K.R., and Iverson, R.M., 2025,
 D-Claw - A library for simulation of granular-fluid flows,
 version 1.0.0: U.S. Geological Survey software release,
 https://doi.org/10.5066/P13GUXUT.
