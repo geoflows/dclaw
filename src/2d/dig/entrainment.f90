@@ -26,7 +26,6 @@
 
         subroutine ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,b_eroded,b_remaining)
 
-
         use digclaw_module, only: rho_f,rho_s,sigma_0,mu,chie,entrainment_rate
         use digclaw_module, only: me,setvars,qfix,qfix_cmass,phi,m_crit,delta
         use geoclaw_module, only: grav,dry_tolerance
@@ -85,10 +84,15 @@
                 hm = h*m + dh*me
                 m = hm/h
 
+                ! Update values for hchi, hrho, and rho based on entrainment
                 hchi = hchi + dh*chie
                 hrho = hm*rho_s + (h-hm)*rho_f
                 rho = hrho/h
+
+                ! update b_eroded
                 b_eroded = b_eroded + dh
+
+                ! maintain pressure as the pressure ratio prior to entrainment
                 p = prat*hrho
 
             endif
