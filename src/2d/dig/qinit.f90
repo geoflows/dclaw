@@ -9,7 +9,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     use qinit_module, only: qinit_type,add_perturbation
     use qinit_module, only: variable_eta_init
     use qinit_module, only: force_dry,use_force_dry,mx_fdry, my_fdry
-    use qinit_module, only: xlow_fdry, ylow_fdry, xhi_fdry, yhi_fdry
+    use qinit_module, only: xlow_fdry, ylow_fdry
     use qinit_module, only: dxqinit,dyqinit,i0qinit,iqinit,mqinit
     use qinit_module, only: mxqinit,myqinit,xhiqinit,xlowqinit
     use qinit_module, only: yhiqinit,ylowqinit

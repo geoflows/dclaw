@@ -33,7 +33,6 @@
       use digclaw_module, only: bed_normal,curvature
       use digclaw_module, only: entrainment,entrainment_method
       use digclaw_module, only: src2method
-      use digclaw_module, only: segregation
       use digclaw_module, only: i_ent,i_theta
       use digclaw_module, only: mu,rho_f,rho_s
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif

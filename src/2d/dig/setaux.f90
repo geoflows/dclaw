@@ -32,17 +32,8 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     use amr_module, only: xperdom, yperdom
 
     use geoclaw_module, only: coordinate_system, earth_radius, deg2rad
-    use geoclaw_module, only: sea_level, ambient_pressure
-
-    use storm_module, only: wind_forcing, pressure_forcing
-    use storm_module, only: wind_index, pressure_index, set_storm_fields
-
-    use friction_module, only: variable_friction, friction_index
-    use friction_module, only: set_friction_field
 
     use topo_module, only: mtopofiles
-
-    use adjoint_module, only : adjoint_flagging,innerprod_index
 
     use auxinit_module, only: mauxinitfiles,iauxinit,ylowauxinit
     use auxinit_module, only: yhiauxinit,xlowauxinit,xhiauxinit
@@ -60,11 +51,11 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     real(kind=8), intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
     ! Locals
-    integer :: ii,jj,m, iint,jint
+    integer :: ii,jj, iint,jint
     real(kind=8) :: x,y,xm,ym,xp,yp,topo_integral
     real(kind=8) :: xper,yper,xperm,yperm,xperp,yperp
     character(len=*), parameter :: aux_format = "(2i4,4d15.3)"
-    integer :: skipcount,iaux,ilo,jlo
+    integer :: iaux,ilo,jlo
 
     ! Declare D-Claw variables...
     integer :: mf,istart,iend,jstart,jend,i,j

@@ -2,7 +2,7 @@
 c-----------------------------------------------------------------------
       subroutine riemann_dig2_aug_sswave_ez(ixy,meqn,mwaves,hL,hR,
      &         huL,huR,hvL,hvR,hmL,hmR,pL,pR,bL,bR,uL,uR,vL,vR,mL,mR,
-     &         thetaL,thetaR,phiL,phiR,sw,fw,w,wallprob,taudirL,
+     &         thetaL,thetaR,phiL,phiR,sw,fw,wallprob,taudirL,
      &         taudirR,chiL,chiR,fsL,fsR,ilook)
 
       !-----------------------------------------------------------------
@@ -31,26 +31,26 @@ c-----------------------------------------------------------------------
       logical wallprob
 
 
-      double precision fw(meqn,mwaves),w(meqn,mwaves)
+      double precision fw(meqn,mwaves)
       double precision sw(mwaves)
       double precision psi(4)
 
 *     !local
-      integer m,mw,ks,mp,k
+      integer m,mw,k
       double precision h,u,v,mbar
-      double precision det1,det2,det3,detR,determinant
+      double precision det1,det2,det3,determinant
       double precision R(0:2,1:3),A(3,3),del(0:4)
       double precision beta(3)
       double precision rho,rhoL,rhoR,tauL,tauR,tau,gzL,gzR
       double precision tanpsi
       double precision kperm,m_eq,alphainv
-      double precision theta,gamma,eps,pm
+      double precision theta,gamma,eps
       double precision sL,sR,sRoe1,sRoe2,sE1,sE2,uhat,chat
-      double precision delb,s1m,s2m,hm,heL,heR,criticaltol,criticaltol_2
+      double precision delb,s1m,s2m,hm,criticaltol,criticaltol_2
       double precision s1s2bar,s1s2tilde,hbar,source2dx,veltol1,veltol2
       double precision hstarHLL,deldelh,drytol,gz,geps,tausource
       double precision raremin,raremax,rare1st,rare2st,sdelta
-      double precision gammaL,gammaR,theta1,theta2,theta3,vnorm,pmtanh01
+      double precision gammaL,gammaR,theta1,theta2,theta3,vnorm
       double precision alpha_seg
       logical sonic,rare1,rare2
       logical rarecorrectortest,rarecorrector
@@ -266,12 +266,12 @@ c     !find bounds in case of critical state resonance, or negative states
 
 *     !determine the source term
 
-      if (ixy.eq.1) then
+      !if (ixy.eq.1) then
          ! DIG: note that theta = 0.0 unless bed_normal is true. For now, assume bed_normal is false. Resolve if dx is needed later.
-         source2dx = source2dx !+ dx*hbar*grav*dsin(theta)
+         !source2dx = source2dx !+ dx*hbar*grav*dsin(theta)
          ! DIG: this is the only place dx is needed
          ! until fixed, bed_normal = 1 yields error in make .data (1/30/24)
-      endif
+      !endif
 
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
       if (vnorm>0.0d0) then
@@ -353,7 +353,6 @@ c     !solve for beta(k) using Cramers Rule=================
          det3=A(1,3)*(A(2,1)*A(3,2)-A(2,2)*A(3,1))
          beta(k)=(det1-det2+det3)/determinant
       enddo
-      !call gaussj(A,3,3,beta,1,1)
 
       do mw=1,3
          do m=1,2
@@ -502,88 +501,3 @@ c           !root finding using a Newton iteration on dsqrt(h)===
 
       end ! subroutine riemanntype----------------------------------------------------------------
 
-c=======================================================================
-c  file: gaussj
-c  routine: gaussj
-c  solves linear system ax=b directly using Guassian Elimination
-c  a(1:n,1:n) is the input matrix of size np by np
-c  b(1:n,1:m) is the right hand side (can solve for m vectors)
-c  On output a is replaced by it's inverse, and b replaced by x.
-
-      SUBROUTINE gaussj(a,n,np,b,m,mp)
-      INTEGER m,mp,n,np,NMAX
-      DOUBLE PRECISION a(np,np),b(np,mp)
-      PARAMETER (NMAX=50)
-      INTEGER i,icol,irow,j,k,l,ll,indxc(NMAX),indxr(NMAX),ipiv(NMAX)
-      DOUBLE PRECISION big,dum,pivinv
-      do 11 j=1,n
-        ipiv(j)=0
-11    continue
-      do 22 i=1,n
-        big=0.d0
-        do 13 j=1,n
-          if(ipiv(j).ne.1)then
-            do 12 k=1,n
-              if (ipiv(k).eq.0) then
-                if (dabs(a(j,k)).ge.big)then
-                  big=dabs(a(j,k))
-                  irow=j
-                  icol=k
-                endif
-
-              else if (ipiv(k).gt.1) then
-                write(*,*) 'singular matrix in gaussj'
-              endif
-12          continue
-          endif
-13      continue
-        ipiv(icol)=ipiv(icol)+1
-        if (irow.ne.icol) then
-          do 14 l=1,n
-            dum=a(irow,l)
-            a(irow,l)=a(icol,l)
-            a(icol,l)=dum
-14        continue
-          do 15 l=1,m
-            dum=b(irow,l)
-            b(irow,l)=b(icol,l)
-            b(icol,l)=dum
-15        continue
-        endif
-        indxr(i)=irow
-        indxc(i)=icol
-        if (a(icol,icol).eq.0.d0) write(*,*) 'singular matrix in gaussj'
-
-        pivinv=1./a(icol,icol)
-        a(icol,icol)=1.d0
-        do 16 l=1,n
-          a(icol,l)=a(icol,l)*pivinv
-16      continue
-        do 17 l=1,m
-          b(icol,l)=b(icol,l)*pivinv
-17      continue
-        do 21 ll=1,n
-          if(ll.ne.icol)then
-            dum=a(ll,icol)
-            a(ll,icol)=0.d0
-            do 18 l=1,n
-              a(ll,l)=a(ll,l)-a(icol,l)*dum
-18          continue
-            do 19 l=1,m
-              b(ll,l)=b(ll,l)-b(icol,l)*dum
-19          continue
-          endif
-21      continue
-22    continue
-      do 24 l=n,1,-1
-        if(indxr(l).ne.indxc(l))then
-
-          do 23 k=1,n
-            dum=a(k,indxr(l))
-            a(k,indxr(l))=a(k,indxc(l))
-            a(k,indxc(l))=dum
-23        continue
-        endif
-24    continue
-      return
-      END
