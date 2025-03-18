@@ -1,17 +1,8 @@
 ! ============================================================================
-!  Program:     auxinit_module
-!  File:        auxinit_mod.f90
-!  Created:     2012-04-05
-!  Author:      David L George
+!  Module for initialization of the aux arrays that might come from files
 ! ============================================================================
-!      Copyright (C) 2012-04-05 David George <dgeorge@uw.edu>
-!
-!  Distributed under the terms of the Berkeley Software Distribution (BSD)
-!  license
-!                     http://www.opensource.org/licenses/
-! ============================================================================
-!  Module for initialization data that might come from files
-! ============================================================================
+
+
 module auxinit_module
 
       implicit none

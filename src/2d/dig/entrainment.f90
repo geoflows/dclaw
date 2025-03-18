@@ -1,3 +1,28 @@
+! ============================================================================
+!  Entrain material at a single computational mesh cell
+! ============================================================================
+!
+! Entrainment routines update the solution state based on entrainment and are
+! called from within src2().
+! If entrainment_method == 0, then ent_dclaw4() is called.
+!
+! Variables
+! ---------
+! dt, timestep duration
+! h, depth of flow
+! u, x-directed velocity
+! v, y-directed velocity
+! m, solid volume fraction
+! p, basal pressure
+! rho, density
+! hchi, h*species 1 fraction
+! gz, z-oriented gravitational acceleration
+! tau, shear stress
+! b_x, x-directed gradient in basal topography
+! b_y, y-directed gradient in basal topography
+! b_eroded, total amount of material that has been eroded from the erodible layer
+! b_remaining, amount of material remaining in the erodible layer
+!--------------------------------------------------------------------------------
 
         subroutine ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,b_eroded,b_remaining)
 

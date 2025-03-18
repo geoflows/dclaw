@@ -2,6 +2,12 @@
 !! This file is a modified version of
 !! clawpack/geoclaw/src/2d/shallow/qinit_module.f90 
 !!
+
+! ============================================================================
+!  Module for initialization of the q arrays that might come from files
+! ============================================================================
+
+
 module qinit_module
 
     ! Updated to include D-Claw files as e.g. set_qinit_dig

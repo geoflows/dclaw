@@ -1,4 +1,27 @@
-
+!================================================================
+! Integrate right-hand side (source term) of the D-Claw equations
+! on one grid at one AMR level.
+!
+! This subroutine is called by stepgrid to integrate the right-
+! hand side of the equations. It is called after the Riemann solver
+! integrates the left-hand side.
+!
+! Variables
+! ---------
+! meqn, number of equations
+! mbc, number of ghost cells
+! mx, number of cells in x-direction
+! my, number of cells in y-direction
+! xlower, x-coordinate of lower left corner
+! ylower, y-coordinate of lower left corner
+! dx, grid cell size in x-direction
+! dy, grid cell size in y-direction
+! q, solution state array
+! maux, number of auxilary variables
+! aux, auxilary array
+! t, current time
+! dt, time step
+!=================================================================
 
    !=========================================================
       subroutine src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)

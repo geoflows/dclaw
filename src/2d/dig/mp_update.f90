@@ -1,20 +1,35 @@
-    !file contains routines for integrating part of source term for m, p and h
-    !does not affect u,v, but note hu,hv changed due to change in h.
-    !single contained routine should be called from src2 with timestep dtk.
+! ============================================================================
+!  Subroutines to integration a portion of the source term
+! ============================================================================
+
+    ! This file contains routines for integrating part of source term for m, p
+    ! and h. It does not affect u,v, but hu,hv will change due to change in h.
     !
-    !integrates:
-    ! dm/dt = f_1(p,m)
-    ! dp/dt = f_2(p,m)
+    ! Depending on the value of srcmethod one of the below routines will be
+    ! called from src2() with timestep dtk.
+    !
+    ! Each of the below subroutines integrates:
+    !   dm/dt = f_1(p,m)
+    !   dp/dt = f_2(p,m)
     ! invariant (rho h)_N+1 = (rho h)_N is exactly or approximately maintained
     ! depending on routine.
     ! Note that as m is updated, h is updated meaning that all variables (h,hu,hv,hm,p) are affected.
     !
-    !three basic alternatives: 1. stay on rho h = constant manfifold, integrate difficult stiff terms for m and p.
-    !                        2. relax rho h constraint, more easily integrate m,p, then approximately return to rho h manifold (new h(m))
-    !                        3. relax rho h constraint, more easily integrate m,p, then exactly return to rho h manifold (new h(m))
+    ! two basic alternatives are provided:
+    !   if srcmethod = 2:
+    !       stay on rho h = constant manfifold, integrate difficult stiff
+    !       terms for m and p. (this method is experimental)
+    !   if srcmethod = 0:
+    !       relax rho h constraint, more easily integrate m,p, then
+    !       approximately return to rho h manifold (new h(m)). This is the
+    !       method that was implemented in 'old dclaw'.
     !
-    ! why 2 vs. 3? Note that if m is poorly integrated, h(m) is poorly updated. So maintaining rho h = constant may lead to bad depth approx
-    ! or possibly poorer volume conservation, even though mass conservation is exact. method 2 gives a somewhat balanced approach perhaps.
+    !   srcmethod = 1 provides an intermediate approach (also experimental)
+    !
+    ! why 0 vs. 1? Note that if m is poorly integrated, h(m) is poorly updated.
+    ! So maintaining rho h = constant may lead to bad depth approx
+    ! or possibly poorer volume conservation, even though mass conservation is exact.
+    ! srcmethod =2 gives a somewhat balanced approach perhaps.
 
 
 subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
