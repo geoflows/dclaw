@@ -35,7 +35,7 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
    use amr_module, only: mxnest, t0, DOFLAG, UNSET
    use amr_module, only: lstart, node, rnode
    use amr_module, only: cornxlo, cornylo, levelptr, mxnest, ndihi, ndilo
-   use amr_module, only: ndjhi, ndjlo, store1, store2, storeaux
+   use amr_module, only: ndjhi, ndjlo, store1, storeaux
    use amr_module, only: alloc, hxposs, hyposs
 
    use refinement_module, only: mflowgrades, keep_fine
@@ -56,9 +56,8 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
    real(kind=8), intent(in out) :: amrflags(1 - mbuff:mx + mbuff, 1 - mbuff:my + mbuff)
 
    ! Generic locals
-   integer :: i, j, m, r
+   integer :: i, j
    real(kind=8) :: x_c, y_c, x_low, y_low, x_hi, y_hi
-   real(kind=8) :: speed, eta, ds
    logical :: FGFLAG
 
    real(kind=8) :: qstencil(meqn,5)
@@ -67,7 +66,7 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
     !! Flowgrade and keep_fine variables
    real(kind=8) :: xlowfg, xhifg, ylowfg, yhifg, xxlow, xxhi, yylow, yyhi
    real(kind=8) :: dxfine, dyfine
-   integer :: nx, ny, q_loc, aux_loc, mitot, mjtot, grid_ptr, iflow, ii, jj, mm
+   integer :: nx, ny, q_loc, aux_loc, mitot, mjtot, grid_ptr, ii, jj, mm
 
    ! Loop over interior points on this grid
    ! (i,j) grid cell is [x_low,x_hi] x [y_low,y_hi], cell cen at (x_c,y_c)
