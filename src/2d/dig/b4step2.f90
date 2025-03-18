@@ -17,6 +17,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
 !
 
     use topo_module, only: aux_finalized
+    use geoclaw_module, only: grav
 
     use amr_module, only: xlowdomain => xlower
     use amr_module, only: ylowdomain => ylower
