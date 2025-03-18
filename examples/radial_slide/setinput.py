@@ -1,7 +1,6 @@
 from clawpack.clawutil.data import ClawData
 from clawpack.geoclaw import topotools
 from clawpack.geoclaw.data import Rearth  # radius of earth
-from clawpack.visclaw import colormaps
 from pylab import *
 from scipy.interpolate import interp1d
 
@@ -66,7 +65,7 @@ def make_plots():
 
     h = eta.Z - basal.Z
     figure()
-    pcolormesh(eta.X, eta.Y, h, cmap=colormaps.white_red)
+    pcolormesh(eta.X, eta.Y, h, cmap="Reds")
     axis("equal")
     colorbar()
     title("Landslide depth")

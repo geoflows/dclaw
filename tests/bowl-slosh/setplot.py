@@ -8,13 +8,13 @@ function setplot is called to set the plot parameters.
 
 from __future__ import absolute_import
 
-import numpy
+import numpy as np
 
 a = 1.0
 sigma = 0.5
 h0 = 0.1
 grav = 9.81
-omega = numpy.sqrt(2.0 * grav * h0) / a
+omega = np.sqrt(2.0 * grav * h0) / a
 
 
 # --------------------------
@@ -28,7 +28,7 @@ def setplot(plotdata=None):
 
     """
 
-    from clawpack.visclaw import colormaps, geoplot
+    from clawpack.visclaw import geoplot
 
     if plotdata is None:
         from clawpack.visclaw.data import ClawPlotData
@@ -58,12 +58,12 @@ def setplot(plotdata=None):
         h = q[0, ...]
         eta = q[3, ...]  # DIG --  NO! should still be -1 component
 
-        water = numpy.ma.masked_where(h <= drytol, eta)
+        water = np.ma.masked_where(h <= drytol, eta)
 
         try:
             # Use mask covering coarse regions if it's set:
             m = current_data.mask_coarse
-            water = numpy.ma.masked_where(m, water)
+            water = np.ma.masked_where(m, water)
         except:
             pass
 
@@ -105,9 +105,8 @@ def setplot(plotdata=None):
     # Add contour lines of bathymetry:
     plotitem = plotaxes.new_plotitem(plot_type="2d_contour")
     plotitem.plot_var = geoplot.topo
-    from numpy import arange, linspace
 
-    plotitem.contour_levels = linspace(-0.1, 0.5, 20)
+    plotitem.contour_levels = np.linspace(-0.1, 0.5, 20)
     plotitem.amr_contour_colors = ["k"]  # color on each level
     plotitem.kwargs = {"linestyles": "solid"}
     plotitem.amr_contour_show = [1]
@@ -131,7 +130,7 @@ def setplot(plotdata=None):
 
         t = current_data.t
 
-        x = linspace(-2, 2, 201)
+        x = np.linspace(-2, 2, 201)
         y = 0.0
         B = h0 * (x**2 + y**2) / a**2 - h0
         eta1 = (
