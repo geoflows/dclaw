@@ -1,15 +1,8 @@
-!! D-Claw notes: 
-!! This file is a lightly modified version of 
+!! D-Claw specific core file
+!! This file is a modified version of
 !! clawpack/geoclaw/src/2d/shallow/valout.f90 
-!! This file differs in that it includes the implementation
-!! of a momentum autostop condition. It also adjustes eta
-!! based on entrainment
-!! 
-!! The D-Claw specific elements of code are
-!!  identified by comments.
-!!
-!! D-Claw specific output - adds eta to q array before writing out
-!!
+
+
 !! Write the results to the file fort.q<iframe>
 !! Use format required by matlab script  plotclaw2.m or Python tools
 !!

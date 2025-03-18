@@ -136,10 +136,10 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
 
 
     Optionally, D-Claw may use a depth-dependent Manning friction value. The value provided to
-    ``geo_data.manning_coefficient`` is used for flows greater than 6 cm. For flows less 
-    than 4 cm the Manning coefficient will be the value specified by ``manning_max`` if 
-    ``dd_manning == True`` (a smooth transition is used between the two values for flow depth 
-    between 4 and 6 cm. 
+    ``geo_data.manning_coefficient`` is used for flows greater than 6 cm. For flows less
+    than 4 cm the Manning coefficient will be the value specified by ``manning_max`` if
+    ``dd_manning == True`` (a smooth transition is used between the two values for flow depth
+    between 4 and 6 cm.
 
     .. list-table::
        :widths: 10 30 10 10
@@ -150,19 +150,19 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - Default Value
          - Type
        * - ``dd_manning``
-         - Flag to indicate whether depth dependent Manning coefficient is used (if 
+         - Flag to indicate whether depth dependent Manning coefficient is used (if
            ``True`` then it is used).
          - ``False``
          - bool
        * - ``manning_max``
-         - Maximum Manning coeficient used when :math:`h` approaches the dry tolerance. 
+         - Maximum Manning coeficient used when :math:`h` approaches the dry tolerance.
          - 0.06
          - float
 
 
     Two parameters control the numerical method used for integrating the source
     term (``src2method``) and the equation used to calculate :math:`\alpha`,
-    the debris compressibility (``alphamethod``). All combinations except for 
+    the debris compressibility (``alphamethod``). All combinations except for
     ``src2method=alphamethod=0`` should be considered experimental.
 
 
@@ -186,26 +186,26 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
 
 
     .. list-table::
-       :widths: 10 30 
+       :widths: 10 30
        :header-rows: 1
 
        * - ``src2method``
          - Description
-       * - -1 
-         - Ignore :math:`m` and :math:`p` coevolution. This option is experimental and may 
+       * - -1
+         - Ignore :math:`m` and :math:`p` coevolution. This option is experimental and may
            used for be for shallow water with friction and advection of :math:`m`.
        * - 0
          - Traditional method for source term integration.
        * - 1
          - Experimental method intermediate between methods 0 and 2.
        * - 2
-         - New, experimental, method for source term integration. Requires 
+         - New, experimental, method for source term integration. Requires
            ``alphamethod==1``.
 
 
 
     .. list-table::
-       :widths: 10 30 
+       :widths: 10 30
        :header-rows: 1
 
        * - ``alphamethod``
@@ -245,8 +245,12 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - Whether to use entrainment (1) or not (0).
          - 0
          - int
+       * - ``entrainment_method``
+         - Entrainment method used. See the :ref:`entrainment section <entrainment-theory>` on the theory page for explaination.
+         - 1
+         - int
        * - ``entrainment_rate``
-         - A coefficient for use of entrainment. TODO
+         - A coefficient for use of entrainment. See documentation for entraiment method used.
          - 0.2
          - float
        * - ``me``
@@ -346,11 +350,10 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
                 "bed_normal=1 not currently supported because of dx dy not accessible in riemann solver"
             )
 
-        if self.src2method == 2 and self.alphamethod <1:
+        if self.src2method == 2 and self.alphamethod < 1:
             raise ValueError(
-            "D-Claw parameter conflict: if src2method == 2 then alphamethod must = 1"
+                "D-Claw parameter conflict: if src2method == 2 then alphamethod must = 1"
             )
-
 
         self.open_data_file(out_file, data_source)
 
@@ -359,7 +362,9 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write("m_crit", description="critical state value of m (#)")
         self.data_write("m0", description="initial solid volume fraction (#)")
         self.data_write("mref", description="reference solid volume fraction (#)")
-        self.data_write("kref", description=" reference permeability",
+        self.data_write(
+            "kref",
+            description=" reference permeability",
         )
         self.data_write("phi", description="basal friction angle (degrees)")
         self.data_write("delta", description="characteristic grain diameter (m)")
@@ -369,14 +374,15 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write(
             "sigma_0", description="baseline stress for definition of compressibility"
         )
-        self.data_write("dd_manning", description="Depth dependent Manning flag (False = Not used)")
         self.data_write(
-            "manning_max", description="Maximum manning coefficient"
+            "dd_manning", description="Depth dependent Manning flag (False = Not used)"
         )
+        self.data_write("manning_max", description="Maximum manning coefficient")
 
-
-        self.data_write("src2method", description = "-1=swe, 0=orig,1=intermediate,2=new" ) # DIG: update text
-        self.data_write("alphamethod", description = "0=,1=,2=") # DIG: update text
+        self.data_write(
+            "src2method", description="-1=swe, 0=orig,1=intermediate,2=new"
+        )  # DIG: update text
+        self.data_write("alphamethod", description="0=,1=,2=")  # DIG: update text
 
         self.data_write(
             "bed_normal",
@@ -387,7 +393,9 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write(
             "entrainment", description="flag for entrainment, 0 = no entrainment"
         )
-        self.data_write("entrainment_method", description="flag for entrainment method")# DIG: update text
+        self.data_write(
+            "entrainment_method", description="flag for entrainment method"
+        )  # DIG: update text
         self.data_write(
             "entrainment_rate", description="rate of entrainment parameter 0-1"
         )

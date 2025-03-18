@@ -1,16 +1,7 @@
-c
-c  -------------------------------------------------------------
-c
-c  -------------------------------------------------------------
-c  -------------------------------------------------------------
-c
-c  D-Claw notes:
-c  This file is a lightly modified version of
-c  clawpack/geoclaw/src/2d/shallow/tick.f. The only difference
-c  between this file and that file is the addition of the
-c  momentum autostop condition, indicated by the variable
-c  amidoneyet. The D-Claw specific elements of code are
-c  identified by comments.
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/tick.f90 
+!!
 c
 c  -------------------------------------------------------------
 c  -------------------------------------------------------------

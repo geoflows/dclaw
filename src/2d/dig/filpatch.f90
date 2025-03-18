@@ -1,3 +1,8 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/fipatch.f90 
+!!
+
 ! :::::::::::::::::::::::::::: FILPATCH :::::::::::::::::::::::::;
 !
 !  fill the portion of valbig from rows  nrowst
@@ -79,8 +84,6 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
     integer :: nghost_patch, lencrse
     logical :: use_force_dry_this_level
     real(kind=8) :: ddxy
-
-    integer :: ivar
 
     ! Stack storage
     !  use stack-based scratch arrays instead of alloc, since dont really
@@ -419,12 +422,12 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
 
                         !!DIG: verify that these are correct...
                         !! initial values only set here if h<drytol.
-                        if (ivar == 4) then
+                        if (n == 4) then
                             ! solid volume fraction
                             vel_max(i_coarse,j_coarse) = 0.d0 ! if refinement makes new mass in a dry cell, assume it is water.
                             vel_min(i_coarse,j_coarse) = 0.d0 ! KRB and DLG changed this from m0 to 0.d0 4/2/2024
 
-                         elseif (ivar == 5) then
+                         elseif (n == 5) then
                             ! pore pressure
                             vel_max(i_coarse,j_coarse) = rho_f*grav
                             vel_min(i_coarse,j_coarse) = rho_f*grav
@@ -515,7 +518,7 @@ recursive subroutine filrecur(level,nvar,valbig,aux,naux,t,mx,my, &
                                     divide_mass = max(h_coarse, h_fine_average)
                                     h_fine = valbig(1, i_fine + nrowst - 1, j_fine + ncolst - 1)
                                     v_new = valcrse(ivalc(n,i_coarse,j_coarse)) / (divide_mass)
-                                    if (ivar > 3) then
+                                    if (n > 3) then
                                         !!DIG change
                                         v_new = max(vel_min(i_coarse,j_coarse), v_new)
                                         v_new = min(vel_max(i_coarse,j_coarse), v_new)

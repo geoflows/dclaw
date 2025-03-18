@@ -1,16 +1,38 @@
-
+!================================================================
+! Integrate right-hand side (source term) of the D-Claw equations
+! on one grid at one AMR level.
+!
+! This subroutine is called by stepgrid to integrate the right-
+! hand side of the equations. It is called after the Riemann solver
+! integrates the left-hand side.
+!
+! Variables
+! ---------
+! meqn, number of equations
+! mbc, number of ghost cells
+! mx, number of cells in x-direction
+! my, number of cells in y-direction
+! xlower, x-coordinate of lower left corner
+! ylower, y-coordinate of lower left corner
+! dx, grid cell size in x-direction
+! dy, grid cell size in y-direction
+! q, solution state array
+! maux, number of auxilary variables
+! aux, auxilary array
+! t, current time
+! dt, time step
+!=================================================================
 
    !=========================================================
       subroutine src2(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux,t,dt)
    !=========================================================
 
-      use geoclaw_module, only: grav, dry_tolerance,deg2rad,friction_depth
+      use geoclaw_module, only: grav, dry_tolerance,friction_depth
       use geoclaw_module, only: manning_coefficient,friction_forcing
 
       use digclaw_module, only: bed_normal,curvature
-      use digclaw_module, only: entrainment,entrainment_rate,entrainment_method
+      use digclaw_module, only: entrainment,entrainment_method
       use digclaw_module, only: src2method
-      use digclaw_module, only: segregation
       use digclaw_module, only: i_ent,i_theta
       use digclaw_module, only: mu,rho_f,rho_s
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
@@ -38,10 +60,10 @@
       real(kind=8) :: b_x,b_y,b_xx,b_yy,b_xy
       real(kind=8) :: beta,coeffmanning
       real(kind=8) :: b_eroded,b_remaining
-      real(kind=8) :: gamma,zeta,dgamma
+      real(kind=8) :: gamma,dgamma
       real(kind=8) :: dtk,dtremaining,alphainv,gacc
 
-      integer :: i,j,ii,jj,icount,itercount,itercountmax
+      integer :: i,j,itercount,itercountmax
 
       logical :: debug
       debug = .false.
@@ -223,7 +245,7 @@
                b_remaining = aux(i_ent,i,j)-b_eroded
                select case(entrainment_method)
                case(0)
-                  call ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,b_x,b_y,b_eroded,b_remaining)
+                  call ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,b_eroded,b_remaining)
                   q(i_bdif,i,j) = b_eroded
                case(1)
                   !do nothing yet

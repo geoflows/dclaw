@@ -1,3 +1,7 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/rpn2.f90 
+!!
 c======================================================================
        subroutine rpn2(ixy,maxm,meqn,mwaves,maux,mbc,mx,
      &                 ql,qr,auxl,auxr,fwave,s,amdq,apdq)
@@ -53,11 +57,9 @@ c
       integer m,i,mw,maxiter,mhu,nhv,waves
       !double precision dtcom,dxcom,dycom,tcom
       double precision wall(3),fw(6,3),sw(3),wave(6,3)
-      double precision lamL(3),lamR(3),beta(3)
       !logical entropy(5)
       logical rare1,rare2,wallprob,drystate
       !logical entropycorr1,entropycorr2
-      integer xxx, mmw
 
       double precision drytol,gmod,veltol
       double precision hR,hL,huR,huL,uR,uL,hvR,hvL,vR,vL
@@ -65,8 +67,6 @@ c
       double precision hstar,hstartest,s1m,s2m,bL,bR
       double precision dxdc,taudirL,taudirR,dx
       double precision theta,thetaL,thetaR
-      double precision h1M,h2M,hu1M,hu2M,u1M,u2M,heR,heL
-      double precision sE1,sE2
       double precision chiHL,chiHR,chiL,chiR,fsL,fsR
       double precision gz,gzL,gzR,rhoR,rhoL
 
@@ -240,7 +240,7 @@ c               bL=hstartest+bR
           ! current dclaw Riemann solver
           call riemann_dig2_aug_sswave_ez(ixy,6,3,hL,hR,huL,huR,
      &         hvL,hvR,hmL,hmR,pL,pR,bL,bR,uL,uR,vL,vR,mL,mR,
-     &         thetaL,thetaR,phi_bedL,phi_bedR,sw,fw,wave,wallprob,
+     &         thetaL,thetaR,phi_bedL,phi_bedR,sw,fw,wallprob,
      &         taudirL,taudirR,chiL,chiR,fsL,fsR,i)
 
 c        !eliminate ghost fluxes for wall

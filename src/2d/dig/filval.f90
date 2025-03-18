@@ -1,4 +1,8 @@
-!
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/filval.f90 
+!!
+
 ! :::::::::::::::::::::::::::::: FILVAL ::::::::::::::::::::::::::
 !
 ! create and fill coarser (level-1) patch with one extra coarse cell all

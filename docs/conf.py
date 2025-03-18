@@ -17,17 +17,17 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'dclaw'
-author = 'Dave George and Katy Barnhart'
+project = "dclaw"
+author = "Dave George and Katy Barnhart"
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = "1.0.0"
 
 html_favicon = "_static/usgs.ico"
 html_logo = "_static/usgs-logo-green.svg"
 
 # -- General configuration ---------------------------------------------------
-master_doc = 'index'
+master_doc = "index"
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -41,8 +41,8 @@ extensions = [
 autodoc2_packages = [
     "../src/python/dclaw",
 ]
-autodoc2_hidden_objects = ['private']
-autodoc2_output_dir = 'src/autodoc2'
+autodoc2_hidden_objects = ["private"]
+autodoc2_output_dir = "src/autodoc2"
 autodoc2_index_template = """
 D-Claw API Reference
 ====================
@@ -69,7 +69,7 @@ myst_enable_extensions = [
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -83,7 +83,7 @@ exclude_patterns = [
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'furo'
+html_theme = "furo"
 html_title = project
 
 numfig = True
@@ -91,8 +91,8 @@ numfig = True
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 html_css_files = [
-    'css/custom.css',
+    "css/custom.css",
 ]
 html_last_updated_fmt = ""

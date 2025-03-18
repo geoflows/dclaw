@@ -1,6 +1,6 @@
 # D-Claw
 
-D-Claw is a software library for the simulation of dense granular flows over spatially variable topography. D-Claw builds on [clawpack](https://www.clawpack.org/), is written in Fortran, and has a python wrapper.
+D-Claw is a software library for the simulation of dense granular flows over spatially variable topography. D-Claw builds on [clawpack](https://www.clawpack.org/), is written in Fortran, and has a python wrapper. The code is hosted on [code.usgs.gov](https://code.usgs.gov/claw/dclaw) and mirrored on [github](https://github.com/geoflows/dclaw).
 
 D-Claw is supported on Linux/Unix only.
 
@@ -24,17 +24,20 @@ If you use D-Claw in a publication, cite it as follows:
 
 
 ``` none
-George, D.L. and Barnhart, K.R., 2025, D-Claw - A library for simulation 
-of granular-fluid flows, version 1.0.0: U.S. Geological Survey software 
-release, https://doi.org/10.5066/P13GUXUT.
+George, D.L., Barnhart, K.R., and Iversion, R.M., 2025,
+D-Claw - A library for simulation of granular-fluid flows,
+version 1.0.0: U.S. Geological Survey software release,
+https://doi.org/10.5066/P13GUXUT.
 ```
 
 Bibtex:
 ``` none
 @misc{george_2025,
-        title = {D-Claw - A library for simulation of granular-fluid flows, 
-                version 1.0.0},
-        author = {George, D.L. and Barnhart, K.R.},
+        title = {D-Claw - A library for simulation of
+                granular-fluid flows, version 1.0.0},
+        author = {George, D.L. and
+                  Barnhart, K.R. and
+                  Iverson, R.M.},
         url = {https://code.usgs.gov/claw/dclaw},
         year = {2025},
         doi = {10.5066/P13GUXUT}
@@ -51,8 +54,10 @@ src/background.md
 src/theory.md
 src/installation.md
 src/examples.md
+src/tests.rst
 src/setrun.md
 src/used_by.md
 src/version_control.md
+src/build-docs.md
 src/autodoc2/index.rst
 ```
