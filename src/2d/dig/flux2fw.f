@@ -1,4 +1,8 @@
-c
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/flux2fw.f90 
+!!
+
 c
 c     =====================================================
       subroutine flux2(ixy,maxm,meqn,maux,mbc,mx,

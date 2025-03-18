@@ -1,3 +1,13 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/qinit_module.f90 
+!!
+
+! ============================================================================
+!  Module for initialization of the q arrays that might come from files
+! ============================================================================
+
+
 module qinit_module
 
     ! Updated to include D-Claw files as e.g. set_qinit_dig
@@ -29,6 +39,8 @@ module qinit_module
 
     integer, private :: mx_qinit
     integer, private :: my_qinit
+
+    integer, parameter ::  QINIT_PARM_UNIT = 106
 
     ! for initializing using force_dry to indicate dry regions below sealevel:
 
@@ -65,9 +77,6 @@ contains
 
     subroutine set_qinit(fname)
 
-        use geoclaw_module, only: GEO_PARM_UNIT
-
-
         implicit none
 
         ! Subroutine arguments
@@ -81,10 +90,10 @@ contains
         integer :: num_force_dry
 
         if (.not.module_setup) then
-            write(GEO_PARM_UNIT,*) ' '
-            write(GEO_PARM_UNIT,*) '--------------------------------------------'
-            write(GEO_PARM_UNIT,*) 'SETQINIT:'
-            write(GEO_PARM_UNIT,*) '-------------'
+            write(QINIT_PARM_UNIT,*) ' '
+            write(QINIT_PARM_UNIT,*) '--------------------------------------------'
+            write(QINIT_PARM_UNIT,*) 'SETQINIT:'
+            write(QINIT_PARM_UNIT,*) '-------------'
 
             ! Open the data file
             if (present(fname)) then
@@ -96,11 +105,11 @@ contains
             read(unit,"(i1)") qinit_type
             if (qinit_type == 0) then
                 ! No perturbation specified
-                write(GEO_PARM_UNIT,*)  '  qinit_type = 0, no perturbation'
+                write(QINIT_PARM_UNIT,*)  '  qinit_type = 0, no perturbation'
                 print *,'  qinit_type = 0, no perturbation'
             else
                 read(unit,*) qinit_fname
-                write(GEO_PARM_UNIT,*)  qinit_fname
+                write(QINIT_PARM_UNIT,*)  qinit_fname
 
                 call read_qinit(qinit_fname)
             endif
@@ -204,8 +213,6 @@ contains
     ! surface elevation eta. The depth is then set as q(i,j,1)=max(eta-b,0)
     subroutine read_qinit(fname)
 
-        use geoclaw_module, only: GEO_PARM_UNIT
-
         implicit none
 
         ! Subroutine arguments
@@ -220,10 +227,10 @@ contains
         print *,'Reading qinit data from file  ', fname
         print *,'  '
 
-        write(GEO_PARM_UNIT,*) '  '
-        write(GEO_PARM_UNIT,*) 'Reading qinit data from'
-        write(GEO_PARM_UNIT,*) fname
-        write(GEO_PARM_UNIT,*) '  '
+        write(QINIT_PARM_UNIT,*) '  '
+        write(QINIT_PARM_UNIT,*) 'Reading qinit data from'
+        write(QINIT_PARM_UNIT,*) fname
+        write(QINIT_PARM_UNIT,*) '  '
 
         open(unit=unit, file=fname, iostat=status, status="unknown", &
              form='formatted',action="read")
@@ -394,8 +401,6 @@ contains
 
    subroutine set_qinit_dig(fname)
 
-      use geoclaw_module, only : GEO_PARM_UNIT
-
       implicit none
 
       ! Input arguments
@@ -409,10 +414,10 @@ contains
 
 
       ! Open and begin parameter file output
-      write(GEO_PARM_UNIT,*) ' '
-      write(GEO_PARM_UNIT,*) '--------------------------------------------'
-      write(GEO_PARM_UNIT,*) 'SETQINIT:'
-      write(GEO_PARM_UNIT,*) '---------'
+      write(QINIT_PARM_UNIT,*) ' '
+      write(QINIT_PARM_UNIT,*) '--------------------------------------------'
+      write(QINIT_PARM_UNIT,*) 'SETQINIT:'
+      write(QINIT_PARM_UNIT,*) '---------'
 
       if (present(fname)) then
          file_name = fname
@@ -430,13 +435,13 @@ contains
       read(iunit,*) mqinitfiles
 
       if (mqinitfiles==0) then
-         write(GEO_PARM_UNIT,*) '   mqinitfiles = 0'
-         write(GEO_PARM_UNIT,*) '   no initial perturbation = 0'
-         write(GEO_PARM_UNIT,*) '   h will be set max(0-b,0)   '
+         write(QINIT_PARM_UNIT,*) '   mqinitfiles = 0'
+         write(QINIT_PARM_UNIT,*) '   no initial perturbation = 0'
+         write(QINIT_PARM_UNIT,*) '   h will be set max(0-b,0)   '
          return
       endif
 
-      write(GEO_PARM_UNIT,*) '   mqinitfiles = ',mqinitfiles
+      write(QINIT_PARM_UNIT,*) '   mqinitfiles = ',mqinitfiles
 
       ! Read and allocate data parameters for each file
       allocate(mxqinit(mqinitfiles),myqinit(mqinitfiles))
@@ -451,10 +456,10 @@ contains
          read(iunit,*) qinitfname(i)
          read(iunit,*) qinitftype(i),iqinit(i)
 
-         write(GEO_PARM_UNIT,*) '   '
-         write(GEO_PARM_UNIT,*) '   ',qinitfname(i)
-         write(GEO_PARM_UNIT,*) '  qinitftype = ', qinitftype(i)
-         write(GEO_PARM_UNIT,*) '  iqinit = ', iqinit(i)
+         write(QINIT_PARM_UNIT,*) '   '
+         write(QINIT_PARM_UNIT,*) '   ',qinitfname(i)
+         write(QINIT_PARM_UNIT,*) '  qinitftype = ', qinitftype(i)
+         write(QINIT_PARM_UNIT,*) '  iqinit = ', iqinit(i)
 
          call read_qinit_dig_header(qinitfname(i),qinitftype(i),mxqinit(i), &
                 myqinit(i),xlowqinit(i),ylowqinit(i),xhiqinit(i),yhiqinit(i), &
@@ -489,7 +494,6 @@ contains
     ! ========================================================================
     subroutine read_qinit_dig(mx,my,filetype,fname,qinit)
 
-        !use geoclaw_module
         use utility_module, only: parse_values, to_lower
 
         implicit none
@@ -595,7 +599,6 @@ contains
     ! ========================================================================
     subroutine read_qinit_dig_header(fname,qinit_type,mx,my,xll,yll,xhi,yhi,dx,dy)
 
-        use geoclaw_module
         use utility_module, only: parse_values, to_lower
 
         implicit none
@@ -727,9 +730,9 @@ contains
 
         close(iunit)
 
-        write(GEO_PARM_UNIT,*) '  mx = ',mx,'  x = (',xll,',',xhi,')'
-        write(GEO_PARM_UNIT,*) '  my = ',my,'  y = (',yll,',',yhi,')'
-        write(GEO_PARM_UNIT,*) '  dx, dy (meters/degrees) = ', dx,dy
+        write(QINIT_PARM_UNIT,*) '  mx = ',mx,'  x = (',xll,',',xhi,')'
+        write(QINIT_PARM_UNIT,*) '  my = ',my,'  y = (',yll,',',yhi,')'
+        write(QINIT_PARM_UNIT,*) '  dx, dy (meters/degrees) = ', dx,dy
 
     end subroutine read_qinit_dig_header
 

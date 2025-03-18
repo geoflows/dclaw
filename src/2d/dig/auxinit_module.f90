@@ -1,17 +1,7 @@
 ! ============================================================================
-!  Program:     auxinit_module
-!  File:        auxinit_mod.f90
-!  Created:     2012-04-05
-!  Author:      David L George
+!  Module for initialization of the aux arrays that might come from files
 ! ============================================================================
-!      Copyright (C) 2012-04-05 David George <dgeorge@uw.edu>
-!
-!  Distributed under the terms of the Berkeley Software Distribution (BSD)
-!  license
-!                     http://www.opensource.org/licenses/
-! ============================================================================
-!  Module for initialization data that might come from files
-! ============================================================================
+
 module auxinit_module
 
       implicit none
@@ -30,11 +20,10 @@ module auxinit_module
       integer, allocatable :: i0auxinit(:), mauxinit(:)
       integer, allocatable :: iauxinit(:), auxinitftype(:)
 
-
+      integer, parameter ::  AUX_PARM_UNIT = 105
 
 
 contains
-
 
     ! ========================================================================
     ! Read auxinit files as specified in auxinit.data
@@ -50,12 +39,10 @@ contains
     !
     ! Associated with each file is a initialization type, iauxinit(file):
     !     as follows:
-    !     defines a perturbation (or definition of) aux(i,j,iauxinit)
+    !     defines a perturbation (or definition of) aux(iauxinit,i,j)
     ! ========================================================================
 
    subroutine set_auxinit(fname)
-
-      use geoclaw_module
 
       implicit none
 
@@ -70,10 +57,10 @@ contains
 
 
       ! Open and begin parameter file output
-      write(GEO_PARM_UNIT,*) ' '
-      write(GEO_PARM_UNIT,*) '--------------------------------------------'
-      write(GEO_PARM_UNIT,*) 'SETAUXINIT:'
-      write(GEO_PARM_UNIT,*) '---------'
+      write(AUX_PARM_UNIT,*) ' '
+      write(AUX_PARM_UNIT,*) '--------------------------------------------'
+      write(AUX_PARM_UNIT,*) 'SETAUXINIT:'
+      write(AUX_PARM_UNIT,*) '---------'
 
       if (present(fname)) then
          file_name = fname
@@ -91,13 +78,14 @@ contains
       read(iunit,*) mauxinitfiles
 
       if (mauxinitfiles==0) then
-         write(GEO_PARM_UNIT,*) '   mauxinitfiles = 0'
-         write(GEO_PARM_UNIT,*) '   no initial perturbation = 0'
-         write(GEO_PARM_UNIT,*) '   h will be set max(0-b,0)   '
+         write(AUX_PARM_UNIT,*) '   mauxinitfiles = 0'
+         write(AUX_PARM_UNIT,*) '   no initial perturbation = 0'
+         write(AUX_PARM_UNIT,*) '   h will be set max(0-b,0)   '
+         close(unit=iunit)
          return
       endif
 
-      write(GEO_PARM_UNIT,*) '   mauxinitfiles = ',mauxinitfiles
+      write(AUX_PARM_UNIT,*) '   mauxinitfiles = ',mauxinitfiles
 
       ! Read and allocate data parameters for each file
       allocate(mxauxinit(mauxinitfiles),myauxinit(mauxinitfiles))
@@ -112,10 +100,10 @@ contains
          read(iunit,*) auxinitfname(i)
          read(iunit,*) auxinitftype(i),iauxinit(i)
 
-         write(GEO_PARM_UNIT,*) '   '
-         write(GEO_PARM_UNIT,*) '   ',auxinitfname(i)
-         write(GEO_PARM_UNIT,*) '  auxinitftype = ', auxinitftype(i)
-         write(GEO_PARM_UNIT,*) '  iauxinit = ', iauxinit(i)
+         write(AUX_PARM_UNIT,*) '   '
+         write(AUX_PARM_UNIT,*) '   ',auxinitfname(i)
+         write(AUX_PARM_UNIT,*) '  auxinitftype = ', auxinitftype(i)
+         write(AUX_PARM_UNIT,*) '  iauxinit = ', iauxinit(i)
 
          call read_auxinit_header(auxinitfname(i),auxinitftype(i),mxauxinit(i), &
                 myauxinit(i),xlowauxinit(i),ylowauxinit(i),xhiauxinit(i),yhiauxinit(i), &
@@ -140,6 +128,8 @@ contains
                 auxinitwork(i0auxinit(i):i0auxinit(i)+mauxinit(i)-1))
       enddo
 
+      close(unit=iunit)
+
    end subroutine set_auxinit
 
 
@@ -150,7 +140,6 @@ contains
     ! ========================================================================
     subroutine read_auxinit(mx,my,filetype,fname,auxinit)
 
-        use geoclaw_module ! DIG specify only
         use utility_module, only: parse_values, to_lower
 
         implicit none
@@ -257,7 +246,6 @@ contains
     ! ========================================================================
     subroutine read_auxinit_header(fname,auxinit_type,mx,my,xll,yll,xhi,yhi,dx,dy)
 
-        use geoclaw_module
         use utility_module, only: parse_values, to_lower
 
         implicit none
@@ -375,9 +363,9 @@ contains
 
         close(iunit)
 
-        write(GEO_PARM_UNIT,*) '  mx = ',mx,'  x = (',xll,',',xhi,')'
-        write(GEO_PARM_UNIT,*) '  my = ',my,'  y = (',yll,',',yhi,')'
-        write(GEO_PARM_UNIT,*) '  dx, dy (meters/degrees) = ', dx,dy
+        write(AUX_PARM_UNIT,*) '  mx = ',mx,'  x = (',xll,',',xhi,')'
+        write(AUX_PARM_UNIT,*) '  my = ',my,'  y = (',yll,',',yhi,')'
+        write(AUX_PARM_UNIT,*) '  dx, dy (meters/degrees) = ', dx,dy
 
     end subroutine read_auxinit_header
 

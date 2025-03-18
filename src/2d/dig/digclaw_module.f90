@@ -1,3 +1,7 @@
+! ============================================================================
+!  Module for initialization D-Claw parameters and core functions
+! ============================================================================
+
 
 module digclaw_module
 
@@ -325,6 +329,7 @@ contains
    !====================================================================
    !subroutine qfix_cmass
    !find physically admissible values of h,m,p,rho while holding rhoh,u,v const.
+   ! 'cmass' = constant mass (constant rho*h)
    !====================================================================
 
    subroutine qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
@@ -363,8 +368,6 @@ contains
 
    end subroutine qfix_cmass
 
-
-
    !====================================================================
    ! subroutine setvars: evaluates needed variable parameters that are
    !                     functions of the solution vector q
@@ -390,6 +393,10 @@ contains
 
       !determine kperm
       !segregation effect on kperm
+      ! DIG: Eventually extent and create a 'segregation.f90' file with
+      ! segeval(...) subroutine that handles all aspects of segregation-
+      ! induced changes (similar to how entrainment options are handled).
+
       kr_chi = 1.0d0
       if (segregation==1) then
          !how many orders of magnitude should kperm change with chi=[0,1]
@@ -402,6 +409,7 @@ contains
       !determine vars related to m_eq and compressibility
       sig_eff = max(0.d0,rho*gz*h - p)
 
+      !  determine 1/alpha
       select case (alphamethod)
       case(0)
          ! case 0: old d-claw, constant sig_0, set as user defined sigma_0
@@ -412,12 +420,13 @@ contains
          ! define sigma_0 so that it is just above the bound (use 0.51 instead
          ! of 0.50).
          sig_0 = 0.50d0*alpha_c*rho_f*(rho_s-rho_f)*gz*h/rho
-         !sig_0 = 0.51d0*alpha_c*(rho_s-rho_f)*gz*h
       end select
       alphainv = m*(sig_eff + sig_0)/alpha_c
 
+      ! Calculate velocity magnitude
       vnorm = sqrt(u**2 + v**2)
 
+      ! Calculate the shear rate (gamma dot in the equations)
       if (h.gt.dry_tolerance) then
         shear = 2.d0*vnorm/h
       else
@@ -434,11 +443,12 @@ contains
       else
          m_eq = m_crit*(sqrt(Nden)/(sqrt(Nden)+ sqrt(Nnum)))
       endif
+
       !Note: c1 is an adjustable parameter that we have traditionally set to 1.0.
       !For problems where one wants to avoid the complications of dilatancy and use
       !     a simpler rheological model, can be set to 0 or a small value.
       tanpsi = c1*(m-m_eq)
-      psi = atan(c1*(m-m_eq)) !does atan return the correct angle always?
+      psi = atan(c1*(m-m_eq))
 
       !calculate coulomb friction tau
       ! Note: for v=0, bounds on tau for static friction are determined in Riemann solver
@@ -454,7 +464,6 @@ contains
       return
 
 end subroutine setvars
-
 
    ! ========================================================================
    !  calc_taudir
@@ -489,7 +498,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       double precision :: theta
       double precision :: tau,rho,alphainv
       double precision :: tanpsi,kperm,m_eq
-      double precision :: Fx,Fy,FxL,FxR,FyL,FyR,FyC,FxC,dot,vnorm,Fproj
+      double precision :: Fx,Fy,FxL,FxR,FyL,FyR,FyC,FxC,dot,hvnorm,Fproj
 
       integer :: i,j
 
@@ -504,6 +513,10 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             else
               theta = 0.d0
             endif
+
+            ! Get h, hu, hv, hm, p, hchi at cell center (no suffix)
+            ! (L)eft (R)ight (T)op and (B)ottom cells of the 3x3
+            ! cell stencil surrounding cell i,j
 
             h = q(i_h,i,j)
             hu = q(i_hu,i,j)
@@ -578,10 +591,17 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                etaT = min(etaT,eta)
             endif
 
+            ! If cell center is dry, set value used for
+            ! cell center here based on left/right cell
+            ! values.
+
             if (h<dry_tolerance) then
                eta = min(etaL,eta)
                eta = min(etaB,eta)
             endif
+
+            ! If all cells in the center are dry, return
+            ! zeros for taudir_x, _y, and fsphi
 
             if ((h+hL+hB+hR+hT)<dry_tolerance) then
                aux(i_taudir_x,i,j) = 0.d0
@@ -614,15 +634,16 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                Fy = 0.d0
             endif
 
-            vnorm = sqrt(hu**2 + hv**2)
-            if (vnorm>0.d0) then ! If moving.
+            ! Calculate the magnitude of momentum.
+            hvnorm = sqrt(hu**2 + hv**2)
+            if (hvnorm>0.d0) then ! If moving.
 
                ! In D-Claw 4 dx and dy were accessible in the riemann solver.
                ! To fix in the transition, dx and dy are multiplied by taudir_x and y
                ! here. This works for everything except for bed normal and produces
                ! equivalent results (1/13/24)
-               aux(i_taudir_x,i,j) = -dx*hu/vnorm
-               aux(i_taudir_y,i,j) = -dy*hv/vnorm
+               aux(i_taudir_x,i,j) = -dx*hu/hvnorm
+               aux(i_taudir_y,i,j) = -dy*hv/hvnorm
                dot = min(max(0.d0,Fx*hu) , max(0.d0,Fy*hv))
                if (dot>0.d0) then
                   !friction should oppose direction of velocity
@@ -630,7 +651,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   !splitting is useful for small velocities and nearly balanced forces
                   !only split amount up to maximum net force for large velocities
                   !aux has cell centered interpretation in Riemann solver
-                  Fproj = dot/vnorm
+                  Fproj = dot/hvnorm
                   aux(i_fsphi,i,j) = min(1.d0,Fproj*rho/max(tau,1.d-16))
 
                   ! DIG: ensure that very low m does not contribute to static friction.
@@ -682,7 +703,6 @@ end subroutine calc_taudir
 
 subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
-
       implicit none
 
       !Input
@@ -699,7 +719,6 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       double precision :: detadx,detadxL,detadxR,detady,detadyT,detadyB
       double precision :: grad_eta
 
-
       integer :: i,j
 
       dry_tol = dry_tolerance
@@ -708,6 +727,9 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       do j=1,my
          do i=1,mx
+
+
+            ! Get values of q from the 3x3 cell stencil
 
             h = q(i_h,i,j)
             hL = q(i_h,i-1,j)
@@ -746,7 +768,8 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             endif
 
             Eta  = h+b
-            !---------max deta/dx-------------------
+
+            ! calculate the max deta/dx
             EtaR = hR+bR
             EtaL = hL+bL
             if (hR<=dry_tol) then
@@ -765,8 +788,7 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                detadx = detadxR
             endif
 
-
-            !---------max deta/dy-------------------
+            ! calculate the max deta/dy
             EtaT = hT+bT
             EtaB = hB+bB
             if (hT<=dry_tol) then

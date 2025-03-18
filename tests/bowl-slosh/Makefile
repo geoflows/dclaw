@@ -14,7 +14,7 @@ CLAWMAKE = $(CLAW)/clawutil/src/Makefile.common
 CLAW_PKG = dclaw                  # Clawpack package to use
 
 
-EXE = $(PWD)/xgeoclaw
+EXE = $(PWD)/xdclaw
 SETRUN_FILE = setrun.py           # File containing function to make data
 OUTDIR = _output                  # Directory for output
 SETPLOT_FILE = setplot.py         # File containing function to set plots
@@ -75,5 +75,4 @@ topo:
 all: 
 	$(MAKE) topo
 	$(MAKE) .plots
-	$(MAKE) .htmls
 

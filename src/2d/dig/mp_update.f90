@@ -1,20 +1,35 @@
-    !file contains routines for integrating part of source term for m, p and h
-    !does not affect u,v, but note hu,hv changed due to change in h.
-    !single contained routine should be called from src2 with timestep dtk.
+! ============================================================================
+!  Subroutines to integration a portion of the source term
+! ============================================================================
+
+    ! This file contains routines for integrating part of source term for m, p
+    ! and h. It does not affect u,v, but hu,hv will change due to change in h.
     !
-    !integrates:
-    ! dm/dt = f_1(p,m)
-    ! dp/dt = f_2(p,m)
+    ! Depending on the value of srcmethod one of the below routines will be
+    ! called from src2() with timestep dtk.
+    !
+    ! Each of the below subroutines integrates:
+    !   dm/dt = f_1(p,m)
+    !   dp/dt = f_2(p,m)
     ! invariant (rho h)_N+1 = (rho h)_N is exactly or approximately maintained
     ! depending on routine.
     ! Note that as m is updated, h is updated meaning that all variables (h,hu,hv,hm,p) are affected.
     !
-    !three basic alternatives: 1. stay on rho h = constant manfifold, integrate difficult stiff terms for m and p.
-    !                        2. relax rho h constraint, more easily integrate m,p, then approximately return to rho h manifold (new h(m))
-    !                        3. relax rho h constraint, more easily integrate m,p, then exactly return to rho h manifold (new h(m))
+    ! two basic alternatives are provided:
+    !   if srcmethod = 2:
+    !       stay on rho h = constant manfifold, integrate difficult stiff
+    !       terms for m and p. (this method is experimental)
+    !   if srcmethod = 0:
+    !       relax rho h constraint, more easily integrate m,p, then
+    !       approximately return to rho h manifold (new h(m)). This is the
+    !       method that was implemented in 'old dclaw'.
     !
-    ! why 2 vs. 3? Note that if m is poorly integrated, h(m) is poorly updated. So maintaining rho h = constant may lead to bad depth approx
-    ! or possibly poorer volume conservation, even though mass conservation is exact. method 2 gives a somewhat balanced approach perhaps.
+    !   srcmethod = 1 provides an intermediate approach (also experimental)
+    !
+    ! why 0 vs. 1? Note that if m is poorly integrated, h(m) is poorly updated.
+    ! So maintaining rho h = constant may lead to bad depth approx
+    ! or possibly poorer volume conservation, even though mass conservation is exact.
+    ! srcmethod =2 gives a somewhat balanced approach perhaps.
 
 
 subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
@@ -44,8 +59,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
     ! in right-half plane as v increases and kperm decreases.
     !====================================================================
 
-       use digclaw_module, only: rho_f,rho_s,sigma_0,mu,setvars,qfix,qfix_cmass,m_crit,delta
-       use geoclaw_module, only: grav
+       use digclaw_module, only: rho_f,rho_s,mu,setvars,qfix,qfix_cmass,m_crit,delta
 
        implicit none
 
@@ -57,11 +71,11 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
        !local
        real(kind=8) :: h0,p0,m_0,p_eq0,p_exc0,vnorm,m_eq
-       real(kind=8) :: kappa,S,rho,rho0,tanpsi,D,tau,sigbed,kperm
-       real(kind=8) :: km,alphainv,c_d,p_exc,dtr,dtm,dtp,dts,p_excm,p_exc_ave
-       real(kind=8) :: km0,kp0,alphainv0,c_d0
+       real(kind=8) :: rho,rho0,tanpsi,tau,kperm
+       real(kind=8) :: alphainv,p_exc,dtr,dtm,dtp,dts,p_exc_ave
+       real(kind=8) :: km0,kp0,c_d0
        real(kind=8) :: hu,hv,hm
-       real(kind=8) :: rho_c,h_c,p_eq_c,m_c,rho_c1,h_c1,p_eq_c1,m_c1,m_lower,m_upper
+       real(kind=8) :: rho_c,h_c,p_eq_c,m_c,m_lower,m_upper
        real(kind=8) :: m_c0,p_eq_c0,sig_c,Nd,Nn,normc,shear,convtol,m_eq1
        integer :: debugloop,iter,itermax,quad0,quad1
        logical :: outquad,debug
@@ -231,9 +245,9 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              debugloop=debugloop + 200
              !bound time step
              ! to max allowed (lithostatic,rhoh*g) if nullcline exceeds it
-             if ((c_d/kp0)>(rhoh*gz-p_eq_c)) then
+             if ((c_d0/kp0)>(rhoh*gz-p_eq_c)) then
                 debugloop=debugloop + 10
-                dtp = min(dtr,-(1.d0/kp0)*log((-kp0*rhoh*gz+kp0*p_eq_c+c_d)/(-kp0*p_exc0+c_d0)))
+                dtp = min(dtr,-(1.d0/kp0)*log((-kp0*rhoh*gz+kp0*p_eq_c+c_d0)/(-kp0*p_exc0+c_d0)))
              !bound time step so not to exceed nullcline
              else
                 debugloop=debugloop + 20
@@ -245,7 +259,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              if (p_exc_ave<=0.d0) then !should only occur if p_exc0<0 and dt small
                 debugloop=debugloop + 1
                 dtm = dtr
-                m = m_0*exp(km*0.5d0*(p_exc+p_exc0)*dts)
+                m = m_0*exp(km0*0.5d0*(p_exc+p_exc0)*dtm)
              else
                 debugloop=debugloop + 2
                 m_upper = m_eq - max(0.d0,(1.d0/3.d0)*kp0*h0*(p_exc_ave)/(vnorm*alphainv))
@@ -521,9 +535,9 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
    !for less easier integration of p.
    !update m,h based on new value of D. rho h not exact/approx.
 
-      use digclaw_module, only: rho_f,rho_s,sigma_0,mu,setvars,qfix,qfix_cmass,m_crit,delta
+      use digclaw_module, only: rho_f,rho_s,mu,setvars,qfix,qfix_cmass
       use digclaw_module, only: src2method
-      use geoclaw_module, only: grav
+
 
       implicit none
 
@@ -533,7 +547,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       real(kind=8), intent(in)  :: gz
 
       !local
-      real(kind=8) :: m_0,p_eq,p_exc,vnorm,m_eq
+      real(kind=8) :: p_eq,p_exc,vnorm,m_eq
       real(kind=8) :: rho,tanpsi,D,tau,kperm,alphainv
       real(kind=8) :: krate,zeta,hchi,hu,hv,hm
 
@@ -547,11 +561,13 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       ! integrate pressure response to dilation/contraction
       vnorm = sqrt(hu**2 + hv**2)/h
       p = p - dt*3.d0*vnorm*tanpsi*alphainv/h
+      call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
 
       ! integrate pressure relaxation to hydrostatic
       zeta = 3.d0*alphainv/(h*2.d0)  + (rho-rho_f)*rho_f*gz/(4.d0*rho)
       krate=-zeta*2.d0*kperm/(h*max(mu,1.d-16))
       p_eq = rho_f*h*gz
+
       p = p_eq + (p-p_eq)*exp(krate*dt)
 
       !integrate changes in hm

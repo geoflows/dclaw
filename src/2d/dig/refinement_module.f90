@@ -1,3 +1,7 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/refinement_module.f90 
+!!
 ! Module containing refinement flagging criteria
 module refinement_module
 
@@ -25,6 +29,7 @@ module refinement_module
     integer, allocatable :: iflowgrademinlevel(:)
     integer :: mflowgrades
     logical :: keep_fine
+    integer, parameter ::  FGR_PARM_UNIT = 107
 
 contains
 
@@ -94,10 +99,10 @@ contains
         logical :: found_file
 
 
-        write(GEO_PARM_UNIT,*) ' '
-        write(GEO_PARM_UNIT,*) '--------------------------------------------'
-        write(GEO_PARM_UNIT,*) 'SET FLOW GRADES:'
-        write(GEO_PARM_UNIT,*) '------------'
+        write(FGR_PARM_UNIT,*) ' '
+        write(FGR_PARM_UNIT,*) '--------------------------------------------'
+        write(FGR_PARM_UNIT,*) 'SET FLOW GRADES:'
+        write(FGR_PARM_UNIT,*) '------------'
 
         ! Read user parameters from setflowgrades.data
 
@@ -118,7 +123,7 @@ contains
         read(iunit,*) mflowgrades
 
         if (mflowgrades == 0) then
-            write(GEO_PARM_UNIT,*) '  No flow grades specified'
+            write(FGR_PARM_UNIT,*) '  No flow grades specified'
             return
         endif
 
@@ -136,10 +141,10 @@ contains
 
         close(iunit)
 
-        write(GEO_PARM_UNIT,*) '   mflowgrades:',  mflowgrades
+        write(FGR_PARM_UNIT,*) '   mflowgrades:',  mflowgrades
 
         do i=1,mflowgrades
-            write(GEO_PARM_UNIT,"(d12.3,3i4)") flowgradevalue(i), &
+            write(FGR_PARM_UNIT,"(d12.3,3i4)") flowgradevalue(i), &
                 iflowgradevariable(i),iflowgradetype(i),iflowgrademinlevel(i)
 
         enddo

@@ -1,3 +1,8 @@
+!! D-Claw specific core file
+!! This file is a modified version of
+!! clawpack/geoclaw/src/2d/shallow/b4step2.f90 
+!!
+
 ! ============================================
 subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep)
 ! ============================================
@@ -8,15 +13,11 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
 ! This particular routine sets negative values of q(i_h,i,j) to zero,
 ! as well as the corresponding q(m,i,j) for m=1,meqn.
 ! This is for problems where q(i_h,i,j) is a depth.
-! This should occur only because of rounding error.
-!
-! Also calls movetopo if topography might be moving.
 
-    use geoclaw_module, only: dry_tolerance
-    use geoclaw_module, only: grav
-    use topo_module, only: num_dtopo,topotime
+!
+
     use topo_module, only: aux_finalized
-    use topo_module, only: xlowdtopo,xhidtopo,ylowdtopo,yhidtopo
+    use geoclaw_module, only: grav
 
     use amr_module, only: xlowdomain => xlower
     use amr_module, only: ylowdomain => ylower

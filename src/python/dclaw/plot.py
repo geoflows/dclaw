@@ -521,7 +521,6 @@ def lithostaticP(current_data):
     else:
         drytol = _drytol
 
-    q = current_data.q
     h = depth(current_data)
     rho = density(current_data)
     var = ma.masked_where(h < drytol, gmod(current_data) * rho * h)
@@ -662,11 +661,11 @@ def N(current_data):  # dimensionless state parameter N
 def local_slope(current_data):
     h = depth(current_data)
 
-    # gravitational driving force per unit area.
-    if hasattr(current_data.plotdata, "dclaw_data"):
-        bed_normal = current_data.plotdata.dclaw_data.bed_normal
-    else:
-        bed_normal = _bed_normal
+    # # gravitational driving force per unit area.
+    # if hasattr(current_data.plotdata, "dclaw_data"):
+    #     bed_normal = current_data.plotdata.dclaw_data.bed_normal
+    # else:
+    #     bed_normal = _bed_normal
 
     eta = surface(current_data)
 
@@ -675,12 +674,12 @@ def local_slope(current_data):
     else:
         drytol = _drytol
 
-    if bed_normal == 1:
-        q = current_data.q
-        theta = q[_i_theta, :, :]
-        sintheta = np.sin(theta)
-    else:
-        sintheta = 0.0
+    # if bed_normal == 1:
+    #     q = current_data.q
+    #     theta = q[_i_theta, :, :]
+    #     sintheta = np.sin(theta)
+    # else:
+    #     sintheta = 0.0
 
     dx = current_data.dx
     dy = current_data.dy
@@ -831,7 +830,7 @@ def phi(current_data):
     if hasattr(current_data.plotdata, "dclaw_data"):
         _p = current_data.plotdata.dclaw_data.phi
     else:
-        _p = _phi # otherwise use default _phi above.
+        _p = _phi  # otherwise use default _phi above.
 
     # results are returned in radians.
     return np.deg2rad(_p)
