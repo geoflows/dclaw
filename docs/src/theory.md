@@ -217,7 +217,7 @@ To treat the first element, the influence of flow behavior on the segregation of
 ```{math}
 u(z) = (1-\beta)\bar{u} + 2\beta\bar{u}\frac{z}{h}
 ```
-where {math}`\beta` is a constant between 0 (plug flow) and 1 (simple shear) and {math}`\bar{u}` is the depth-averaged velocity.
+where {math}`\beta` is a constant between 0 (plug flow) and 1 (simple shear) and {math}`\bar{u}` is the depth-averaged velocity. Note that Gray and Kokelaar (2010) use the symbol {math}`\alpha=1-\beta` such that {math}`\alpha=0` results in simple shear and {math}`\alpha=1` results in plug flow. We use the symbol {math}`\beta` to disambiguate from the debris' elastic compressibility values defined above and because we think that a value of 0 for plug flow and 1 for simple shear is more intutitive.
 
 As the mixture shears, species {math}`A` moves to the surface of the flow, and is preferentially advected by the flow. The lateral transport of {math}`\chi`, the fraction of species {math}`A` is described by the following equation, which, for brevity, shows only x-directed transport.
 
@@ -227,7 +227,7 @@ As the mixture shears, species {math}`A` moves to the surface of the flow, and i
 \frac{\partial}{\partial x} \left (\beta h \chi u \left( 1-\chi\right) \right)=0
 ```
 
-The representation of the feedback between the value of {math}`\chi` and flow behavior is highly experimental (c.f., Jones et al., 2023). At present the value for {math}`k` given above is modified as follows:
+The representation of the feedback between the value of {math}`\chi` and flow behavior is highly experimental (c.f., Jones et al., 2023). At present the value for the permeability, {math}`k`, given above is modified as follows:
 
 ```{math}
 k = k_{chi} k_r\exp{\frac{m-m_r}{0.04}}
@@ -237,6 +237,9 @@ where
 ```{math}
 \log_{10} kr_chi = 4(\chi-0.5))
 ```
+
+This implementation results material that is 50% each of Species {math}`A` and {math}`B` having a permeability of {math}`k_r`. Material that is 100% species {math}`A` will have a higher permeability and material that is 100% {math}`B` will have a lower permeability.
+
 
 :::{admonition} Warning
 The implementation of the feedback between segregation and flow behavior is likely to change.
