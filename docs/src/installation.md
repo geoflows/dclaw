@@ -91,7 +91,7 @@ In addition, the standard Clawpack make commands listed above, the standard D-Cl
 
 ## Run an example application
 
-Assuming that compilation has executed successfully, you should have a file called `xgeoclaw` in the example directory. To run a typical application, you may run three to five commands.
+Assuming that compilation has executed successfully, you should have a file called `xdclaw` in the example directory. To run a typical application, you may run three to five commands.
 
 **make input**
 

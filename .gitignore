@@ -10,7 +10,7 @@ fort*
 *.log
 timing.txt
 timing.csv
-xgeoclaw
+xdclaw
 .plots
 .output
 *.tex
