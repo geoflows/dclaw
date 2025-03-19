@@ -6,13 +6,19 @@ c-----------------------------------------------------------------------
      &         taudirR,chiL,chiR,fsL,fsR,ilook)
 
       !-----------------------------------------------------------------
-      ! solve the dig Riemann problem for debris flow eqn
+      ! solve the D-Claw Riemann problem at each interface for debris flow eqn
       ! this is for 2d version
       !
-      ! This solver is an extension of that described in:
-      ! J. Comput. Phys. (6): 3089-3113, March 2008
-      ! Augmented Riemann Solvers for the Shallow Equations,
-      !                   with Steady States and Inundation
+      ! This solver is an extension of GeoClaw's solver described in (George, 2008).
+      ! See (George & Iverson, 2014) for an overview of this D-Claw extension.
+      ! 
+      ! The Riemann solver solves the left-hand side of the PDEs, neglecting source terms
+      ! except for the topographic source terms, -ghb_x and -ghb_y.
+      ! In the case of static material that does not fail (deform)
+      ! topographic source terms and static friction balance, accounted for here.
+      ! For moving material, frictional resistance is handled with the other 
+      ! source terms (the right hand side) accounted for in a fractional step
+      ! implemented in src2 subroutine
       !-----------------------------------------------------------------
 
       use geoclaw_module, only: grav, dry_tolerance

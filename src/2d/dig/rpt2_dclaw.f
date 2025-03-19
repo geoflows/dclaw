@@ -1,7 +1,17 @@
 !! D-Claw specific core file
 !! This file is a modified version of
-!! clawpack/geoclaw/src/2d/shallow/rpt2.f90 
+!! clawpack/geoclaw/src/2d/shallow/rpt2.f
 !!
+! 
+! rpt2: solve transverse Riemann problems orthogonal to the normal Reimann problems.
+!
+! The standard clawpack version of this routine is intended to be user-written to accommodate
+! the particular model equations to be solved. See (Leveque, 2002) (D-Claw bibliography)
+! for details.
+! 
+! This version is modified from the GeoClaw version for the shallow-water equations
+! and extended to the D-Claw equations (Iverson & George, 2014).
+!
 ! =====================================================
       subroutine rpt2(ixy,imp,maxm,meqn,mwaves,maux,mbc,mx,
      &                ql,qr,aux1,aux2,aux3,asdq,bmasdq,bpasdq)

@@ -1,17 +1,37 @@
-!! D-Claw specific core file
-!! This file is a modified version of
-!! clawpack/geoclaw/src/2d/shallow/rpn2.f90 
-!!
+
+c D-Claw specific core file
+c This file is a modified version of
+c clawpack/geoclaw/src/2d/shallow/rpn2.f 
+c
+c
+c rpn2: solve normal Riemann problems at cell interfaces (x- or y- oriented)
+c       this subroutine is given an entire row or column of cells 
+c       from a grid. 
+c
+c       The standard clawpack version is primarily empty and intended
+c       to be user-written depending on model equations.
+c       See (Leveque, 2002) (D-Claw bibliography) for details.
+c
+c       This version is similar to the geoclaw version in that it
+c       deals with a depth-averaged flow over topography by testing 
+c       wall-boundary ghost Riemann problems at wet-dry interface.
+c       For related details see (George, 2008;2011) in D-Claw reference list  
+c
+c       this routine calls the subroutine riemann_dig2_aug_sswave_ez
+c       found in the file riemannsolvers_dclaw.f to solve the actual
+c       Riemann problem at each interface, after the wall-boundary tests.
 c======================================================================
        subroutine rpn2(ixy,maxm,meqn,mwaves,maux,mbc,mx,
      &                 ql,qr,auxl,auxr,fwave,s,amdq,apdq)
 c======================================================================
 c
-c Solves normal Riemann problems for the 2D SHALLOW WATER equations
+c GeoClaw version solves normal Riemann problems for the 2D SHALLOW WATER equations
 c     with topography:
 c     #        h_t + (hu)_x + (hv)_y = 0                           #
 c     #        (hu)_t + (hu^2 + 0.5gh^2)_x + (huv)_y = -ghb_x      #
 c     #        (hv)_t + (huv)_x + (hv^2 + 0.5gh^2)_y = -ghb_y      #
+
+c DClaw versions solves related depth-averaged system, see (Iverson & George, 2014)
 
 c On input, ql contains the state vector at the left edge of each cell
 c     qr contains the state vector at the right edge of each cell

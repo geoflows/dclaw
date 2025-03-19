@@ -11,28 +11,32 @@
     ! Each of the below subroutines integrates:
     !   dm/dt = f_1(p,m)
     !   dp/dt = f_2(p,m)
-    ! invariant (rho h)_N+1 = (rho h)_N is exactly or approximately maintained
+    ! invariant (rho h)_N+1 = (rho h)_N is exactly maintained
     ! depending on routine.
-    ! Note that as m is updated, h is updated meaning that all variables (h,hu,hv,hm,p) are affected.
+    ! Note that as m is updated, h = C/rho(m) => h is updated meaning that all variables (h,hu,hv,hm,p) are affected.
     !
-    ! two basic alternatives are provided:
-    !   if srcmethod = 2:
-    !       stay on rho h = constant manfifold, integrate difficult stiff
-    !       terms for m and p. (this method is experimental)
-    !   if srcmethod = 0:
-    !       relax rho h constraint, more easily integrate m,p, then
-    !       approximately return to rho h manifold (new h(m)). This is the
+    ! three alternatives are provided:
+    !   if srcmethod = 0
+    !       relax rho h constraint to more easily integrate p (new D)
+    !       update h,hm,hu,hv using the same D which only approx maintains rhoh
     !       method that was implemented in 'old dclaw'.
+    !       implemented in subroutine mp_update_relax_Dclaw4 below
+    !   if srcmethod = 1:
+    !       satisfy exactly rho h = constant 
+    !       integrate hm and p same as srcmethod = 0.
+    !       Then redefine h(m) to give new hu,hv
+    !       (this method is experimental)
+    !       implemented in subroutine mp_update_relax_Dclaw4 below
+    !   if srcmethod = 2:
+    !       stay on rho h = constant manifold, integrate stiff
+    !       terms for m and p. Then redefine h(m) to give new hu,hv,hm
+    !       (this method is experimental)
+    !       implemented in subroutine mp_update_FE_4quad below
     !
-    !   srcmethod = 1 provides an intermediate approach (also experimental)
-    !
-    ! why 0 vs. 1? Note that if m is poorly integrated, h(m) is poorly updated.
-    ! So maintaining rho h = constant may lead to bad depth approx
-    ! or possibly poorer volume conservation, even though mass conservation is exact.
-    ! srcmethod =2 gives a somewhat balanced approach perhaps.
 
 
 subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
+    ! used if srcmethod = 2
     !====================================================================
     ! subroutine mp_update_FE_4quad: integrate dp_exc/dt,dm/dt by a hybrid
     ! explicit integration that depends on the initial quadrant of phase space.
@@ -530,9 +534,10 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
       !========================================================================
 subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
    !====================================================================
+   !used if srcmethod = 0:1
    !subroutine mp_update_relax_Dclaw4: D-Claw 4.x method
    !integrate p, relaxing rho h constant (leave manifold)
-   !for less easier integration of p.
+   !for easier integration of p.
    !update m,h based on new value of D. rho h not exact/approx.
 
       use digclaw_module, only: rho_f,rho_s,mu,setvars,qfix,qfix_cmass
@@ -583,8 +588,9 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       ! can redefine h by constant rho h and hm, or update h directly
       case(0)
          ! case 0: old method.
-         ! integrate hu, hv, hm, and h.
-         ! rationale is if hm is poor, not to base h,hu,hv on it
+         ! integrate p explicitly (gives new D)
+         ! integrate hu, hv, hm, and h with same D
+         ! rationale is if m is poor, not to base h,hu,hv on it
          ! even if rho h is varied
          h = h + h*krate*dt
          hchi = h*chi
@@ -593,7 +599,8 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
          call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
       case(1)
          ! case 1: half-way new method.
-         ! redefine h by hm, rhoh, set hu,hv by new h
+         ! integrate hm and p as above.
+         ! redefine h by hm and rhoh=constant, set hu,hv by new h
          ! rationale is to maintain rhoh = constant
          h = (rhoh - hm*(rho_s-rho_f))/rho_f
          hu = h*u

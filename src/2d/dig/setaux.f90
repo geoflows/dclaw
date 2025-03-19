@@ -288,6 +288,8 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
       ! Earth Surface, 124, 1464–1484. https://doi.org/10.1029/2018JF004802
 
       ! DIG Discuss: this is a potential reason to keep around (aux(i_phi))
+      ! DLG (3/2025): I doubt we will use this anytime soon...could be deleted.
+      !               I guess we could delete aux(i_phi) and add again if needed later.
       if (friction_correction) then
         do j=1-mbc+1,my+mbc-1
             do i=1-mbc+1,mx+mbc-1
