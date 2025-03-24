@@ -1,0 +1,39 @@
+image: python:3.11
+
+stages:
+  - build
+  - docs
+
+default:
+  tags:
+    - chs-shared
+
+
+# Build: Spinx docs dependencies
+
+build:
+  stage: build
+  script:
+    - pip install virtualenv
+    - virtualenv "venv-311"
+    - source "venv-311/bin/activate"
+    - pip install sphinx sphinx_design sphinx-autodoc2 myst-parser sphinx-copybutton furo
+
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - "venv-311"
+
+# Docs: Sphinx docs
+
+pages:
+  stage: docs
+#  when: manual
+  script:
+    - source "venv-311/bin/activate"
+    - sphinx-build -a -b html docs public
+  artifacts:
+    paths:
+    - public
+
+
