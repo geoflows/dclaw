@@ -11,7 +11,7 @@
       "licenses": [
         {
           "name": "BSD 3-Clause License",
-          "URL": "https://code.usgs.gov/claw/dclaw/-/raw/1.1.0/LICENSE.md"
+          "URL": "https://code.usgs.gov/claw/dclaw/-/raw/1.0.0/LICENSE.md"
         }
       ]
     },
@@ -45,7 +45,7 @@
     },
 
     "date": {
-      "metadataLastUpdated": "2025-02-10"
+      "metadataLastUpdated": "2025-03-24"
     }
   }
 ]
