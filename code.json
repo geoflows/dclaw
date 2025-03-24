@@ -1,0 +1,51 @@
+[
+  {
+    "name": "dclaw",
+    "organization": "U.S. Geological Survey",
+    "description": "D-Claw - A library for the simulation of granular-fluid flows",
+    "version": "1.0.0",
+    "status": "Beta",
+
+    "permissions": {
+      "usageType": "openSource",
+      "licenses": [
+        {
+          "name": "BSD 3-Clause License",
+          "URL": "https://code.usgs.gov/claw/dclaw/-/raw/1.1.0/LICENSE.md"
+        }
+      ]
+    },
+
+    "homepageURL": "https://code.usgs.gov/claw/dclaw",
+    "downloadURL": "https://code.usgs.gov/claw/dclaw/-/archive/1.0.0/dclaw-1.0.0.zip",
+    "disclaimerURL": "https://code.usgs.gov/claw/dclaw/-/raw/1.0.0/DISCLAIMER.md",
+    "repositoryURL": "https://code.usgs.gov/claw/dclaw.git",
+    "vcs": "git",
+
+    "laborHours": 10000,
+
+    "tags": [
+      "clawpack",
+      "dclaw",
+      "D-Claw",
+      "granular-fluid flows",
+      "landslides",
+      "debris flows",
+      "tsunami"
+    ],
+
+    "languages": [
+      "fortran", 
+      "python"
+    ],
+
+    "contact": {
+      "name": "David L. George",
+      "email": "dgeorge@usgs.gov"
+    },
+
+    "date": {
+      "metadataLastUpdated": "2025-02-10"
+    }
+  }
+]
