@@ -137,7 +137,6 @@ COMMON_SOURCES += \
   $(GEOLIB)/getmaxspeed.f90 \
   $(GEOLIB)/advanc.f \
   $(GEOLIB)/fgmax_read.f90 \
-  $(GEOLIB)/fgmax_frompatch.f90 \
   $(GEOLIB)/fgmax_interp.f90 \
   $(GEOLIB)/fgmax_values.f90 \
   $(GEOLIB)/fgmax_finalize.f90 \
@@ -157,6 +156,7 @@ COMMON_SOURCES += \
   $(DIGLIB)/tick.f \
   $(DIGLIB)/amr2.f90 \
   $(DIGLIB)/qinit.f90 \
+  $(DIGLIB)/fgmax_frompatch.f90 \
   $(DIGLIB)/filval.f90 \
   $(DIGLIB)/filpatch.f90 \
   $(DIGLIB)/update.f90 \
