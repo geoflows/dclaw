@@ -38,7 +38,7 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
    use amr_module, only: ndjhi, ndjlo, store1, storeaux
    use amr_module, only: alloc, hxposs, hyposs
 
-   use refinement_module, only: mflowgrades, keep_fine
+   use refinement_module, only: mflowgrades, keep_fine, fine_level
 
    use digclaw_module, only: i_h
    use geoclaw_module, only: dry_tolerance
@@ -136,21 +136,23 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
 
          if (keep_fine .and. mflowgrades .gt. 0) then
 
-            ! if level is lower than mxnest determine whether a grid exists
-            ! here on each level between level+1 and mxnest. For each cell
+            ! if level is lower than fine_level determine whether a grid exists
+            ! here on each level between level+1 and fine_level. For each cell
             ! within that grid, test whether refinement should be maintained.
             ! ignore ghost cells on the finer grid
 
-            if (level .lt. mxnest) then
+            if (level .lt. fine_level) then
 
-              ! consider flow on mxnest (not highest here, only mxnest)
+              ! consider flow on fine_level (not highest here, only fine_level)
 
-              ! get pointer to the start of this mxnest
-              grid_ptr = lstart(mxnest)
+              ! get pointer to the start of this fine_level
+              grid_ptr = lstart(fine_level)
+
+              ! might need to update to know where the end of the fine_level grids are.
 
               ! get fine dx and dy values
-              dxfine = hxposs(mxnest)
-              dyfine = hyposs(mxnest)
+              dxfine = hxposs(fine_level)
+              dyfine = hyposs(fine_level)
 
               do while (grid_ptr /= 0)
 
