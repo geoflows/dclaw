@@ -88,6 +88,8 @@ contains
 
     subroutine set_flow_grades(fname)
 
+        use amr_module, only: mxnest
+
         implicit none
 
         ! Input arguments
@@ -140,11 +142,12 @@ contains
         read(iunit,*) keep_fine
         write(*,*) 'keep_fine', keep_fine
 
-
-
         read(iunit,*) fine_level
 
-        ! IF fine level == -1, set to mxnest
+        ! if less than zero set to mxnest
+        if (fine_level.lt.0) then
+          fine_level = mxnest
+        endif
 
         write(*,*) 'fine_level', fine_level
 

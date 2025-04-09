@@ -854,4 +854,6 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
         for flowgrade in self.flowgrades:
             self._out_file.write(4 * "%g  " % tuple(flowgrade) + "\n")
         self.data_write("keep_fine", description="keep_fine")
+        self.data_write("fine_level", description="fine_level")
+
         self.close_data_file()
