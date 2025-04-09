@@ -29,6 +29,7 @@ module refinement_module
     integer, allocatable :: iflowgrademinlevel(:)
     integer :: mflowgrades
     logical :: keep_fine
+    integer :: fine_level
     integer, parameter ::  FGR_PARM_UNIT = 107
 
 contains
@@ -87,6 +88,8 @@ contains
 
     subroutine set_flow_grades(fname)
 
+        use amr_module, only: mxnest
+
         implicit none
 
         ! Input arguments
@@ -138,6 +141,15 @@ contains
 
         read(iunit,*) keep_fine
         write(*,*) 'keep_fine', keep_fine
+
+        read(iunit,*) fine_level
+
+        ! if less than zero set to mxnest
+        if (fine_level.lt.0) then
+          fine_level = mxnest
+        endif
+
+        write(*,*) 'fine_level', fine_level
 
         close(iunit)
 
