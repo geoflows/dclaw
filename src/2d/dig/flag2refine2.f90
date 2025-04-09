@@ -90,6 +90,12 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
          if ((mflowgrades > 0).and. &
              ((q(i_h, i, j).gt.dry_tolerance)).and. &
              (.not. keep_fine)) then
+
+         ! Need to change this logic so that instead of .not.keep_fine
+         ! you can enter this loop if keep fine is True but that
+         ! level is .ge. fine_level
+
+
          ! only check flowgrades if central cell has thickness
          ! DIG: Discuss
 
