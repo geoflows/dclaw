@@ -38,7 +38,7 @@ The following parameters are currently hardwired several places:
 Instructions
 ^^^^^^^^^^^^
 
-This example uses a custom ``qinit.f90``. First recompile the code from within the ``bowl_slosh`` directory:
+This example uses a custom ``qinit.f90``. First recompile the code from within the ``bowl_slosh`` directory::
 
 	make clean
 	make clobber
