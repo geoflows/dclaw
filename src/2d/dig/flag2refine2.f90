@@ -89,7 +89,7 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
          FGFLAG = .false.
          if ((mflowgrades > 0).and. &
              ((q(i_h, i, j).gt.dry_tolerance)).and. &
-             (.not. keep_fine)) then
+             ((.not. keep_fine).or.level>=fine_level)) then
 
          ! Need to change this logic so that instead of .not.keep_fine
          ! you can enter this loop if keep fine is True but that
