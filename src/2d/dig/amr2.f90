@@ -502,7 +502,7 @@ program amr2
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()
-        call set_auxt()
+        call set_auxt(rest)
 
     else
 
@@ -540,7 +540,7 @@ program amr2
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()
-        call set_auxt()
+        call set_auxt(rest)
 
         cflmax = 0.d0   ! otherwise use previously checkpointed val
 
