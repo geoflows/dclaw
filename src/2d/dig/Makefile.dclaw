@@ -25,6 +25,7 @@ COMMON_MODULES += \
  $(DIGLIB)/refinement_module.f90 \
  $(GEOLIB)/adjointsup_module.f90 \
  $(GEOLIB)/fgout_module.f90 \
+ $(GEOLIB)/auxt_module.f90 \
 
 #list of common modules needed for dclaw codes
 COMMON_MODULES += \

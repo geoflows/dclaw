@@ -112,6 +112,7 @@ program amr2
     use adjoint_module, only: read_adjoint_data
     use auxinit_module, only: set_auxinit
     use digclaw_module, only: set_dig, set_pinit
+    use auxt_module, only: set_auxt
 
     implicit none
 
@@ -501,6 +502,7 @@ program amr2
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()
+        call set_auxt()
 
     else
 
@@ -538,6 +540,7 @@ program amr2
         call set_pinit()
         call set_qinit_dig()
         call set_flow_grades()
+        call set_auxt()
 
         cflmax = 0.d0   ! otherwise use previously checkpointed val
 

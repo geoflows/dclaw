@@ -223,11 +223,11 @@ def setrun(claw_pkg="dclaw"):
     # ---------------
 
     # Number of equations in the system:
-    clawdata.num_eqn = 7
+    clawdata.num_eqn = 9
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
     # num_aux must be at least the number needed
-    clawdata.num_aux = 10
+    clawdata.num_aux = 8
 
     # Index of aux array corresponding to capacity function, if there is one:
     # typically only used if coordinate_system=2
@@ -601,8 +601,17 @@ def setrun(claw_pkg="dclaw"):
     fgout.q_out_vars = [1, 4, 8]
     # fgout_grids.append(fgout)    # written to fgout_grids.data
 
-    # == setauxinit.data values ==
+    # == auxinit.data values ==
     # auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
+
+
+    # == auxt.data values ==
+
+    # auxt_data = rundata.auxt_data  # initialized when rundata instantiated
+    # auxt_data.append([dtopotype, iauxinit, fname])
+    auxt_data = rundata.auxt_data
+    auxt_data.auxtfiles.append([3, 8, "dhdt.dtopo3"])
+
 
     # == fgmax.data values ==
     # fgmax_files = rundata.fgmax_data.fgmax_files
