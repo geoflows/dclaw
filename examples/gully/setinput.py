@@ -1,6 +1,7 @@
 import numpy as np
 from clawpack.clawutil.data import ClawData
 from clawpack.geoclaw import topotools
+from clawpack.geoclaw import dtopotools
 from clawpack.geoclaw.data import Rearth  # radius of earth
 from clawpack.visclaw import colormaps
 from pylab import *
@@ -11,7 +12,6 @@ rotate = False
 # Create a gully that exits onto a fan
 # landslide located on a side slop of the gully
 dx = 25
-
 
 if rotate:
     x0 = 0  # right side of domain
@@ -46,15 +46,44 @@ alpha_f = 5  # fan slope angle
 if rotate:
     xl1, xl2 = 2100, 2200  # landslide x extent
     yl1, yl2 = 700, 800  # landslide y extent
+
+    xl1r, xl2r = 2100, 2200  # rain x extent
+    yl1r, yl2r = 1500, 1600  # rain y extent
 else:
     yl1, yl2 = 2100, 2200  # landslide x extent
     xl1, xl2 = 700, 800  # landslide y extent
 
+    xl1r, xl2r = 1500, 1600 # rain x extent
+    yl1r, yl2r = 2100, 2200 # rain y extent
+
 depth = 4  # landslide depth
+
+def make_rain(): # create a dtopo-style file that represents rain.
+    # rain starts at t=1 and ends at t=61. Boxcar rain function
+    x = np.arange(xl1r-dx, xl2r+2*dx, dx)
+    y = np.arange(yl1r-dx, yl2r+2*dx, dx)
+
+    X, Y = np.meshgrid(x,y)
+    dtopo = dtopotools.DTopography()
+    dtopo.X = X
+    dtopo.Y = Y
+    dtopo.times=[0.99, 1, 61, 61.01]
+
+    dZ = np.zeros((len(dtopo.times), y.size, x.size))
+    dtopo.dZ = dZ
+
+    i15 = 50 #mm/hr
+    rrate = i15/1000/(60*60) # meters/second
+
+    rainarea = (X>=xl1r)&(X<=xl2r)&(Y>=yl1r)&(Y<yl2r)
+
+    print(rainarea.sum())
+    print(rrate)
+    dZ[1:3,rainarea] = rrate
+    dtopo.write(path='dhdt.dtopo3', dtopo_type=3, dZ_format="%.7f")
 
 
 def make_plots():
-
     basal = topotools.Topography("basal_topo.tt3", 3)
     basal.plot(long_lat=False)
     title("Basal topo")
@@ -71,7 +100,7 @@ def make_plots():
 
     h = eta.Z - basal.Z
     figure()
-    pcolormesh(eta.X, eta.Y, h, cmap=colormaps.white_red)
+    pcolormesh(eta.X, eta.Y, h, cmap='viridis')
     xlim(x0, x2)
     ylim(y0, y2)
     axis("equal")
@@ -158,4 +187,5 @@ def maketopo():
 
 if __name__ == "__main__":
     maketopo()
+    make_rain()
     make_plots()

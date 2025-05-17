@@ -35,7 +35,9 @@ module digclaw_module
     integer ::  i_hm
     integer ::  i_pb
     integer ::  i_hchi
-    integer ::  i_bdif
+    integer ::  i_hs
+    integer ::  i_hf
+
 
     ! indicies of aux
     integer ::  i_dig
@@ -45,6 +47,7 @@ module digclaw_module
     integer ::  i_taudir_x
     integer ::  i_taudir_y
     integer ::  i_ent
+    integer ::  i_dhdt
 
     integer, parameter ::  DIG_PARM_UNIT = 78
     integer, parameter ::  PINIT_PARM_UNIT = 79
@@ -88,7 +91,8 @@ contains
          i_hm=4
          i_pb=5
          i_hchi=6
-         i_bdif=7
+         i_hs=7
+         i_hf=8
 
          ! set aux index values based on coordinate system
          i_phi    = i_dig
@@ -97,6 +101,7 @@ contains
          i_taudir_x = i_dig + 3
          i_taudir_y = i_dig + 4
          i_ent = i_dig + 5
+         i_dhdt = i_dig + 6
 
          !kappa: earth pressure coefficient
          kappa = 1.d0
@@ -154,7 +159,7 @@ contains
          close(iunit)
 
          ! test that naux is large enough
-         if (i_dig + 4 + entrainment > naux) then
+         if (i_dig + 5 + entrainment > naux) then
             write(*,*)
             write(*,*) "*******************************************************"
             write(*,*) "**************** AUX ERROR"
@@ -162,7 +167,7 @@ contains
             write(*,*) "**************** inconsistent with coordinate_system"
             write(*,*) "**************** and entrainment."
             write(*,*) "**************** Setrun num_aux    = ", naux
-            write(*,*) "**************** Aux required      = ", i_dig + 4 + entrainment
+            write(*,*) "**************** Aux required      = ", i_dig + 5 + entrainment
             write(*,*) "**************** coordinate_system = ", coordinate_system
             write(*,*) "**************** entrainment       = ", entrainment
             write(*,*) "*******************************************************"
@@ -264,13 +269,13 @@ contains
    !accept solution q, return admissible q and primitive vars: u,v,m,rho,chi
    !====================================================================
 
-   subroutine qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+   subroutine qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
 
       implicit none
 
       !i/o
       double precision, intent(in) :: gz
-      double precision, intent(inout) :: h,hu,hv,hm,p,hchi
+      double precision, intent(inout) :: h,hu,hv,hm,p,hchi,hf
       double precision, intent(inout) :: u,v,m,rho,chi
 
       !Locals
@@ -281,6 +286,13 @@ contains
 
       if (h.le.dry_tolerance) then
          if (debug.and.h<0.d0) write(*,*) '****WARNING******** QFIX: dry state encountered, h:', h, hm
+
+         ! move h to hf
+         if (h.gt.0.d0) then
+            hf = hf + h
+         endif
+
+         ! set h to zero
          h =  0.d0
          hu = 0.d0
          hv = 0.d0
@@ -484,11 +496,11 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       !Locals
       double precision :: gz
-      double precision :: h,hu,hv,hm,p,hchi,b,eta
-      double precision :: hL,huL,hvL,hmL,pL,hchiL,bL,etaL
-      double precision :: hR,huR,hvR,hmR,pR,hchiR,bR,etaR
-      double precision :: hB,huB,hvB,hmB,pB,hchiB,bB,etaB
-      double precision :: hT,huT,hvT,hmT,pT,hchiT,bT,etaT
+      double precision :: h,hu,hv,hm,p,hchi,b,eta,hf
+      double precision :: hL,huL,hvL,hmL,pL,hchiL,bL,etaL,hfL
+      double precision :: hR,huR,hvR,hmR,pR,hchiR,bR,etaR,hfR
+      double precision :: hB,huB,hvB,hmB,pB,hchiB,bB,etaB,hfB
+      double precision :: hT,huT,hvT,hmT,pT,hchiT,bT,etaT,hfT
 
       double precision :: u,v,m,chi
       double precision :: uL,vL,mL,chiL,rhoL
@@ -524,10 +536,11 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hm = q(i_hm,i,j)
             p  = q(i_pb,i,j)
             hchi = q(i_hchi,i,j)
+            hf = q(i_hf,i,j)
 
-            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+            call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
 
-            b = aux(1,i,j)-q(i_bdif,i,j)
+            b = aux(1,i,j)-aux(i_ent,i,j)+q(i_hs,i,j)
             eta = h+b
             phi = aux(i_phi,i,j)
 
@@ -537,10 +550,11 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hmL = q(i_hm,i-1,j)
             pL  = q(i_pb,i-1,j)
             hchiL = q(i_hchi,i-1,j)
+            hfL = q(i_hf,i-1,j)
 
-            call qfix(hL,huL,hvL,hmL,pL,hchiL,uL,vL,mL,chiL,rhoL,gz)
+            call qfix(hL,huL,hvL,hmL,pL,hchiL,hfL,uL,vL,mL,chiL,rhoL,gz)
 
-            bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
+            bL = aux(1,i-1,j)-aux(i_ent,i-1,j)+q(i_hs,i-1,j)
             etaL= hL+bL
             if (hL<dry_tolerance) then
                etaL = min(etaL,eta)
@@ -552,10 +566,11 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hmR = q(i_hm,i+1,j)
             pR  = q(i_pb,i+1,j)
             hchiR = q(i_hchi,i+1,j)
+            hfR = q(i_hf,i+1,j)
 
-            call qfix(hR,huR,hvR,hmR,pR,hchiR,uR,vR,mR,chiR,rhoR,gz)
+            call qfix(hR,huR,hvR,hmR,pR,hchiR,hfR,uR,vR,mR,chiR,rhoR,gz)
 
-            bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
+            bR = aux(1,i+1,j)-aux(i_ent,i+1,j)+q(i_hs,i+1,j)
             etaR= hR+bR
             if (hR<dry_tolerance) then
                etaR = min(etaR,eta)
@@ -567,10 +582,11 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hmB = q(i_hm,i,j-1)
             pB  = q(i_pb,i,j-1)
             hchiB = q(i_hchi,i,j-1)
+            hfB = q(i_hf,i,j-1)
 
-            call qfix(hB,huB,hvB,hmB,pB,hchiB,uB,vB,mB,chiB,rhoB,gz)
+            call qfix(hB,huB,hvB,hmB,pB,hchiB,hfB,uB,vB,mB,chiB,rhoB,gz)
 
-            bB = aux(1,i,j-1)-q(i_bdif,i,j-1)
+            bB = aux(1,i,j-1)-aux(i_ent,i,j-1)+q(i_hs,i,j-1)
             etaB= hB+bB
             if (hB<dry_tolerance) then
                etaB = min(etaB,eta)
@@ -582,10 +598,11 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             hmT = q(i_hm,i,j+1)
             pT  = q(i_pb,i,j+1)
             hchiT = q(i_hchi,i,j+1)
+            hfT = q(i_hf,i,j+1)
 
-            call qfix(hT,huT,hvT,hmT,pT,hchiT,uT,vT,mT,chiT,rhoT,gz)
+            call qfix(hT,huT,hvT,hmT,pT,hchiT,hfT,uT,vT,mT,chiT,rhoT,gz)
 
-            bT = aux(1,i,j+1)-q(i_bdif,i,j+1)
+            bT = aux(1,i,j+1)-aux(i_ent,i,j+1)+q(i_hs,i,j+1)
             etaT= hT+bT
             if (hT<dry_tolerance) then
                etaT = min(etaT,eta)

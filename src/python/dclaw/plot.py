@@ -21,8 +21,10 @@ _i_hv = 2
 _i_hm = 3
 _i_pb = 4
 _i_hchi = 5
-_i_beroded = 6
-_i_eta = 7
+_i_hs = 6
+_i_hf = 7
+_i_eta = 8
+
 
 # aux indices
 _i_topo = 0
@@ -381,18 +383,23 @@ def species2_fraction(current_data):
     return chi2
 
 
-def b_eroded(current_data):
-    # eroded depth
+def hs(current_data):
+    # erodible sediment depth
+    # total eroded is aux[_i_ent,:,:]-q[_i_hs, :, :]
     q = current_data.q
-    b_eroded = q[_i_beroded, :, :]
-    # if np.any(b_eroded>0):
-    #        print(f'b_eroded gt zero, {np.sum(b_eroded>0)}')
-    return b_eroded
+    hs = q[_i_hs, :, :]
+    return hs
 
+def hf(current_data):
+    # static water depth
+    q = current_data.q
+    hf = q[_i_hf, :, :]
+    return hf
+
+def hf_minus_hs(current_data):
+    return hf(current_data)-hs(current_data)
 
 # Ancillary values
-
-
 def density(current_data):
     # new segregation might modify.
     m = solid_frac(current_data)

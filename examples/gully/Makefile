@@ -27,6 +27,7 @@ PLOTDIR = _plots                  # Directory for plots
 FC = gfortran
 FFLAGS ?= -O  -gno-strict-dwarf -fbounds-check  -fopenmp \
       -std=legacy -ffpe-trap='invalid,overflow,zero'
+LFAGS ?= -g
 
 # ---------------------------------
 # package sources for this program:

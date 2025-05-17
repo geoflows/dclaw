@@ -24,7 +24,7 @@
 ! b_remaining, amount of material remaining in the erodible layer
 !--------------------------------------------------------------------------------
 
-        subroutine ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,b_eroded,b_remaining)
+        subroutine ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,hs)
 
         use digclaw_module, only: rho_f,rho_s,mu,chie,entrainment_rate
         use digclaw_module, only: me,setvars,qfix,qfix_cmass
@@ -33,8 +33,8 @@
         implicit none
 
         !i/o
-        real(kind=8), intent(inout) :: h,m,p,u,v,rho,b_eroded,hchi
-        real(kind=8), intent(in)  :: b_x,b_y,dt,b_remaining,tau
+        real(kind=8), intent(inout) :: h,m,p,u,v,rho,hs,hchi
+        real(kind=8), intent(in)  :: b_x,b_y,dt,tau
         real(kind=8), intent(in)  :: gz
 
         !local
@@ -54,7 +54,7 @@
 
         if (vnorm.gt.vlow) then
 
-            if (b_remaining.gt.0.d0) then
+            if (hs.gt.0.d0) then
 
 
                 ! calculate entrained material density
@@ -76,7 +76,7 @@
                 ! calculate dh
 
                 dh = entrainment_rate*dt*(t1bot-t2top)/(rhoe*beta*vnorm)
-                dh = min(dh,b_remaining)
+                dh = min(dh,hs)
 
                 ! increment h based on dh
                 h = h + dh
@@ -88,8 +88,8 @@
                 hrho = hm*rho_s + (h-hm)*rho_f
                 rho = hrho/h
 
-                ! update b_eroded
-                b_eroded = b_eroded + dh
+                ! update hs
+                hs = hs - dh
 
                 ! maintain pressure as the pressure ratio prior to entrainment
                 p = prat*hrho

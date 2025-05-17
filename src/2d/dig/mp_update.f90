@@ -532,7 +532,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        end subroutine mp_update_FE_4quad
 
       !========================================================================
-subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
+subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,hf,rhoh,gz)
    !====================================================================
    !used if srcmethod = 0:1
    !subroutine mp_update_relax_Dclaw4: D-Claw 4.x method
@@ -547,7 +547,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       implicit none
 
       !i/o
-      real(kind=8), intent(inout) :: h,u,v,m,p,chi
+      real(kind=8), intent(inout) :: h,u,v,m,p,chi,hf
       real(kind=8), intent(in)  :: rhoh,dt
       real(kind=8), intent(in)  :: gz
 
@@ -566,7 +566,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
       ! integrate pressure response to dilation/contraction
       vnorm = sqrt(hu**2 + hv**2)/h
       p = p - dt*3.d0*vnorm*tanpsi*alphainv/h
-      call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+      call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
 
       ! integrate pressure relaxation to hydrostatic
       zeta = 3.d0*alphainv/(h*2.d0)  + (rho-rho_f)*rho_f*gz/(4.d0*rho)
@@ -596,7 +596,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
          hchi = h*chi
          hu = hu*exp(dt*krate)
          hv = hv*exp(dt*krate)
-         call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+         call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
       case(1)
          ! case 1: half-way new method.
          ! integrate hm and p as above.
@@ -606,7 +606,7 @@ subroutine mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
          hu = h*u
          hv = h*v
          hchi = h*chi
-         call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+         call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
       end select
 
       ! qfix will set prim with conserved

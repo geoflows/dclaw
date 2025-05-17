@@ -466,7 +466,7 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
     * ``iqinit``: integer indicating the element of **q** associated with this file.
     * ``fname``: string indicating the path to the file
 
-    All elements of **q** except for :math:`\Delta b` are accessible through
+    All elements of **q** except for :math:`h_s` are accessible through
     ``setqinit``. Some may not typically be set and some are set using the
     value divided by :math:`h`.
 
@@ -509,15 +509,20 @@ class QinitDClawData(clawpack.clawutil.data.ClawData):
            - meters
            - 6
            - Specified as :math:`\chi` not :math:`h\chi`
-       *   - :math:`\Delta b`
-           - Depth of material entrained
+       *   - :math:`h_s`
+           - Depth of entrainable material.
            - meters
            - 7
-           - Not set because this value must start at zero.
+           - Not set because this value is initialized based on math:`h_e`.
+       *   - :math:`h_f`
+           - Depth of static fluid
+           - meters
+           - 8
+           - Initialized to zero unless set by a file.
        *   - :math:`\eta`
            - Surface elevation :math:`\eta=b+h`
            - meters
-           - 8
+           - 9
            - If files are provided for both :math:`h` and :math:`\eta`, the file
              provided last is used. If :math:`\eta` is provided and :math:`eta<b`,
              the value for :math:`h` is set to 0.
@@ -638,6 +643,11 @@ class AuxInitDClawData(clawpack.clawutil.data.ClawData):
            - meters
            - 7
            - 9
+       *   - :math:`\frac{dh}{dt}`
+           - Rain rate (experimental)
+           - meters per second
+           - 8
+           - 10
 
     The topobathymetric surface :math:`b` is specified using the attribute
     ``rundata.topo_data.topofiles`` (see

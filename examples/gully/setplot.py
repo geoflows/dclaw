@@ -153,7 +153,30 @@ def setplot(plotdata=None):
     plotitem.imshow_cmap = "pink_r"
     plotitem.imshow_norm = mpl.colors.Normalize(vmin=0, vmax=1)
 
-    # eventually add segregation and entrained depth
+
+    # Panel 4 : hf-hs
+    plotaxes = plotfigure.new_plotaxes("hf_minus_hs")
+    plotaxes.title = ""
+    plotaxes.scaled = True
+    plotaxes.axescmd = "subplot(224)"
+    plotaxes.xlimits = xlimits
+    plotaxes.ylimits = ylimits
+    plotaxes.afteraxes = aa_notime
+    plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
+    plotitem.show = True
+    plotitem.plot_var = dplot.eta
+    plotitem.add_colorbar = False
+    plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
+    plotitem.plot_var = dplot.hf_minus_hs
+    plotitem.add_colorbar = True
+    plotitem.colorbar_kwargs = {
+        "shrink": 0.5,
+        "location": "bottom",
+        "orientation": "horizontal",
+    }
+    plotitem.colorbar_label = "hf-hs (m)"
+    plotitem.imshow_cmap = "Blues"
+    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.00001, vmax=0.001, clip=True)
 
     # -------------------------------------
     # Plots of timing (CPU and wall time):

@@ -40,8 +40,8 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
 
    use refinement_module, only: mflowgrades, keep_fine
 
-   use digclaw_module, only: i_h
    use geoclaw_module, only: dry_tolerance
+   use digclaw_module, only: i_h,i_ent
 
    implicit none
 
@@ -295,7 +295,7 @@ subroutine check_flowgrades(meqn, maux, level, &
    use refinement_module, only: flowgradevalue, iflowgradevariable, &
                                 iflowgradetype, iflowgrademinlevel, mflowgrades
    use geoclaw_module, only: dry_tolerance, sea_level
-   use digclaw_module, only: i_h, i_hu, i_hv, i_bdif
+   use digclaw_module, only: i_h, i_hu, i_hv, i_hs, i_ent
 
    implicit none
 
@@ -376,7 +376,7 @@ subroutine check_flowgrades(meqn, maux, level, &
 
             ! only calculate surface perturbation if center cell is wet.
             if (qstencil(i_h,1) .gt. dry_tolerance) then
-               flowgrademeasure = dabs(qstencil(i_h,1) + auxstencil(1,1) - qstencil(i_bdif,1) - sea_level)
+               flowgrademeasure = dabs(qstencil(i_h,1) + auxstencil(1,1) - auxstencil(i_ent,1) + qstencil(i_hs,1) - sea_level)
             else
                flowgrademeasure = 0.d0
             end if
@@ -389,10 +389,10 @@ subroutine check_flowgrades(meqn, maux, level, &
                 (qstencil(i_h,4) .gt. dry_tolerance) .and. &
                 (qstencil(i_h,5) .gt. dry_tolerance)) then ! only consider if all stencil cells are wet.
 
-               lef = qstencil(i_h,2) + auxstencil(1,2) - qstencil(i_bdif,2)
-               rig = qstencil(i_h,3) + auxstencil(1,3) - qstencil(i_bdif,3)
-               bot = qstencil(i_h,4) + auxstencil(1,4) - qstencil(i_bdif,4)
-               top = qstencil(i_h,5) + auxstencil(1,5) - qstencil(i_bdif,5)
+               lef = qstencil(i_h,2) + auxstencil(1,2) - auxstencil(i_ent,2) + qstencil(i_hs,2)
+               rig = qstencil(i_h,3) + auxstencil(1,3) - auxstencil(i_ent,3) + qstencil(i_hs,3)
+               bot = qstencil(i_h,4) + auxstencil(1,4) - auxstencil(i_ent,4) + qstencil(i_hs,4)
+               top = qstencil(i_h,5) + auxstencil(1,5) - auxstencil(i_ent,5) + qstencil(i_hs,5)
 
                flowgrademeasure = sqrt(((rig - lef)/(2.0d0*dx))**2 + ((top - bot)/(2.0d0*dy))**2)
             else

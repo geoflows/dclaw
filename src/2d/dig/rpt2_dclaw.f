@@ -34,7 +34,8 @@
       use geoclaw_module, only: grav, dry_tolerance
       use geoclaw_module, only: coordinate_system,earth_radius,deg2rad
       use digclaw_module, only: rho_f,rho_s,bed_normal,i_theta
-      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
+      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi
+      use digclaw_module, only: i_hs,i_ent
 
       implicit none
 
@@ -101,7 +102,7 @@
               m = qr(i_hm,i-1)/h
               p = qr(i_pb,i-1)
               chi = qr(i_hchi,i-1)/h
-              eta = h + aux2(1,i-1) - qr(i_bdif,i-1)
+              eta = h + aux2(1,i-1) - aux2(i_ent,i-1) + qr(i_hs,i-1)
               topo1 = aux1(1,i-1)
               topo3 = aux3(1,i-1)
          else
@@ -111,7 +112,7 @@
               m = ql(i_hm,i)/h
               p = ql(i_pb,i)
               chi = ql(i_hchi,i)/h
-              eta = h + aux2(1,i) - ql(i_bdif, i)
+              eta = h + aux2(1,i) - aux2(i_ent,i) + ql(i_hs, i)
               topo1 = aux1(1,i)
               topo3 = aux3(1,i)
          endif
@@ -123,12 +124,12 @@
          ! Note: prior to v5.8.0 this checked against max rather than min
          if (eta < min(topo1,topo3)) cycle  ! go to next i
 
-         ! DIG - Right now, with only erosion in q(i_bdif), entrainment will only
+         ! DIG - Right now, with only erosion in q(i_hs), entrainment will only
          ! lower topo, and thus the check that waves into up/down cells is permitted
          ! if both are lower than this cell's eta is conservative. Should deposition
          ! be added, need to adjust aux1,2,3 in step2.
          ! However, this would require a D-Claw specific step2 that adjusts
-         ! aux(1) by q(i_bdif)
+         ! aux(1) by q(i_hs)
 
          ! if we get here, we want to do the splitting (no dry cells),
          ! so compute the necessary quantities:

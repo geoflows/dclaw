@@ -21,7 +21,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     use digclaw_module, only: qfix,calc_pmin,calc_taudir
     use digclaw_module, only: bed_normal,chi0,init_ptype,segregation
     use digclaw_module, only: i_theta,m0,rho_f,rho_s,init_pmin_ratio
-    use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi
+    use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_hf,i_hs,i_ent
 
     implicit none
 
@@ -33,7 +33,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
     ! Locals
     integer :: i,j,m,ii,jj,i1,i2,iend,istart,jstart,jend,mf
-    integer :: initchi,initm,initpv,initu,initv
+    integer :: initchi,initm,initpv,initu,initv,inithf
     real(kind=8) :: x,y,xc,xhigher,xim,ximc,xinthi,xintlow,xip,xipc
     real(kind=8) :: yc,yhigher,yinthi,yintlow,yjm,yjmc,yjp,yjpc
     real(kind=8) :: veta(1-mbc:mx+mbc,1-mbc:my+mbc)
@@ -111,6 +111,15 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     !===========================================
     ! D-Claw specific initialization of q
     !===========================================
+
+    ! set i_hs to i_ent
+    ! and set i_hf to 0.0d0
+    do i=1,mx
+      do j=1,my
+         q(i_hs,i,j) = aux(i_ent,i,j)
+         q(i_hf,i,j) = 0.d0
+      enddo
+    enddo
 
       xhigher = xlower + (mx-0.5d0)*dx ! DIG: higher is cell center but lower is cell edge. Correct?
       yhigher = ylower + (my-0.5d0)*dy ! below, we are comparing against xlow/hi, ylow/hi which are cell edges.
@@ -194,12 +203,15 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       initm = 0
       initchi = 0
       initpv = 0
+      inithf = 0
+      ! hs cannot be user-specified at initialization
       do mf =1,mqinitfiles
          if (iqinit(mf).eq.i_hu) initu=1
          if (iqinit(mf).eq.i_hv) initv = 1
          if (iqinit(mf).eq.i_hm) initm = 1
          if (iqinit(mf).eq.i_pb) initpv = 1
          if (iqinit(mf).eq.i_hchi) initchi = 1
+         if (iqinit(mf).eq.i_hf) inithf = 1
       enddo
 
 
@@ -234,8 +246,10 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                   q(i_pb,i,j) = q(i_h,i,j)*q(i_pb,i,j)
                endif
 
+
                if (q(i_h,i,j).le.dry_tolerance) then
                   do m = 1,meqn
+                     if ((m.eq.i_hf).or.(m.eq.i_hs)) continue
                      q(m,i,j) = 0.d0
                   enddo
                endif
@@ -281,7 +295,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
                   call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j), &
                        q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j), &
-                          u,v,sv,chi,rho,gz)
+                          q(i_hf,i,j),u,v,sv,chi,rho,gz)
 
                   if (bed_normal.eq.1) then
                      p_ratioij = init_pmin_ratio &

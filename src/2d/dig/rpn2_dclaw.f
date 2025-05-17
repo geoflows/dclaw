@@ -57,7 +57,8 @@ c
 
       use digclaw_module, only: bed_normal,i_theta,qfix
       use digclaw_module, only: i_fsphi,i_phi,i_taudir_x,i_taudir_y
-      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
+      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_hf
+      use digclaw_module, only: i_ent,i_hs
 
       implicit none
 
@@ -162,10 +163,12 @@ c        !set normal direction
 
          !zero (small) negative values if they exist and set velocities
          call qfix(ql(i_h,i),ql(mhu,i),ql(nhv,i),ql(i_hm,i),
-     &             ql(i_pb,i),ql(i_hchi,i),uR,vR,mR,chiR,rhoR,gzR)
+     &             ql(i_pb,i),ql(i_hchi,i),ql(i_hf,i),
+     &             uR,vR,mR,chiR,rhoR,gzR)
 
          call qfix(qr(i_h,i-1),qr(mhu,i-1),qr(nhv,i-1),qr(i_hm,i-1),
-     &             qr(i_pb,i-1),qr(i_hchi,i-1),uL,vL,mL,chiL,rhoL,gzL)
+     &             qr(i_pb,i-1),qr(i_hchi,i-1),qr(i_hf,i-1),
+     &             uL,vL,mL,chiL,rhoL,gzL)
 
          !Riemann problem variables
          hL = qr(i_h,i-1)
@@ -178,8 +181,8 @@ c        !set normal direction
          hmR = ql(i_hm,i)
          pL = qr(i_pb,i-1)
          pR = ql(i_pb,i)
-         bL = auxr(1,i-1)  - qr(i_bdif,i-1)
-         bR = auxl(1,i) - ql(i_bdif,i)
+         bL = auxr(1,i-1) - auxr(i_ent, i-1) + qr(i_hs,i-1)
+         bR = auxl(1,i)   - auxl(i_ent, i)   + ql(i_hs,i)
          phi_bedL = auxr(i_phi,i-1)
          phi_bedR = auxl(i_phi,i)
          chiHL = qr(i_hchi,i-1)

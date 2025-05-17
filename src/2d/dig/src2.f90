@@ -33,9 +33,9 @@
       use digclaw_module, only: bed_normal,curvature
       use digclaw_module, only: entrainment,entrainment_method
       use digclaw_module, only: src2method
-      use digclaw_module, only: i_ent,i_theta
+      use digclaw_module, only: i_ent,i_theta,i_dhdt
       use digclaw_module, only: mu,rho_f,rho_s
-      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
+      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_hs,i_hf
       use digclaw_module, only: qfix,setvars
       use digclaw_module, only: dd_manning,manning_max
       implicit none
@@ -49,7 +49,7 @@
       double precision, intent(inout) :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
 
       !local
-      real(kind=8) :: gz,gx,h,hu,hv,hm,u,v,m,p,chi
+      real(kind=8) :: gz,gx,h,hu,hv,hm,u,v,m,p,chi,hs,hf
       real(kind=8) :: b,bR,bL,bT,bB,bTR,bTL,bBR,bBL
 
       real(kind=8) :: rhoh,hchi
@@ -59,7 +59,6 @@
       real(kind=8) :: m_eq
       real(kind=8) :: b_x,b_y,b_xx,b_yy,b_xy
       real(kind=8) :: beta,coeffmanning
-      real(kind=8) :: b_eroded,b_remaining
       real(kind=8) :: gamma,dgamma
       real(kind=8) :: dtk,dtremaining,alphainv,gacc
 
@@ -97,8 +96,24 @@
          ! 1/30/2024 - Leaving this as is for the moment, this is something to evaluate later.
          ! DIG: 10/3/24: DLG is eliminating ghost cells from loop.
 
-            ! Get state variable
+            ! Get state variables and evaluate rain.
             h = q(i_h,i,j)
+
+            if (aux(i_dhdt,i,j).gt.0.d0) then
+               ! add rain to hf
+               q(i_hf,i,j) = q(i_hf,i,j) + (dt*aux(i_dhdt,i,j))
+            endif
+
+            hf = q(i_hf,i,j)
+            hs = q(i_hs,i,j)
+
+            ! if h + (hf-hs) > 2*drytol, move hf-hs to h
+            ! hm does not need adjusting as rain has m=0
+            if ((h+(hf-hs))>2.0d0*dry_tolerance) then
+               h = h + (hf-hs)
+               hf = hs
+            endif
+
             if (h<=dry_tolerance) cycle
             hu = q(i_hu,i,j)
             hv = q(i_hv,i,j)
@@ -121,15 +136,15 @@
                gx = grav*dsin(theta)
             endif
             if (curvature==1.or.entrainment==1) then
-               b = aux(1,i,j)-q(i_bdif,i,j)
-               bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
-               bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
-               bT = aux(1,i,j+1)-q(i_bdif,i,j+1)
-               bB = aux(1,i,j-1)-q(i_bdif,i,j-1)
-               bTR = aux(1,i+1,j+1)-q(i_bdif,i+1,j+1)
-               bTL = aux(1,i-1,j+1)-q(i_bdif,i-1,j+1)
-               bBR = aux(1,i+1,j-1)-q(i_bdif,i+1,j-1)
-               bBL = aux(1,i-1,j-1)-q(i_bdif,i-1,j-1)
+               b = aux(1,i,j)       -aux(i_ent,i,j)     +q(i_hs,i,j)
+               bL = aux(1,i-1,j)    -aux(i_ent,i-1,j)   +q(i_hs,i-1,j)
+               bR = aux(1,i+1,j)    -aux(i_ent,i+1,j)   +q(i_hs,i+1,j)
+               bT = aux(1,i,j+1)    -aux(i_ent,i,j+1)   +q(i_hs,i,j+1)
+               bB = aux(1,i,j-1)    -aux(i_ent,i,j-1)   +q(i_hs,i,j-1)
+               bTR = aux(1,i+1,j+1) -aux(i_ent,i+1,j+1) +q(i_hs,i+1,j+1)
+               bTL = aux(1,i-1,j+1) -aux(i_ent,i-1,j+1) +q(i_hs,i-1,j+1)
+               bBR = aux(1,i+1,j-1) -aux(i_ent,i+1,j-1) +q(i_hs,i+1,j-1)
+               bBL = aux(1,i-1,j-1) -aux(i_ent,i-1,j-1) +q(i_hs,i-1,j-1)
                b_x = (bR-bL)/2.d0*dx
                b_y = (bT-bB)/2.d0*dy
                b_xx=(bR - 2.d0*b + bL)/(dx**2)
@@ -147,7 +162,7 @@
                gz = gz + gacc
             endif
 
-            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+            call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
 
 !-----------!integrate momentum source term------------------------
             ! need tau:
@@ -186,7 +201,7 @@
                hm = h*m
                hchi = h*chi
             case(0:1)
-               call mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,rhoh,gz)
+               call mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,hf,rhoh,gz)
                hu = h*u
                hv = h*v
                hm = h*m
@@ -219,7 +234,7 @@
                hv = h*v
                hm = h*m
                hchi = h*chi
-               call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+               call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
 
             end select
 
@@ -231,6 +246,8 @@
                q(i_hm,i,j) = hm
                q(i_pb,i,j) = p
                q(i_hchi,i,j) = hchi
+               q(i_hs,i,j) = hs
+               q(i_hf,i,j) = hf
                cycle
             endif
 
@@ -241,12 +258,11 @@
 
             !======================mass entrainment===========================
             if (entrainment==1) then
-               b_eroded = q(i_bdif,i,j)
-               b_remaining = aux(i_ent,i,j)-b_eroded
+               hs = q(i_hs,i,j)
                select case(entrainment_method)
                case(0)
-                  call ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,b_eroded,b_remaining)
-                  q(i_bdif,i,j) = b_eroded
+                  call ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,hs)
+                  q(i_hs,i,j) = hs
                case(1)
                   !do nothing yet
                end select
@@ -273,7 +289,7 @@
                   hu= hu/dgamma
                   hv= hv/dgamma
                   !new u,v below
-                  call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+                  call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
                endif
             endif
 
@@ -287,6 +303,8 @@
             q(i_hm,i,j) = hm
             q(i_pb,i,j) = p
             q(i_hchi,i,j) = hchi
+            q(i_hs,i,j) = hs
+            q(i_hf,i,j) = hf
 
          enddo
       enddo

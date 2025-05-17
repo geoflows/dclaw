@@ -23,6 +23,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
 !!   Start of D-Claw specific code: get variables needed for momentum autostop
     use geoclaw_module, only: dry_tolerance
     use digclaw_module, only: mom_autostop, momlevel, amidoneyet
+    use digclaw_module, only: i_ent, i_hs
 !!   End of D-Claw specific code: 
 
 #ifdef HDF5
@@ -200,7 +201,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                             eta = h + alloc(iaddaux(1,i,j))
 
 			     !!   Start of D-Claw specific code: 
-                            eta = eta - alloc(iadd(7,i,j))   ! Adjust eta based on entrainment
+                            eta = eta - alloc(iaddaux(i_ent,i,j)) + alloc(iadd(i_hs,i,j))   ! Adjust eta based on entrainment
 			     !! End of D-Claw specific code
                             if (abs(eta) < 1d-99) then
                                 eta = 0.d0
