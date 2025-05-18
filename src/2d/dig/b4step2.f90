@@ -17,7 +17,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
 !
 
     use topo_module, only: aux_finalized
-    use auxt_module, only: auxt_finalized,update_auxt
+    use auxt_module, only: auxtfill_finalized
     use geoclaw_module, only: grav
     use geoclaw_module, only: speed_limit
 
@@ -101,15 +101,14 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     enddo
 
 
-    if (aux_finalized < 2 .and. actualstep) then
+    if ((aux_finalized < 2 .and. actualstep) .or. (auxtfill_finalized.eqv..false.)) then
         ! topo arrays might have been updated by dtopo more recently than
         ! aux arrays were set unless at least 1 step taken on all levels
         aux(1,:,:) = NEEDS_TO_BE_SET ! new system checks this val before setting
         call setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux)
-    endif
 
-    if (auxt_finalized < 2  .and. actualstep) then
-        call update_auxt(mbc,mx,my,xlower,ylower,dx,dy,maux,aux)
+        ! update_auxt() called from within setaux() to ensure it is allways
+        ! called when setaux() is called.
     endif
 
     ! find factor of safety ratios and friction orientation

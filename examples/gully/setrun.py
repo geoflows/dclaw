@@ -608,7 +608,7 @@ def setrun(claw_pkg="dclaw"):
     # == auxt.data values ==
 
     # auxt_data = rundata.auxt_data  # initialized when rundata instantiated
-    # auxt_data.append([dtopotype, iauxinit, fname])
+    # auxt_data.append([dtopotype, iauxt, fname])
     auxt_data = rundata.auxt_data
     auxt_data.auxtfiles.append([3, 8, "dhdt1.dtopo3"])
     auxt_data.auxtfiles.append([3, 8, "dhdt2.dtopo3"])

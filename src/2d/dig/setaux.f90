@@ -35,6 +35,8 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
 
     use topo_module, only: mtopofiles
 
+    use auxt_module, only: setauxt,auxt_finalized
+
     use auxinit_module, only: mauxinitfiles,iauxinit,ylowauxinit
     use auxinit_module, only: yhiauxinit,xlowauxinit,xhiauxinit
     use auxinit_module, only: i0auxinit,auxinitwork,mxauxinit
@@ -196,6 +198,12 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
     do mf= i_dig,maux
        aux(mf,:,:) = 0.0
     enddo
+
+    ! update based on auxt files
+    if (auxt_finalized < 2) then
+        ! TODO -- do we need to set some values to NEEDS_TO_BE_SET
+        call setauxt(mbc,mx,my,xlower,ylower,dx,dy,maux,aux)
+    endif
 
 !     --------------integrate auxinit files if they exist---------------
       xhigher = xlow + (mx-0.5d0)*dx

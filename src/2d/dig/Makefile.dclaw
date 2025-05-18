@@ -122,7 +122,6 @@ COMMON_SOURCES += \
 # list of source files from GEOCLAW library.
 COMMON_SOURCES += \
   $(GEOLIB)/setprob.f90 \
-  $(GEOLIB)/topo_update.f90 \
   $(GEOLIB)/cellgridintegrate2.f \
   $(GEOLIB)/topointegral.f \
   $(GEOLIB)/bilinearintegral.f \
@@ -172,3 +171,5 @@ COMMON_SOURCES += \
   $(DIGLIB)/entrainment.f90 \
   $(DIGLIB)/mp_update.f90 \
   $(DIGLIB)/flux2fw.f \
+  $(DIGLIB)/topo_update.f90 \
+

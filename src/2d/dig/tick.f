@@ -13,6 +13,10 @@ c
       use amr_module
       use topo_module, only: dt_max_dtopo, num_dtopo, topo_finalized,
      &                       aux_finalized, topo0work
+
+      use auxt_module, only: dt_max_auxt, num_auxt_files,
+     &                       auxt_finalized
+
       use gauges_module, only: setbestsrc, num_gauges
       use gauges_module, only: print_gauges_and_reset_nextLoc
 
@@ -193,11 +197,12 @@ c     if this is true by checking if aux_finalized == 2 elsewhere in code.
       if (aux_finalized .eq. 1 .and. num_dtopo > 0) then
 c         # this is only true once, and only if there was moving topo
           deallocate(topo0work)
-          endif
+      endif
       if (topo_finalized .and. (aux_finalized .lt. 2)) then
           aux_finalized = aux_finalized + 1
-          endif
+      endif
 
+      ! TODO -- Finalize auxt when no more auxt information exists.
 
 c
 c     ------------- regridding  time?  ---------
@@ -496,7 +501,7 @@ c
 c             ! use same alg. as when setting refinement when first make new fine grids
           dtnew(1) = min(dtnew(1),dt_max)
           if ((num_dtopo>0).and.(topo_finalized.eqv..false.)) then
-              dtnew(1) = min(dtnew(1),dt_max_dtopo)
+              dtnew(1) = min(min(dtnew(1),dt_max_dtopo),dt_max_auxt)
           endif
 
           possk(1) = dtnew(1)
