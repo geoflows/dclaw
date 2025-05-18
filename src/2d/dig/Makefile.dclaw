@@ -123,6 +123,7 @@ COMMON_SOURCES += \
 COMMON_SOURCES += \
   $(GEOLIB)/setprob.f90 \
   $(GEOLIB)/cellgridintegrate2.f \
+  $(GEOLIB)/cellgridintegrate2_auxt.f \
   $(GEOLIB)/topointegral.f \
   $(GEOLIB)/bilinearintegral.f \
   $(GEOLIB)/src1d.f90 \
