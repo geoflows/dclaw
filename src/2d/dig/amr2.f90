@@ -584,7 +584,6 @@ program amr2
         nstart = 0
     endif
 
-
     write(parmunit,*) ' '
     write(parmunit,*) '--------------------------------------------'
     write(parmunit,*) ' '

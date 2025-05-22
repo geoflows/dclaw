@@ -13,6 +13,7 @@ subroutine topo_update(t)
 
 
    use topo_module
+   use auxt_module, only: auxt_update,auxtfill_finalized
 
    implicit none
 
@@ -25,12 +26,32 @@ subroutine topo_update(t)
    integer(kind=8) :: ij,ij0,i,j,ijll,ijlr,ijul,ijur
    real(kind=8) :: x,y,xl,xr,yu,yl,zll,zlr,zul,zur,dz12,dz1,dz2,dztotal
 
-   if (t<minval(t0dtopo).or.topo_finalized.eqv..true.) then
-      return
+   write(*,*) "++++++krb++++, topo_update-start : topo_finalized", topo_finalized
+   write(*,*) "++++++krb++++, topo_update-start : auxtfill_finalized", auxtfill_finalized
+
+   ! update any auxt values.
+   if (.not. auxtfill_finalized) then
+      call auxt_update(t)
    endif
 
-   if (minval(topotime)>=maxval(tfdtopo)) then
-      topo_finalized = .true.
+   ! if there are any dtopo files, evaluate whether to continue
+   if (num_dtopo>0) then
+      if (t<minval(t0dtopo).or.topo_finalized.eqv..true.) then
+         return
+      endif
+
+      ! modify from typical topo_update.
+      if ((minval(topotime)>=maxval(tfdtopo)).and.auxtfill_finalized) then
+         topo_finalized = .true.
+         return
+      endif
+
+      if ((minval(topotime)>=maxval(tfdtopo))) then
+         return
+      endif
+
+   else ! otherwise, base setting topo_finalized based on auxtfill_finalized and return
+      topo_finalized = auxtfill_finalized
       return
    endif
 

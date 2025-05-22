@@ -15,7 +15,7 @@ c
      &                       aux_finalized, topo0work
 
       use auxt_module, only: dt_max_auxt, num_auxt_files,
-     &                       auxt_finalized
+     &                       auxtfill_finalized
 
       use gauges_module, only: setbestsrc, num_gauges
       use gauges_module, only: print_gauges_and_reset_nextLoc
@@ -71,6 +71,8 @@ c          have its error estimated and finer levels should be regridded.
 c ::::::::::::::::::::::::::::::::::::;::::::::::::::::::::::::::
 c
 
+
+      write(*,*)"++++++krb++++,tick-start:topo_finalized",topo_finalized
 
       ncycle         = nstart
       call setbestsrc()     ! need at very start of run, including restart
