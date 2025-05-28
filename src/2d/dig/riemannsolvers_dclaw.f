@@ -187,19 +187,20 @@ c     !determine the middle entropy corrector wave------------------------
       s1s2bar = 0.25d0*(uL+uR)**2- gz*hbar
       s1s2tilde= max(0.d0,uL*uR) - gz*hbar
 
+      !dig save for later
       !supercritical, bound jump in h at interface to hL. also reduces source
-      if (sw(1).gt.0.d0.and.hL.gt.0.d0.and.delb.lt.0.d0) then 
-        s1s2bar = max(s1s2bar,-gz*hbar*delb/hL)
-      elseif (sw(3).lt.0.d0.and.hR.gt.0.d0.and.delb.gt.0.d0) then
-        s1s2bar = max(s1s2bar,gz*hbar*delb/hR)
-      endif
+      !if (sw(1).gt.0.d0.and.hL.gt.0.d0.and.delb.lt.0.d0) then 
+      !  s1s2bar = max(s1s2bar,-gz*hbar*delb/hL)
+      !elseif (sw(3).lt.0.d0.and.hR.gt.0.d0.and.delb.gt.0.d0) then
+      !  s1s2bar = max(s1s2bar,gz*hbar*delb/hR)
+      !endif
 
 c     !find if sonic problem
       sonic=.false.
       if (dabs(s1s2bar).le.criticaltol) then
          sonic=.true.
-      elseif (uL*uR.lt.0.d0) then
-         sonic =.true.
+      !elseif (uL*uR.lt.0.d0) then (dig save for later)
+      !   sonic =.true.
       elseif (s1s2bar*s1s2tilde.le.criticaltol**2) then
          sonic=.true.
       elseif (s1s2bar*sE1*sE2.le.criticaltol**2) then
