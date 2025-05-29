@@ -220,7 +220,7 @@ c     !find if sonic problem
       if (sonic) then
          source2dx = -gz*hbar*delb
       else
-         source2dx = -gz*hbar*delb*min(s1s2tilde/s1s2bar,1.d0)
+         source2dx = -gz*hbar*delb*s1s2tilde/s1s2bar 
       endif
 
       source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb))
