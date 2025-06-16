@@ -10,6 +10,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from clawpack.visclaw import colormaps, geoplot, gridtools
+
 from setinput import xl1, xl2, yl1, yl2
 
 xlimits = [2000, 4000]

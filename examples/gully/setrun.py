@@ -10,8 +10,9 @@ import sys
 
 import numpy as np
 from clawpack.geoclaw import fgmax_tools, fgout_tools
+
 # get information about the extent of the domain and landslide from setinput.py
-from setinput import x0, x2, xl1, xl2, y0, y2, yl1, yl2
+from setinput import x0, x2, xl1, xl2, y0, y2, yl1, yl2, xr1, xr2, yr1, yr2
 
 try:
     CLAW = os.environ["CLAW"]
@@ -464,6 +465,9 @@ def setrun(claw_pkg="dclaw"):
     rundata.regiondata.regions.append(
         [3, 3, 0, 1, xl1 - 200, xl2 + 200, yl1 - 200, yl2 + 200]
     )
+    rundata.regiondata.regions.append(
+        [3, 3, 0, 1, xr1 - 200, xr2 + 200, yr1 - 200, yr2 + 200]
+    )
 
     # for testing and comparison with/without amr, set mxnest region to entire domain.
     if force_full_region:
@@ -516,7 +520,7 @@ def setrun(claw_pkg="dclaw"):
     geo_data.friction_forcing = True
     geo_data.manning_coefficient = 0.025
     geo_data.friction_depth = 1e6
-    geo_data.speed_limit=30
+    geo_data.speed_limit = 30
 
     # Refinement settings
     refinement_data = rundata.refinement_data
@@ -602,7 +606,9 @@ def setrun(claw_pkg="dclaw"):
     # fgout_grids.append(fgout)    # written to fgout_grids.data
 
     # == setauxinit.data values ==
-    # auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
+    auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
+    dhdtfile = "dhdt.tt3"
+    auxinitdclaw_data.auxinitfiles.append([3, 8, dhdtfile]) # with coordinate system 1, dhdt is aux8
 
     # == fgmax.data values ==
     # fgmax_files = rundata.fgmax_data.fgmax_files

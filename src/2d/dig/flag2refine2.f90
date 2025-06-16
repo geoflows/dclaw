@@ -320,6 +320,8 @@ subroutine check_flowgrades(meqn, maux, level, &
    real(kind=8) :: flowgrademeasure,lef,rig,bot,top
    integer :: iflow
 
+   !TODO flowgrades need to consider i_hf, i_hs, and i_dhdt
+
    mfg_loop: do iflow = 1, mflowgrades
 
       ! flowgradevariable = 1, depth

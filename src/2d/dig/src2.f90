@@ -101,6 +101,7 @@
 
             if (aux(i_dhdt,i,j).gt.0.d0) then
                ! add rain to hf
+               write(*,*) 'src2: raining', dt*aux(i_dhdt,i,j)
                q(i_hf,i,j) = q(i_hf,i,j) + (dt*aux(i_dhdt,i,j))
             endif
 
@@ -109,9 +110,13 @@
 
             ! if h + (hf-hs) > 2*drytol, move hf-hs to h
             ! hm does not need adjusting as rain has m=0
-            if ((h+(hf-hs))>2.0d0*dry_tolerance) then
+            if ((h+(hf-hs)>2.0d0*dry_tolerance).and.(hf-hs>0.d0)) then
+
+               write(*,*) 'src2: moving hf to h: hf=', hf,'h=', h
+
                h = h + (hf-hs)
                hf = hs
+               q(i_hf,i,j) = hf
             endif
 
             if (h<=dry_tolerance) cycle

@@ -42,16 +42,24 @@ alpha_g = 45  # gully side slope angle
 alpha_c = 15  # gully channel slope angle
 alpha_f = 5  # fan slope angle
 
-# landslide
+# landslide and rainstorm
 if rotate:
     xl1, xl2 = 2100, 2200  # landslide x extent
     yl1, yl2 = 700, 800  # landslide y extent
+
+    xr1, xr2 = 2100, 2200  # rainstorm x extent
+    yr1, yr2 = 1200, 1300  # rainstorm y extent
+
 else:
     yl1, yl2 = 2100, 2200  # landslide x extent
     xl1, xl2 = 700, 800  # landslide y extent
 
-depth = 4  # landslide depth
+    yr1, yr2 = 2100, 2200  # rainstorm x extent
+    xr1, xr2 = 1200, 1300  # rainstorm y extent
 
+depth = 4  # landslide depth
+dhdt = 7e-6  # 25.2 mm/hr
+dhdt = 0.001 # much larger value to make rain move from hs to h in simulation timeframe
 
 def make_plots():
 
@@ -59,6 +67,13 @@ def make_plots():
     basal.plot(long_lat=False)
     title("Basal topo")
     fname = "basal_topo.png"
+    savefig(fname)
+    print("Created ", fname)
+
+    rain_rate = topotools.Topography("dhdt.tt3", 3)
+    rain_rate.plot(long_lat=False)
+    title("Rain rate")
+    fname = "dhdt.png"
     savefig(fname)
     print("Created ", fname)
 
@@ -71,7 +86,7 @@ def make_plots():
 
     h = eta.Z - basal.Z
     figure()
-    pcolormesh(eta.X, eta.Y, h, cmap='viridis')
+    pcolormesh(eta.X, eta.Y, h, cmap="viridis")
     xlim(x0, x2)
     ylim(y0, y2)
     axis("equal")
@@ -117,6 +132,15 @@ def basal(x, y):
     return z
 
 
+def rain(x, y):
+    z = np.zeros_like(x)
+
+    rain_location = (x > xr1) * (x <= xr2) * (y > yr1) * (y <= yr2)
+    z[rain_location] = dhdt
+
+    return z
+
+
 def thickness(x, y):
     z = np.zeros_like(x)
 
@@ -149,6 +173,7 @@ def maketopo():
         ("basal_topo.tt3", basal),
         ("surface_topo.tt3", eta),
         ("thickness.tt3", thickness),
+        ("dhdt.tt3", rain),
     ]:
         topography = topotools.Topography(topo_func=function)
         topography.x = np.linspace(x0, x2, nx * 2 + 1)

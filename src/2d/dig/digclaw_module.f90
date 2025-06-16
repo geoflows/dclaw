@@ -289,6 +289,7 @@ contains
 
          ! move h to hf
          if (h.gt.0.d0) then
+            write(*,*) 'qfix: h moved to hf: hf=', hf,'h=', h
             hf = hf + h
          endif
 

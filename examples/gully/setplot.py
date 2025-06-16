@@ -10,6 +10,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from clawpack.visclaw import colormaps, geoplot, gridtools
+
 from setinput import rotate
 
 if rotate:
@@ -102,7 +103,7 @@ def setplot(plotdata=None):
     }
     plotitem.colorbar_label = "Depth (m)"
     plotitem.imshow_cmap = "Purples"
-    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.001, vmax=4, clip=True)
+    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.00001, vmax=4, clip=True)
     plotitem.patchedges_show = True
 
     # Panel 2 : Hillshade and Velocity
@@ -153,7 +154,6 @@ def setplot(plotdata=None):
     plotitem.imshow_cmap = "pink_r"
     plotitem.imshow_norm = mpl.colors.Normalize(vmin=0, vmax=1)
 
-
     # Panel 4 : hf-hs
     plotaxes = plotfigure.new_plotaxes("hf_minus_hs")
     plotaxes.title = ""
@@ -176,7 +176,7 @@ def setplot(plotdata=None):
     }
     plotitem.colorbar_label = "hf-hs (m)"
     plotitem.imshow_cmap = "Blues"
-    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.00001, vmax=0.001, clip=True)
+    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.000001, vmax=0.001, clip=True)
 
     # -------------------------------------
     # Plots of timing (CPU and wall time):
@@ -222,5 +222,7 @@ def setplot(plotdata=None):
     plotdata.latex_framesperline = 1  # layout of plots
     plotdata.latex_makepdf = False  # also run pdflatex?
     plotdata.parallel = True  # make multiple frame png's at once
+    plotdata.mp4_movie = True
+    plotdata.movie_name_prefix = "../gully_animation"
 
     return plotdata
