@@ -838,6 +838,7 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
     .. code-block::
 
         flowgradesdata.keep_fine = True
+        flowgrades.fine_level = 3
 
     If the finest grid level meets the flowgrades refinement criteria,
     a coarser grid containing it that does not itself meet the refinement
@@ -851,6 +852,7 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
         super(FlowGradesData, self).__init__()
         self.add_attribute("flowgrades", [])
         self.add_attribute("keep_fine", False)
+        self.add_attribute("fine_level", -1)
         self.add_attribute("nflowgrades", None)
 
     def write(self, out_file="flowgrades.data", data_source="setrun.py"):
@@ -862,4 +864,6 @@ class FlowGradesData(clawpack.clawutil.data.ClawData):
         for flowgrade in self.flowgrades:
             self._out_file.write(4 * "%g  " % tuple(flowgrade) + "\n")
         self.data_write("keep_fine", description="keep_fine")
+        self.data_write("fine_level", description="fine_level")
+
         self.close_data_file()

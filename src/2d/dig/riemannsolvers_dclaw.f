@@ -42,10 +42,10 @@ c-----------------------------------------------------------------------
       double precision psi(4)
 
 *     !local
-      integer m,mw,k
+      integer m,mw,k,cwavetype
       double precision h,u,v,mbar
       double precision det1,det2,det3,determinant
-      double precision R(0:2,1:3),A(3,3),del(0:4)
+      double precision R(0:2,1:3),del(0:4) !A(3,3)
       double precision beta(3)
       double precision rho,rhoL,rhoR,tauL,tauR,tau,gzL,gzR
       double precision tanpsi
@@ -57,7 +57,7 @@ c-----------------------------------------------------------------------
       double precision hstarHLL,deldelh,drytol,gz,geps,tausource
       double precision raremin,raremax,rare1st,rare2st,sdelta
       double precision gammaL,gammaR,theta1,theta2,theta3,vnorm
-      double precision alpha_seg
+      double precision alpha_seg,a,b,c
       logical sonic,rare1,rare2
       logical rarecorrectortest,rarecorrector
 
@@ -187,10 +187,20 @@ c     !determine the middle entropy corrector wave------------------------
       s1s2bar = 0.25d0*(uL+uR)**2- gz*hbar
       s1s2tilde= max(0.d0,uL*uR) - gz*hbar
 
+      !dig save for later
+      !supercritical, bound jump in h at interface to hL. also reduces source
+      !if (sw(1).gt.0.d0.and.hL.gt.0.d0.and.delb.lt.0.d0) then 
+      !  s1s2bar = max(s1s2bar,-gz*hbar*delb/hL)
+      !elseif (sw(3).lt.0.d0.and.hR.gt.0.d0.and.delb.gt.0.d0) then
+      !  s1s2bar = max(s1s2bar,gz*hbar*delb/hR)
+      !endif
+
 c     !find if sonic problem
       sonic=.false.
       if (dabs(s1s2bar).le.criticaltol) then
          sonic=.true.
+      !elseif (uL*uR.lt.0.d0) then (dig save for later)
+      !   sonic =.true.
       elseif (s1s2bar*s1s2tilde.le.criticaltol**2) then
          sonic=.true.
       elseif (s1s2bar*sE1*sE2.le.criticaltol**2) then
@@ -210,7 +220,7 @@ c     !find if sonic problem
       if (sonic) then
          source2dx = -gz*hbar*delb
       else
-         source2dx = -delb*gz*hbar*s1s2tilde/s1s2bar
+         source2dx = -gz*hbar*delb*s1s2tilde/s1s2bar 
       endif
 
       source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb))
@@ -245,6 +255,7 @@ c     !find bounds in case of critical state resonance, or negative states
       R(0,2) = 0.d0
       R(1,2) = 0.d0
       R(2,2) = 1.d0
+      cwavetype = 1
 
       R(0,1) = 1.d0
       R(1,1) = sw(1)
@@ -258,6 +269,7 @@ c     !find bounds in case of critical state resonance, or negative states
          R(0,2) = 1.d0
          R(1,2) = sw(2)
          R(2,2) = sw(2)**2
+        cwavetype = 2
       endif
 
       !determine del
@@ -329,36 +341,57 @@ c     !find bounds in case of critical state resonance, or negative states
       endif
 
 
-*     !R beta = del
-*     !gauss routine replaces del with beta and R with it's inverse
+       !R beta = del
+        a = sw(1)
+        b = sw(2)
+        c = sw(3)
+  
+        !solve for beta = Rinv*delta
+        if (cwavetype==1) then
+          !r2 is (0,0,1)
+          beta(1) = (c*del(0) - del(1))/(c-a)
+          beta(2) = a*c*del(0) - (a+c)*del(1) + del(2)
+          beta(3) = (del(1)-a*del(0))/(c-a)
+        elseif (cwavetype==2) then
+          !r2 is (1, s2, s2**2)
+          beta(1) = (b*c*del(0) - (b+c)*del(1) +del(2))/
+     &          (a**2- a*b - a*c + b*c)
+          beta(2) = (-a*c*del(0) + (a+c)*del(1) -del(2))/
+     &      (a*b - a*c- b**2 + b*c)
+          beta(3) = (a*b*del(0) -(a+b)*del(1) + del(2))/
+     &      (a*b - a*c - b*c + c**2)
+        endif
+
+
+      !gauss routine replaces del with beta and R with it's inverse
       !want to keep R, so replacing with A
-      do mw=0,2
-         beta(mw+1) = del(mw)
-         do m=0,2
-            A(m+1,mw+1)=R(m,mw+1)
-         enddo
-      enddo
+      !do mw=0,2
+      !   beta(mw+1) = del(mw)
+      !   do m=0,2
+      !     A(m+1,mw+1)=R(m,mw+1)
+      !   enddo
+      !enddo
 
 c     !Determine determinant of eigenvector matrix========
-      det1=A(1,1)*(A(2,2)*A(3,3)-A(2,3)*A(3,2))
-      det2=A(1,2)*(A(2,1)*A(3,3)-A(2,3)*A(3,1))
-      det3=A(1,3)*(A(2,1)*A(3,2)-A(2,2)*A(3,1))
-      determinant=det1-det2+det3
+      !det1=A(1,1)*(A(2,2)*A(3,3)-A(2,3)*A(3,2))
+      !det2=A(1,2)*(A(2,1)*A(3,3)-A(2,3)*A(3,1))
+      !det3=A(1,3)*(A(2,1)*A(3,2)-A(2,2)*A(3,1))
+      !determinant=det1-det2+det3
 c     !solve for beta(k) using Cramers Rule=================
-      do k=1,3
-         do mw=1,3
-               A(1,mw)=R(0,mw)
-               A(2,mw)=R(1,mw)
-               A(3,mw)=R(2,mw)
-         enddo
-         A(1,k)=del(0)
-         A(2,k)=del(1)
-         A(3,k)=del(2)
-         det1=A(1,1)*(A(2,2)*A(3,3)-A(2,3)*A(3,2))
-         det2=A(1,2)*(A(2,1)*A(3,3)-A(2,3)*A(3,1))
-         det3=A(1,3)*(A(2,1)*A(3,2)-A(2,2)*A(3,1))
-         beta(k)=(det1-det2+det3)/determinant
-      enddo
+      !do k=1,3
+      !   do mw=1,3
+      !         A(1,mw)=R(0,mw)
+      !         A(2,mw)=R(1,mw)
+      !         A(3,mw)=R(2,mw)
+      !   enddo
+      !   A(1,k)=del(0)
+      !   A(2,k)=del(1)
+      !   A(3,k)=del(2)
+      !   det1=A(1,1)*(A(2,2)*A(3,3)-A(2,3)*A(3,2))
+      !   det2=A(1,2)*(A(2,1)*A(3,3)-A(2,3)*A(3,1))
+      !   det3=A(1,3)*(A(2,1)*A(3,2)-A(2,2)*A(3,1))
+      !   beta(k)=(det1-det2+det3)/determinant
+      !enddo
 
       do mw=1,3
          do m=1,2
