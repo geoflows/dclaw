@@ -25,7 +25,6 @@ COMMON_MODULES += \
  $(DIGLIB)/refinement_module.f90 \
  $(GEOLIB)/adjointsup_module.f90 \
  $(GEOLIB)/fgout_module.f90 \
- $(GEOLIB)/auxt_module.f90 \
 
 #list of common modules needed for dclaw codes
 COMMON_MODULES += \
@@ -122,8 +121,8 @@ COMMON_SOURCES += \
 # list of source files from GEOCLAW library.
 COMMON_SOURCES += \
   $(GEOLIB)/setprob.f90 \
+  $(GEOLIB)/topo_update.f90 \
   $(GEOLIB)/cellgridintegrate2.f \
-  $(GEOLIB)/cellgridintegrate2_auxt.f \
   $(GEOLIB)/topointegral.f \
   $(GEOLIB)/bilinearintegral.f \
   $(GEOLIB)/src1d.f90 \
@@ -172,5 +171,3 @@ COMMON_SOURCES += \
   $(DIGLIB)/entrainment.f90 \
   $(DIGLIB)/mp_update.f90 \
   $(DIGLIB)/flux2fw.f \
-  $(DIGLIB)/topo_update.f90 \
-

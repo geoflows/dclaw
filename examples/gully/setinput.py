@@ -1,7 +1,6 @@
 import numpy as np
 from clawpack.clawutil.data import ClawData
 from clawpack.geoclaw import topotools
-from clawpack.geoclaw import dtopotools
 from clawpack.geoclaw.data import Rearth  # radius of earth
 from clawpack.visclaw import colormaps
 from pylab import *
@@ -12,6 +11,7 @@ rotate = False
 # Create a gully that exits onto a fan
 # landslide located on a side slop of the gully
 dx = 25
+
 
 if rotate:
     x0 = 0  # right side of domain
@@ -46,47 +46,15 @@ alpha_f = 5  # fan slope angle
 if rotate:
     xl1, xl2 = 2100, 2200  # landslide x extent
     yl1, yl2 = 700, 800  # landslide y extent
-
-    # rain 1
-    x1r1, x2r1 = 2100, 2200  # rain x extent
-    y1r1, y2r1 = 1500, 1600  # rain y extent
-
-    # rain 2
-    x1r2, x2r2 = 1100, 1200  # rain x extent
-    y1r2, y2r2 = 1500, 1600  # rain y extent
 else:
     yl1, yl2 = 2100, 2200  # landslide x extent
     xl1, xl2 = 700, 800  # landslide y extent
 
-    # rain #1
-    x1r1, x2r1 = 1500, 1600 # rain x extent
-    y1r1, y2r1 = 2100, 2200 # rain y extent
-
-    # rain #2
-    x1r2, x2r2 = 1500, 1600 # rain x extent
-    y1r2, y2r2 = 2100, 2200 # rain y extent
-
 depth = 4  # landslide depth
-
-def make_rain(x1,y1,x2,y2,times,i15,path): # create a dtopo-style file that represents rain.
-    # rain starts at t=1 and ends at t=61. Boxcar rain function
-    x = np.arange(x1-dx, x2+2*dx, dx)
-    y = np.arange(y1-dx, y2+2*dx, dx)
-
-    X, Y = np.meshgrid(x,y)
-    dtopo = dtopotools.DTopography()
-    dtopo.X = X
-    dtopo.Y = Y
-    dtopo.times=times
-    dZ = np.zeros((len(dtopo.times), y.size, x.size))
-    dtopo.dZ = dZ
-    rrate = i15/1000/(60*60) # meters/second
-    rainarea = (X>=x1)&(X<=x2)&(Y>=y1)&(Y<y2)
-    dZ[1:-2,rainarea] = rrate
-    dtopo.write(path=path, dtopo_type=3, dZ_format="%.7f")
 
 
 def make_plots():
+
     basal = topotools.Topography("basal_topo.tt3", 3)
     basal.plot(long_lat=False)
     title("Basal topo")
@@ -190,11 +158,4 @@ def maketopo():
 
 if __name__ == "__main__":
     maketopo()
-    i15 = 50 #mm/hr
-    times = [0.99, 1, 61, 61.01]
-    make_rain(x1r1,y1r1,x2r1,y2r1,times,i15,'dhdt1.dtopo3')
-
-    i15 = 26 #mm/hr
-    times = [1.99, 2, 62, 62.01]
-    make_rain(x1r2,y1r2,x2r2,y2r2,times,i15,'dhdt2.dtopo3')
     make_plots()

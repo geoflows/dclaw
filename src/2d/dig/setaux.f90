@@ -35,8 +35,6 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
 
     use topo_module, only: mtopofiles
 
-    use auxt_module, only: setauxt
-
     use auxinit_module, only: mauxinitfiles,iauxinit,ylowauxinit
     use auxinit_module, only: yhiauxinit,xlowauxinit,xhiauxinit
     use auxinit_module, only: i0auxinit,auxinitwork,mxauxinit
@@ -199,9 +197,6 @@ subroutine setaux(mbc,mx,my,xlow,ylow,dx,dy,maux,aux)
        aux(mf,:,:) = 0.0
     enddo
 
-    ! update based on auxt files
-    call setauxt(mbc,mx,my,xlower,ylower,dx,dy,maux,aux)
-
 !     --------------integrate auxinit files if they exist---------------
       xhigher = xlow + (mx-0.5d0)*dx
       yhigher = ylow + (my-0.5d0)*dy
@@ -345,5 +340,3 @@ contains
     end subroutine wrap_coords
 
 end subroutine setaux
-
-

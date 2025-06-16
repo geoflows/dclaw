@@ -605,15 +605,6 @@ def setrun(claw_pkg="dclaw"):
     # auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
 
 
-    # == auxt.data values ==
-
-    # auxt_data = rundata.auxt_data  # initialized when rundata instantiated
-    # auxt_data.append([dtopotype, iauxt, fname])
-    auxt_data = rundata.auxt_data
-    auxt_data.auxtfiles.append([3, 8, "dhdt1.dtopo3"])
-    auxt_data.auxtfiles.append([3, 8, "dhdt2.dtopo3"])
-
-
     # == fgmax.data values ==
     # fgmax_files = rundata.fgmax_data.fgmax_files
     # for fixed grids append to this list names of any fgmax input files

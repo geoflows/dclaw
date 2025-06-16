@@ -17,7 +17,6 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
 !
 
     use topo_module, only: aux_finalized
-    use auxt_module, only: auxtfill_finalized
     use geoclaw_module, only: grav
     use geoclaw_module, only: speed_limit
 
@@ -29,7 +28,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     use amr_module, only: outunit
 
     use digclaw_module, only: i_theta,bed_normal,qfix,calc_taudir
-    use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_hs,i_ent,i_hf
+    use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
 
     implicit none
 
@@ -58,9 +57,9 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
         do i=1-mbc,mx+mbc
             if (bed_normal.eq.1) gz=grav*dcos(aux(i_theta,i,j))
 
-            call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j),q(i_hf,i,j),u,v,m,chi,rho,gz)
+            call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j),u,v,m,chi,rho,gz)
 
-            ! q(i_hs,i,j) = max(q(i_hs,i,j),0.0d0) ! DIG: if we store deposition in i_hs, remove.
+            q(i_bdif,i,j) = max(q(i_bdif,i,j),0.0d0) ! DIG: if we store deposition in i_bdif, remove.
         enddo
     enddo
 
@@ -101,14 +100,11 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     enddo
 
 
-    if ((aux_finalized < 2 .and. actualstep) .or. (auxtfill_finalized.eqv..false.)) then
+    if (aux_finalized < 2 .and. actualstep) then
         ! topo arrays might have been updated by dtopo more recently than
         ! aux arrays were set unless at least 1 step taken on all levels
         aux(1,:,:) = NEEDS_TO_BE_SET ! new system checks this val before setting
         call setaux(mbc,mx,my,xlower,ylower,dx,dy,maux,aux)
-
-        ! update_auxt() called from within setaux() to ensure it is allways
-        ! called when setaux() is called.
     endif
 
     ! find factor of safety ratios and friction orientation
