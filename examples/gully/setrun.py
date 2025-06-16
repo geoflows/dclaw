@@ -601,9 +601,8 @@ def setrun(claw_pkg="dclaw"):
     fgout.q_out_vars = [1, 4, 8]
     # fgout_grids.append(fgout)    # written to fgout_grids.data
 
-    # == auxinit.data values ==
+    # == setauxinit.data values ==
     # auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
-
 
     # == fgmax.data values ==
     # fgmax_files = rundata.fgmax_data.fgmax_files
