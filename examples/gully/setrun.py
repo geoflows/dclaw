@@ -31,9 +31,9 @@ except:
 # One might create two applications with the same setup (setinput.py,setrun.py,
 # setplot.py, and Makefile) that differ only in the numerical options.
 
-amr = True
-order = 1
-transverse = 0
+amr = False
+order = 2
+transverse = 2
 limiter = 4
 amr_test_no = 0
 
@@ -260,8 +260,8 @@ def setrun(claw_pkg="dclaw"):
 
     if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
-        clawdata.num_output_times = 20
-        clawdata.tfinal = 100.0
+        clawdata.num_output_times = 40
+        clawdata.tfinal = 200.0
         clawdata.output_t0 = True  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
@@ -663,7 +663,9 @@ def setrun(claw_pkg="dclaw"):
     # flowgrademinlevel: refine to at least this level if flowgradevalue is exceeded.
 
     flowgrades_data.keep_fine = True
-    flowgrades_data.flowgrades.append([1.0e-6, 1, 1, 3])
+    flowgrades_data.flowgrades.append([1.0e-4, 1, 1, 3]) # flag depth
+    flowgrades_data.flowgrades.append([0, 4, 1, 3]) # flag hf-hs
+    flowgrades_data.flowgrades.append([0, 5, 1, 3]) # flag dhdt
 
     #  ----- For developers -----
     # Toggle debugging print statements:

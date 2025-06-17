@@ -103,7 +103,7 @@ def setplot(plotdata=None):
     }
     plotitem.colorbar_label = "Depth (m)"
     plotitem.imshow_cmap = "Purples"
-    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.00001, vmax=4, clip=True)
+    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.001, vmax=4, clip=True)
     plotitem.patchedges_show = True
 
     # Panel 2 : Hillshade and Velocity
@@ -155,7 +155,7 @@ def setplot(plotdata=None):
     plotitem.imshow_norm = mpl.colors.Normalize(vmin=0, vmax=1)
 
     # Panel 4 : hf-hs
-    plotaxes = plotfigure.new_plotaxes("hf_minus_hs")
+    plotaxes = plotfigure.new_plotaxes("hf")
     plotaxes.title = ""
     plotaxes.scaled = True
     plotaxes.axescmd = "subplot(224)"
@@ -167,16 +167,16 @@ def setplot(plotdata=None):
     plotitem.plot_var = dplot.eta
     plotitem.add_colorbar = False
     plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
-    plotitem.plot_var = dplot.hf_minus_hs
+    plotitem.plot_var = dplot.hf
     plotitem.add_colorbar = True
     plotitem.colorbar_kwargs = {
         "shrink": 0.5,
         "location": "bottom",
         "orientation": "horizontal",
     }
-    plotitem.colorbar_label = "hf-hs (m)"
-    plotitem.imshow_cmap = "Blues"
-    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.000001, vmax=0.001, clip=True)
+    plotitem.colorbar_label = "hf (m)"
+    plotitem.imshow_cmap = "PuOr"
+    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.0001, vmax=0.01, clip=True)
 
     # -------------------------------------
     # Plots of timing (CPU and wall time):
@@ -215,9 +215,9 @@ def setplot(plotdata=None):
     plotdata.print_framenos = "all"  # list of frames to print
     plotdata.print_gaugenos = "all"  # list of gauges to print
     plotdata.print_fignos = "all"  # list of figures to print
-    plotdata.html = True  # create html files of plots?
+    plotdata.html = False  # create html files of plots?
     plotdata.html_homelink = "../README.html"  # pointer for top of index
-    plotdata.latex = True  # create latex file of plots?
+    plotdata.latex = False  # create latex file of plots?
     plotdata.latex_figsperline = 2  # layout of plots
     plotdata.latex_framesperline = 1  # layout of plots
     plotdata.latex_makepdf = False  # also run pdflatex?

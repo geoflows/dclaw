@@ -28,7 +28,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     use amr_module, only: outunit
 
     use digclaw_module, only: i_theta,bed_normal,qfix,calc_taudir
-    use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_hs,i_ent,i_hf
+    use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_hs,i_ent,i_hf,i_hs
 
     implicit none
 
@@ -57,7 +57,7 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
         do i=1-mbc,mx+mbc
             if (bed_normal.eq.1) gz=grav*dcos(aux(i_theta,i,j))
 
-            call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j),q(i_hf,i,j),u,v,m,chi,rho,gz)
+            call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j),q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j),q(i_hf,i,j),q(i_hs,i,j),u,v,m,chi,rho,gz)
 
         enddo
     enddo

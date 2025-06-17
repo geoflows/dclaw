@@ -264,18 +264,19 @@ contains
 
    end subroutine set_pinit
 
+
    !====================================================================
    !subroutine qfix
    !accept solution q, return admissible q and primitive vars: u,v,m,rho,chi
    !====================================================================
 
-   subroutine qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
+   subroutine qfix(h,hu,hv,hm,p,hchi,hf,hs,u,v,m,chi,rho,gz)
 
       implicit none
 
       !i/o
       double precision, intent(in) :: gz
-      double precision, intent(inout) :: h,hu,hv,hm,p,hchi,hf
+      double precision, intent(inout) :: h,hu,hv,hm,p,hchi,hf,hs
       double precision, intent(inout) :: u,v,m,rho,chi
 
       !Locals
@@ -289,8 +290,11 @@ contains
 
          ! move h to hf
          if (h.gt.0.d0) then
-            write(*,*) 'qfix: h moved to hf: hf=', hf,'h=', h
+            ! write(*,*) '+++++ krbdebug++++ qfix: h moved to hf and hs: hf=', hf,'h=', h, 'hs=', hs
             hf = hf + h
+            hs = hs + hm/me
+            ! hm = depth of pure solid material and me is solid fraction of static layer.
+            ! so if hm stops,hm/me added to hs
          endif
 
          ! set h to zero
@@ -497,11 +501,11 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       !Locals
       double precision :: gz
-      double precision :: h,hu,hv,hm,p,hchi,b,eta,hf
-      double precision :: hL,huL,hvL,hmL,pL,hchiL,bL,etaL,hfL
-      double precision :: hR,huR,hvR,hmR,pR,hchiR,bR,etaR,hfR
-      double precision :: hB,huB,hvB,hmB,pB,hchiB,bB,etaB,hfB
-      double precision :: hT,huT,hvT,hmT,pT,hchiT,bT,etaT,hfT
+      double precision :: h,hu,hv,hm,p,hchi,b,eta,hf,hs
+      double precision :: hL,huL,hvL,hmL,pL,hchiL,bL,etaL,hfL,hsL
+      double precision :: hR,huR,hvR,hmR,pR,hchiR,bR,etaR,hfR,hsR
+      double precision :: hB,huB,hvB,hmB,pB,hchiB,bB,etaB,hfB,hsB
+      double precision :: hT,huT,hvT,hmT,pT,hchiT,bT,etaT,hfT,hsT
 
       double precision :: u,v,m,chi
       double precision :: uL,vL,mL,chiL,rhoL
@@ -538,8 +542,10 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             p  = q(i_pb,i,j)
             hchi = q(i_hchi,i,j)
             hf = q(i_hf,i,j)
+            hs = q(i_hs,i,j)
 
-            call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
+
+            call qfix(h,hu,hv,hm,p,hchi,hf,hs,u,v,m,chi,rho,gz)
 
             b = aux(1,i,j)-aux(i_ent,i,j)+q(i_hs,i,j)
             eta = h+b
@@ -552,8 +558,9 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             pL  = q(i_pb,i-1,j)
             hchiL = q(i_hchi,i-1,j)
             hfL = q(i_hf,i-1,j)
+            hsL = q(i_hs,i-1,j)
 
-            call qfix(hL,huL,hvL,hmL,pL,hchiL,hfL,uL,vL,mL,chiL,rhoL,gz)
+            call qfix(hL,huL,hvL,hmL,pL,hchiL,hfL,hsL,uL,vL,mL,chiL,rhoL,gz)
 
             bL = aux(1,i-1,j)-aux(i_ent,i-1,j)+q(i_hs,i-1,j)
             etaL= hL+bL
@@ -568,8 +575,9 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             pR  = q(i_pb,i+1,j)
             hchiR = q(i_hchi,i+1,j)
             hfR = q(i_hf,i+1,j)
+            hsR = q(i_hs,i+1,j)
 
-            call qfix(hR,huR,hvR,hmR,pR,hchiR,hfR,uR,vR,mR,chiR,rhoR,gz)
+            call qfix(hR,huR,hvR,hmR,pR,hchiR,hfR,hsR,uR,vR,mR,chiR,rhoR,gz)
 
             bR = aux(1,i+1,j)-aux(i_ent,i+1,j)+q(i_hs,i+1,j)
             etaR= hR+bR
@@ -584,8 +592,9 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             pB  = q(i_pb,i,j-1)
             hchiB = q(i_hchi,i,j-1)
             hfB = q(i_hf,i,j-1)
+            hsB = q(i_hs,i,j-1)
 
-            call qfix(hB,huB,hvB,hmB,pB,hchiB,hfB,uB,vB,mB,chiB,rhoB,gz)
+            call qfix(hB,huB,hvB,hmB,pB,hchiB,hfB,hsB,uB,vB,mB,chiB,rhoB,gz)
 
             bB = aux(1,i,j-1)-aux(i_ent,i,j-1)+q(i_hs,i,j-1)
             etaB= hB+bB
@@ -600,8 +609,9 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             pT  = q(i_pb,i,j+1)
             hchiT = q(i_hchi,i,j+1)
             hfT = q(i_hf,i,j+1)
+            hsT = q(i_hs,i,j+1)
 
-            call qfix(hT,huT,hvT,hmT,pT,hchiT,hfT,uT,vT,mT,chiT,rhoT,gz)
+            call qfix(hT,huT,hvT,hmT,pT,hchiT,hfT,hsT,uT,vT,mT,chiT,rhoT,gz)
 
             bT = aux(1,i,j+1)-aux(i_ent,i,j+1)+q(i_hs,i,j+1)
             etaT= hT+bT

@@ -57,8 +57,8 @@ c
 
       use digclaw_module, only: bed_normal,i_theta,qfix
       use digclaw_module, only: i_fsphi,i_phi,i_taudir_x,i_taudir_y
-      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_hf
-      use digclaw_module, only: i_ent,i_hs
+      use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi
+      use digclaw_module, only: i_ent,i_hs,i_hf
 
       implicit none
 
@@ -164,11 +164,11 @@ c        !set normal direction
          !zero (small) negative values if they exist and set velocities
          call qfix(ql(i_h,i),ql(mhu,i),ql(nhv,i),ql(i_hm,i),
      &             ql(i_pb,i),ql(i_hchi,i),ql(i_hf,i),
-     &             uR,vR,mR,chiR,rhoR,gzR)
+     &             ql(i_hs,i),uR,vR,mR,chiR,rhoR,gzR)
 
          call qfix(qr(i_h,i-1),qr(mhu,i-1),qr(nhv,i-1),qr(i_hm,i-1),
      &             qr(i_pb,i-1),qr(i_hchi,i-1),qr(i_hf,i-1),
-     &             uL,vL,mL,chiL,rhoL,gzL)
+     &             qr(i_hs,i-1),uL,vL,mL,chiL,rhoL,gzL)
 
          !Riemann problem variables
          hL = qr(i_h,i-1)

@@ -41,7 +41,7 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
    use refinement_module, only: mflowgrades, keep_fine, fine_level
 
    use geoclaw_module, only: dry_tolerance
-   use digclaw_module, only: i_h,i_ent
+   use digclaw_module, only: i_h,i_ent,i_hs,i_hf,i_dhdt
 
    implicit none
 
@@ -88,7 +88,9 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
          ! determine if flowgrades are used
          FGFLAG = .false.
          if ((mflowgrades > 0).and. &
-             ((q(i_h, i, j).gt.dry_tolerance)).and. &
+             ((q(i_h, i, j).gt.dry_tolerance).or. &
+              (aux(i_dhdt, i, j).gt.0d0).or. &
+              (q(i_hf, i, j) - q(i_hs, i, j) .gt.0.d0)) .and. &
              ((.not. keep_fine).or.level>=fine_level)) then
 
          ! Need to change this logic so that instead of .not.keep_fine
@@ -219,9 +221,10 @@ subroutine flag2refine2(mx, my, mbc, mbuff, meqn, maux, xlower, ylower, dx, dy, 
                              (y_low .lt. yyhi)) then
 
                             ! test if central cell has thickness.
-                            if (alloc(iadd(i_h, ii, jj)).gt.dry_tolerance) then
-                              ! only check flowgrades if central cell in stencil has thickness
-                              ! DIG: Discuss
+                            if (  (alloc(iadd(i_h, ii, jj)).gt.dry_tolerance) .or. &
+                                  (alloc(iaddaux(i_dhdt, ii, jj)).gt.0d0) .or. &
+                                  (alloc(iadd(i_hf, ii, jj))-alloc(iadd(i_hs, ii, jj)).gt.0d0)   ) then
+                              ! only check flowgrades if central cell in stencil has thickness or meets other criteria
 
                               ! construct arrays of q and aux for the five cell
                               ! stencil surrounding cell ii,jj.
@@ -304,6 +307,7 @@ subroutine check_flowgrades(meqn, maux, level, &
                                 iflowgradetype, iflowgrademinlevel, mflowgrades
    use geoclaw_module, only: dry_tolerance, sea_level
    use digclaw_module, only: i_h, i_hu, i_hv, i_hs, i_ent
+   use digclaw_module, only: i_hf,i_hs,i_dhdt
 
    implicit none
 
@@ -319,8 +323,6 @@ subroutine check_flowgrades(meqn, maux, level, &
     !! Locals
    real(kind=8) :: flowgrademeasure,lef,rig,bot,top
    integer :: iflow
-
-   !TODO flowgrades need to consider i_hf, i_hs, and i_dhdt
 
    mfg_loop: do iflow = 1, mflowgrades
 
@@ -409,8 +411,50 @@ subroutine check_flowgrades(meqn, maux, level, &
                flowgrademeasure = 0.d0
             end if
          end if
+
+
+      ! flowgradevariable = 4, hf-hs (static water)
+      elseif (iflowgradevariable(iflow) .eq. 4) then
+
+         ! flowgradetype = 1, magnitude
+         if (iflowgradetype(iflow) .eq. 1) then
+
+            flowgrademeasure = qstencil(i_hf,1) - qstencil(i_hs,1)
+
+            ! flowgradetype != 1, gradient
+         else
+
+            lef = qstencil(i_hf,2) - qstencil(i_hs,2)
+            rig = qstencil(i_hf,3) - qstencil(i_hs,3)
+            bot = qstencil(i_hf,4) - qstencil(i_hs,4)
+            top = qstencil(i_hf,5) - qstencil(i_hs,5)
+
+            flowgrademeasure = sqrt(((rig - lef)/(2.0d0*dx))**2 + ((top - bot)/(2.0d0*dy))**2)
+
+         end if
+
+      ! flowgradevariable = 5, dhdt, rain
+      elseif (iflowgradevariable(iflow) .eq. 5) then
+
+         ! flowgradetype = 1, magnitude
+         if (iflowgradetype(iflow) .eq. 1) then
+
+            flowgrademeasure = auxstencil(i_dhdt,1)
+
+            ! flowgradetype != 1, gradient
+         else
+
+            lef = auxstencil(i_dhdt,2)
+            rig = auxstencil(i_dhdt,3)
+            bot = auxstencil(i_dhdt,4)
+            top = auxstencil(i_dhdt,5)
+
+            flowgrademeasure = sqrt(((rig - lef)/(2.0d0*dx))**2 + ((top - bot)/(2.0d0*dy))**2)
+
+         end if
+
       else
-         write (*, *) '+++++ only flowgradevariable = 1,2,3 supported'
+         write (*, *) '+++++ only flowgradevariable = 1,2,3,4,5 supported'
          stop
       end if
 

@@ -24,7 +24,7 @@
 ! b_remaining, amount of material remaining in the erodible layer
 !--------------------------------------------------------------------------------
 
-        subroutine ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,hs)
+        subroutine ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,hs,hf)
 
         use digclaw_module, only: rho_f,rho_s,mu,chie,entrainment_rate
         use digclaw_module, only: me,setvars,qfix,qfix_cmass
@@ -33,7 +33,7 @@
         implicit none
 
         !i/o
-        real(kind=8), intent(inout) :: h,m,p,u,v,rho,hs,hchi
+        real(kind=8), intent(inout) :: h,m,p,u,v,rho,hs,hf,hchi
         real(kind=8), intent(in)  :: b_x,b_y,dt,tau
         real(kind=8), intent(in)  :: gz
 
@@ -77,6 +77,8 @@
 
                 dh = entrainment_rate*dt*(t1bot-t2top)/(rhoe*beta*vnorm)
                 dh = min(dh,hs)
+
+                ! TODO need to reflect hs, hf, me and potential variable saturation of static layer
 
                 ! increment h based on dh
                 h = h + dh

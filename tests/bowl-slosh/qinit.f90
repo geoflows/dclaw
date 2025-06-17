@@ -305,6 +305,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
                   call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j), &
                        q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j), &
+                          q(i_f,i,j),q(i_hs,i,j)&
                           u,v,sv,chi,rho,gz)
 
                   if (bed_normal.eq.1) then

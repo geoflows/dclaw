@@ -98,26 +98,32 @@
 
             ! Get state variables and evaluate rain.
             h = q(i_h,i,j)
+            hf = q(i_hf,i,j)
+            hs = q(i_hs,i,j)
 
             if (aux(i_dhdt,i,j).gt.0.d0) then
                ! add rain to hf
-               write(*,*) 'src2: raining', dt*aux(i_dhdt,i,j)
-               q(i_hf,i,j) = q(i_hf,i,j) + (dt*aux(i_dhdt,i,j))
-            endif
+               write(*,*) '+++++ krbdebug++++ src2: raining1: t, dt', t, dt
+               write(*,*) '+++++ krbdebug++++ src2: raining2: aux(i_dhdt,i,j), dt*aux(i_dhdt,i,j)', aux(i_dhdt,i,j), dt*aux(i_dhdt,i,j)
+               write(*,*) '+++++ krbdebug++++ src2: raining3: hf before', hf
 
-            hf = q(i_hf,i,j)
-            hs = q(i_hs,i,j)
+               hf = hf + dt*aux(i_dhdt,i,j)
+               write(*,*) '+++++ krbdebug++++ src2: raining4: hf afer', hf
+               write(*,*) '+++++ krbdebug++++ src2: raining5'
+
+            endif
 
             ! if h + (hf-hs) > 2*drytol, move hf-hs to h
             ! hm does not need adjusting as rain has m=0
             if ((h+(hf-hs)>2.0d0*dry_tolerance).and.(hf-hs>0.d0)) then
-
-               write(*,*) 'src2: moving hf to h: hf=', hf,'h=', h
-
+               ! write(*,*) '+++++ krbdebug++++ src2: moving hf to h: hf=', hf,'h=', h
                h = h + (hf-hs)
                hf = hs
-               q(i_hf,i,j) = hf
             endif
+
+            ! put values back in case h<drytol. hs has not changed.
+            q(i_h,i,j) = h
+            q(i_hf,i,j) = hf
 
             if (h<=dry_tolerance) cycle
             hu = q(i_hu,i,j)
@@ -167,7 +173,7 @@
                gz = gz + gacc
             endif
 
-            call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
+            call qfix(h,hu,hv,hm,p,hchi,hf,hs,u,v,m,chi,rho,gz)
 
 !-----------!integrate momentum source term------------------------
             ! need tau:
@@ -206,7 +212,7 @@
                hm = h*m
                hchi = h*chi
             case(0:1)
-               call mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,hf,rhoh,gz)
+               call mp_update_relax_Dclaw4(dt,h,u,v,m,p,chi,hf,hs,rhoh,gz)
                hu = h*u
                hv = h*v
                hm = h*m
@@ -239,7 +245,7 @@
                hv = h*v
                hm = h*m
                hchi = h*chi
-               call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
+               call qfix(h,hu,hv,hm,p,hchi,hf,hs,u,v,m,chi,rho,gz)
 
             end select
 
@@ -266,8 +272,10 @@
                hs = q(i_hs,i,j)
                select case(entrainment_method)
                case(0)
-                  call ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,hs)
+                  call ent_dclaw4(dt,h,u,v,m,p,rho,hchi,gz,tau,b_x,b_y,hs,hf)
                   q(i_hs,i,j) = hs
+                  q(i_hf,i,j) = hf
+
                case(1)
                   !do nothing yet
                end select
@@ -294,7 +302,7 @@
                   hu= hu/dgamma
                   hv= hv/dgamma
                   !new u,v below
-                  call qfix(h,hu,hv,hm,p,hchi,hf,u,v,m,chi,rho,gz)
+                  call qfix(h,hu,hv,hm,p,hchi,hf,hs,u,v,m,chi,rho,gz)
                endif
             endif
 

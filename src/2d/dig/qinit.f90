@@ -117,7 +117,7 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     do i=1,mx
       do j=1,my
          q(i_hs,i,j) = aux(i_ent,i,j)
-         q(i_hf,i,j) = 0.d0
+         q(i_hf,i,j) = 0.d0 ! TODO - this initializes dry. should allow this to be aux(i_ent) or based on a file?
       enddo
     enddo
 
@@ -295,7 +295,8 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
                   call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j), &
                        q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j), &
-                          q(i_hf,i,j),u,v,sv,chi,rho,gz)
+                       q(i_hf,i,j),q(i_hs,i,j),&
+                       u,v,sv,chi,rho,gz)
 
                   if (bed_normal.eq.1) then
                      p_ratioij = init_pmin_ratio &
