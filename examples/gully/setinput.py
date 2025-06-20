@@ -59,7 +59,7 @@ else:
 
 depth = 4  # landslide depth
 dhdt = 7e-6  # 25.2 mm/hr
-dhdt = 0.001 # much larger value to make rain move from hs to h in simulation timeframe
+dhdt = 0.0001 # much larger value to make rain move from hs to h in simulation timeframe
 
 def make_plots():
 

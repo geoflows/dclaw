@@ -35,7 +35,7 @@ amr = False
 order = 2
 transverse = 2
 limiter = 4
-amr_test_no = 0
+amr_test_no = 1
 
 
 # Use either one level with 25 m grid cells (AMR = False)
@@ -63,7 +63,7 @@ if amr_test_no == 0:
     dt_initial = 0.1
     kratio = refinement_ratios
     force_full_region = False
-    max1d = 150
+    max1d = 1000
 
 # amr_test_no = 1
 # ---------------
@@ -141,12 +141,13 @@ variable_dt_refinement_ratios = dt_variable
 
 # Timestep control.
 # depending on whether timesteps are aligned, set values for dt_initial, total_steps, output_step_interval, and kratio.
-total_time = 100
+total_time = 40
 if amr_test_no > 0:
     if aligned_steps:
         dt_initial = 0.5
         total_steps = int(total_time / dt_initial)
         output_step_interval = 10
+        output_step_interval=1
         kratio = [1, 1, 1]
     else:
         dt_initial = 1.0 / factor

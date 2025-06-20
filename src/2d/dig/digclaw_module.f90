@@ -290,9 +290,16 @@ contains
 
          ! move h to hf
          if (h.gt.0.d0) then
-            ! write(*,*) '+++++ krbdebug++++ qfix: h moved to hf and hs: hf=', hf,'h=', h, 'hs=', hs
+            write(*,*) '+++++ krbdebug++++ qfix: h moved to hf and hs'
+            write(*,*) '+++++ krbdebug++++ qfix: before: hf=', hf,'h=', h, 'hs=', hs
+            write(*,*) '+++++ krbdebug++++ qfix: before: hm/h', hm/h,'me=', me
+
             hf = hf + h
             hs = hs + hm/me
+            h = 0.d0
+            write(*,*) '+++++ krbdebug++++ qfix: after : hf=', hf,'h=', h, 'hs=', hs
+            write(*,*) '+++++ krbdebug++++ qfix: after : hf-hs=', hf-hs
+
             ! hm = depth of pure solid material and me is solid fraction of static layer.
             ! so if hm stops,hm/me added to hs
          endif

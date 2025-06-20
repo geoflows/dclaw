@@ -34,7 +34,7 @@
       use digclaw_module, only: entrainment,entrainment_method
       use digclaw_module, only: src2method
       use digclaw_module, only: i_ent,i_theta,i_dhdt
-      use digclaw_module, only: mu,rho_f,rho_s
+      use digclaw_module, only: mu,rho_f,rho_s,me
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_hs,i_hf
       use digclaw_module, only: qfix,setvars
       use digclaw_module, only: dd_manning,manning_max
@@ -98,34 +98,50 @@
 
             ! Get state variables and evaluate rain.
             h = q(i_h,i,j)
+            hm = q(i_hm,i,j)
             hf = q(i_hf,i,j)
             hs = q(i_hs,i,j)
 
+
             if (aux(i_dhdt,i,j).gt.0.d0) then
                ! add rain to hf
-               write(*,*) '+++++ krbdebug++++ src2: raining1: t, dt', t, dt
-               write(*,*) '+++++ krbdebug++++ src2: raining2: aux(i_dhdt,i,j), dt*aux(i_dhdt,i,j)', aux(i_dhdt,i,j), dt*aux(i_dhdt,i,j)
-               write(*,*) '+++++ krbdebug++++ src2: raining3: hf before', hf
+               ! write(*,*) '+++++ krbdebug++++ src2: raining1: t, dt', t, dt
+               ! write(*,*) '+++++ krbdebug++++ src2: raining2: aux(i_dhdt,i,j), dt*aux(i_dhdt,i,j)', aux(i_dhdt,i,j), dt*aux(i_dhdt,i,j)
+               ! write(*,*) '+++++ krbdebug++++ src2: raining3: hf before', hf
 
                hf = hf + dt*aux(i_dhdt,i,j)
-               write(*,*) '+++++ krbdebug++++ src2: raining4: hf afer', hf
-               write(*,*) '+++++ krbdebug++++ src2: raining5'
+               ! write(*,*) '+++++ krbdebug++++ src2: raining4: hf afer', hf
+               ! write(*,*) '+++++ krbdebug++++ src2: raining5'
 
             endif
 
-            ! if h + (hf-hs) > 2*drytol, move hf-hs to h
+            ! if h + (hf-hs) > drytol, move hf-hs to h
             ! hm does not need adjusting as rain has m=0
-            if ((h+(hf-hs)>2.0d0*dry_tolerance).and.(hf-hs>0.d0)) then
+            if ((h+(hf-hs)>dry_tolerance).and.(hf-hs>0.d0)) then
                ! write(*,*) '+++++ krbdebug++++ src2: moving hf to h: hf=', hf,'h=', h
                h = h + (hf-hs)
                hf = hs
+               ! hm is not adjusted as hf has m = 0. h increase as hm does not change. Implied m decreases.
             endif
 
-            ! put values back in case h<drytol. hs has not changed.
+            ! if h + (hf-hs) > drytol and hs<drytol, pick up
+            if ((h+hs>dry_tolerance).and.(hs.le.2.d0*dry_tolerance)) then
+               h = h + hs !function(hs,hf) TODO need to adjust depending on level of saturation in lower layer. This assumes the lower layer is fully saturated.
+               hm = hm + hs*me
+               hs = 0.d0
+               hf = 0.d0
+            endif
+
+
+            ! put values back in case h<drytol.
             q(i_h,i,j) = h
+            q(i_hm,i,j) = hm
             q(i_hf,i,j) = hf
+            q(i_hs,i,j) = hs
 
             if (h<=dry_tolerance) cycle
+
+
             hu = q(i_hu,i,j)
             hv = q(i_hv,i,j)
             hm = q(i_hm,i,j)

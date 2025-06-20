@@ -85,7 +85,7 @@ def setplot(plotdata=None):
     plotaxes = plotfigure.new_plotaxes("depth")
     plotaxes.title = "Depth"
     plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(221)"
+    plotaxes.axescmd = "subplot(231)"
     plotaxes.xlimits = xlimits
     plotaxes.ylimits = ylimits
     plotaxes.afteraxes = aa
@@ -110,7 +110,7 @@ def setplot(plotdata=None):
     plotaxes = plotfigure.new_plotaxes("velocity")
     plotaxes.title = ""
     plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(222)"
+    plotaxes.axescmd = "subplot(232)"
     plotaxes.xlimits = xlimits
     plotaxes.ylimits = ylimits
     plotaxes.afteraxes = aa_notime
@@ -130,11 +130,11 @@ def setplot(plotdata=None):
     plotitem.imshow_cmap = "Greens"
     plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.1, vmax=10, clip=True)
 
-    # Panel 2 : Hillshade and M
+    # Panel 3 : Hillshade and M
     plotaxes = plotfigure.new_plotaxes("solidfrac")
     plotaxes.title = ""
     plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(223)"
+    plotaxes.axescmd = "subplot(233)"
     plotaxes.xlimits = xlimits
     plotaxes.ylimits = ylimits
     plotaxes.afteraxes = aa_notime
@@ -154,11 +154,11 @@ def setplot(plotdata=None):
     plotitem.imshow_cmap = "pink_r"
     plotitem.imshow_norm = mpl.colors.Normalize(vmin=0, vmax=1)
 
-    # Panel 4 : hf-hs
+    # Panel 4 : hf
     plotaxes = plotfigure.new_plotaxes("hf")
     plotaxes.title = ""
     plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(224)"
+    plotaxes.axescmd = "subplot(234)"
     plotaxes.xlimits = xlimits
     plotaxes.ylimits = ylimits
     plotaxes.afteraxes = aa_notime
@@ -178,6 +178,54 @@ def setplot(plotdata=None):
     plotitem.imshow_cmap = "PuOr"
     plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.0001, vmax=0.01, clip=True)
 
+
+    # Panel 5 : hs
+    plotaxes = plotfigure.new_plotaxes("hs")
+    plotaxes.title = ""
+    plotaxes.scaled = True
+    plotaxes.axescmd = "subplot(235)"
+    plotaxes.xlimits = xlimits
+    plotaxes.ylimits = ylimits
+    plotaxes.afteraxes = aa_notime
+    plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
+    plotitem.show = True
+    plotitem.plot_var = dplot.eta
+    plotitem.add_colorbar = False
+    plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
+    plotitem.plot_var = dplot.hs
+    plotitem.add_colorbar = True
+    plotitem.colorbar_kwargs = {
+        "shrink": 0.5,
+        "location": "bottom",
+        "orientation": "horizontal",
+    }
+    plotitem.colorbar_label = "hs (m)"
+    plotitem.imshow_cmap = "PuOr"
+    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.0001, vmax=0.01, clip=True)
+
+    # Panel 6 : hf-hs
+    plotaxes = plotfigure.new_plotaxes("hf-hs")
+    plotaxes.title = ""
+    plotaxes.scaled = True
+    plotaxes.axescmd = "subplot(236)"
+    plotaxes.xlimits = xlimits
+    plotaxes.ylimits = ylimits
+    plotaxes.afteraxes = aa_notime
+    plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
+    plotitem.show = True
+    plotitem.plot_var = dplot.eta
+    plotitem.add_colorbar = False
+    plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
+    plotitem.plot_var = dplot.hf_minus_hs
+    plotitem.add_colorbar = True
+    plotitem.colorbar_kwargs = {
+        "shrink": 0.5,
+        "location": "bottom",
+        "orientation": "horizontal",
+    }
+    plotitem.colorbar_label = "hf-hs (m)"
+    plotitem.imshow_cmap = "PuOr"
+    plotitem.imshow_norm = mpl.colors.LogNorm(vmin=0.0001, vmax=0.01, clip=True)
     # -------------------------------------
     # Plots of timing (CPU and wall time):
 
@@ -215,7 +263,7 @@ def setplot(plotdata=None):
     plotdata.print_framenos = "all"  # list of frames to print
     plotdata.print_gaugenos = "all"  # list of gauges to print
     plotdata.print_fignos = "all"  # list of figures to print
-    plotdata.html = False  # create html files of plots?
+    plotdata.html = True  # create html files of plots?
     plotdata.html_homelink = "../README.html"  # pointer for top of index
     plotdata.latex = False  # create latex file of plots?
     plotdata.latex_figsperline = 2  # layout of plots
