@@ -34,9 +34,15 @@ This is an incomplete list and will be updated as more examples are disseminated
 
 ### Simulations of Barry Arm landslide complex
 
-Barnhart and Collins (2025) provide an example of setting up and running multiple simulations of the Barry Arm landslide complex in support of Barnhart and others (accepted).
+Barnhart and Collins (2025) provide an example of setting up and running multiple simulations of the Barry Arm landslide complex in support of Barnhart and others (2025).
 
-**References**
+### Simulation of the 2024 Surprise Inlet landslides
 
-- Barnhart, K.R., and Collins, A.L., 2025, Barry Arm landslide complex tsunami modeling scenarios: U.S. Geological Survey software release, https://doi.org/10.5066/P175RQZR.
-- Barnhart, K.R., George, D.L., Collins, A. L., Schaefer, L. N., and Staley, D. M., Uncertainty reduction for subaerial landslide-tsunami hazards: accepted at JGR-Earth Surface.
+Barnhart (2025) provides an example of setting up and running a single simulation of the 2024 Surprise Inlet landslides in support of Karasözen and others (2025).
+
+### References
+
+- Barnhart, K.R., 2025, Simulation of Surprise Inlet landslides, version 1.0.0: U.S. Geological Survey software release, <https://doi.org/10.5066/P13BEXYP>.
+- Barnhart, K.R., and Collins, A.L., 2025, Barry Arm landslide complex tsunami modeling scenarios: U.S. Geological Survey software release, <https://doi.org/10.5066/P175RQZR>.
+- Barnhart, K. R., George, D. L., Collins, A. L., Schaefer, L. N., and Staley, D.M., 2025, Uncertainty reduction for subaerial landslide-tsunami hazards. Journal of Geophysical Research: Earth Surface, 130, e2024JF007906. <https://doi.org/10.1029/2024JF007906>.
+- Karasözen, E., West, M.E., Barnhart, K.R., Lyons, J.J., Nichols, T., Schaefer, L.N., Bahng, B., Ohlendorf, S., Staley, D.M. and Wolken, G.J., 2025, 2024 Surprise Inlet landslides---Insights from a prototype landslide‐triggered tsunami monitoring system in Prince William Sound, Alaska: Geophysical Research Letters, v.52, e2025GL115911, <https://doi.org/10.1029/2025GL115911>.
