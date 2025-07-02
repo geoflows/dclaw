@@ -124,7 +124,8 @@
                ! hm is not adjusted as hf has m = 0. h increase as hm does not change. Implied m decreases.
             endif
 
-            ! if h + (hf-hs) > drytol and hs<drytol, pick up
+            ! 'depositing' material from h into hf and hs because h<drytol occurs in
+            ! qfix(). If hs ~= drytol or hs<drytol and h + hs > drytol, pick up
             if ((h+hs>dry_tolerance).and.(hs.le.2.d0*dry_tolerance)) then
                h = h + hs !function(hs,hf) TODO need to adjust depending on level of saturation in lower layer. This assumes the lower layer is fully saturated.
                hm = hm + hs*me

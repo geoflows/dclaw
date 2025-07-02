@@ -288,14 +288,17 @@ contains
       if (h.le.dry_tolerance) then
          if (debug.and.h<0.d0) write(*,*) '****WARNING******** QFIX: dry state encountered, h:', h, hm
 
-         ! move h to hf
+         ! move h to hf and hs
          if (h.gt.0.d0) then
-            write(*,*) '+++++ krbdebug++++ qfix: h moved to hf and hs'
-            write(*,*) '+++++ krbdebug++++ qfix: before: hf=', hf,'h=', h, 'hs=', hs
-            write(*,*) '+++++ krbdebug++++ qfix: before: hm/h', hm/h,'me=', me
+            !write(*,*) '+++++ krbdebug++++ qfix: h moved to hf and hs'
+            !write(*,*) '+++++ krbdebug++++ qfix: before: hf=', hf,'h=', h, 'hs=', hs
+            !write(*,*) '+++++ krbdebug++++ qfix: before: hm/h', hm/h,'me=', me
 
-            hf = hf + h
+            hf = hf + h/(1-m) !TODO, this needs adjusting based on m and/or me
             hs = hs + hm/me
+
+            ! TODO, do we need to update i_ent?
+
             h = 0.d0
             write(*,*) '+++++ krbdebug++++ qfix: after : hf=', hf,'h=', h, 'hs=', hs
             write(*,*) '+++++ krbdebug++++ qfix: after : hf-hs=', hf-hs
