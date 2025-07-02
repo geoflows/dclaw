@@ -2,6 +2,10 @@
 
 This page describes the equations solved by D-Claw. A user interested in the details of the equation derivation is referred to Iverson and George (2014). Those interested in an explanation of the numerical implementation are referred to George and Iverson (2014).
 
+We encourage all users of D-Claw to study the derivation of the governing equations provided by Iverson and George (2014). Understanding the equations is necessary to grasp what the model means and interpret results.
+
+Similarly, we suggest that users undertake systematic parameter sensitivity analysis in the context of their study area and model output of interest. Iverson and George (2016) provides an example of a sensitivity study applied to the 2014 Oso landslide alongside a summary of the underlying equations. Our experience conducting sensitivity analyses for multiple cases (such as Barnhart and others [2025] and Karasözen and others [2025]) indicates that details of parameter sensitivity are often site specific and vary based on model output of interest.
+
 ## State variables and auxiliary variables
 
 D-Claw considers the flow of material under gravity ({math}`\vec{g} = (g_x,g_y,g_z)^\mathrm{T}`) with thickness {math}`h`, x- and y- directed velocities {math}`u` and {math}`v`, solid-volume fraction {math}`m`, and basal pore-fluid pressure {math}`p_b` over an arbitrary surface {math}`b`. Optionally, entrainment of erodible sediment and particle size segregation are implemented. The depth of eroded and entrained material is given by {math}`\Delta b` (positive indicating entrainment has occurred). Segregation considers two species fractions {math}`A` and {math}`B` with {math}`\chi` representing the fraction of species {math}`A`.
@@ -19,10 +23,10 @@ The variables which vary in space and time are:
     - Flow depth
     - meters
 *   - {math}`hu`
-    - Flow x-momentum: depth times x-directed velocity
+    - Flow x-momentum per unit unit bed area divided by local bulk flow density: depth times x-directed velocity
     - meters squared per second
 *   - {math}`hv`
-    - Flow y-momentum: depth times y-directed velocity
+    - Flow y-momentum per unit unit bed area divided by local bulk flow density: depth times y-directed velocity
     - meters squared per second
 *   - {math}`hm`
     - Solid volume: depth times solid-volume fraction
@@ -108,7 +112,7 @@ v\frac{\partial p_b}{\partial y}= \varphi_5
 
 where {math}`\varphi_1`,  {math}`\varphi_2`,  {math}`\varphi_3`,  {math}`\varphi_4`, and {math}`\varphi_5`  represent the source terms.
 
-The bulk density of the flow, {math}`\rho`, is calculated based on the fluid and solid densities, {math}`\rho_f` and {math}`\rho_s`, respectively.
+The bulk density of the flow, {math}`\rho`, is calculated based on the solid volume fraction {math}`m` and the fluid and solid densities, {math}`\rho_f` and {math}`\rho_s`, respectively.
 
 ```{math}
 \rho = \rho_s m + (1-m)\rho_f
@@ -138,7 +142,7 @@ The source terms {math}`\varphi_1--\varphi_5` are defined as
 \varphi_5 = \zeta D - \frac{3}{\alpha h}||(u,v)^\mathrm{T}||\tan\psi
 ```
 
-where {math}`\vec{\tau}_s = (\tau_{s,x},\tau_{s,y})^\mathrm{T}` and {math}`\vec{\tau}_f = (\tau_{f,x},\tau_{f,y})^\mathrm{T}` are the shear tractions exerted by the solid phase and fluid phase, respectively, at the base of the flow, {math}`\alpha` is the debris' elastic compressibility, {math}`\psi` is the granular dilatancy angle, and {math}`D` is the granular dilation rate.
+where {math}`\vec{\tau}_s = (\tau_{s,x},\tau_{s,y})^\mathrm{T}` and {math}`\vec{\tau}_f = (\tau_{f,x},\tau_{f,y})^\mathrm{T}` are the shear tractions exerted by the solid phase and fluid phase, respectively, at the base of the flow, {math}`\alpha` is the debris' elastic compressibility, {math}`\psi` is the granular dilatancy angle, and {math}`D` is the depth-integrated granular dilation rate. The presence of {math}`D` in the source terms compensates for the absence of derivatives of rho in the governing differential equations.
 
 For brevity, the variables {math}`\varrho` in and {math}`\varrho` are defined.
 
@@ -164,20 +168,20 @@ An optional definition for {math}`\sigma_0` (see setrun documentation) utilizes,
 ```
 Selecting this option for the definition of {math}`\sigma_0` may provide enhanced stability of numerical simulations but is still undergoing beta testing.
 
-The dilation rate,{math}`D`, is postulated to be proportional to the excess fluid pressure (see Iverson and George, 2014)
+The depth-integrated granular dilation rate, {math}`D`, was derived from mass-conservation principles by Iverson and George (2014), who also showed that it is related to the excess basal fluid pressure by
 
 ```{math}
 D = -\frac{2k}{h\mu}\left ( p_b - \rho_f g_z h \right )
 ```
 where {math}`k` is the hydraulic permeability (a function of {math}`m`), and {math}`\mu`  is the effective shear viscosity of the pore-fluid.
 
-A form for {math}`k` is
+An empirical equation for {math}`k` was provided by Iverson and George (2014) as
 ```{math}
 k = k_r\exp{\frac{m-m_r}{0.04}}
 ```
 where {math}`k_r` and {math}`m_r` are the reference permeability and solid volume fraction.
 
-The fluid and solid components of basal resistance {math}`\vec{\tau}_f` and {math}`\vec{\tau}_f` are calculated as
+The fluid and solid components of basal resistance {math}`\vec{\tau}_f` and {math}`\vec{\tau}_s` are calculated as
 
 ```{math}
 \vec{\tau}_f = \frac{2\mu\left ( 1-m \right )}{h}(u,v)^\mathrm{T},
@@ -187,15 +191,15 @@ The fluid and solid components of basal resistance {math}`\vec{\tau}_f` and {mat
 \vec{\tau}_s = \sigma_e \tan(\phi + \psi)\frac{(u,v)^\mathrm{T}}{||(u,v)^\mathrm{T}||}.
 ```
 
-with {math}`\sigma_e = \rho g_z h - p_b`, the basal effective normal stress.
+with {math}`\sigma_e = \rho g_z h - p_b`, the basal effective normal stress. The solid-phase basal resistance accounts for the effects of the granular friction angle, {math}`\phi`, and for the modifying influence of the granular dilantancy angle, {math}`\psi`, whereas the fluid-phase basal resistance employs a standard depth-averaged form for viscous shear flows.
 
-{math}`\psi` is the granular dilatancy angle:
+The granular dilatancy angle {math}`\psi` evolves according to the relation
 
 ```{math}
 c_1 \tan\psi = m - \frac{m_\mathrm{crit}}{1+\sqrt{N}}
 ```
 
-{math}`c_1` is a dimensionless constant (typically 1), {math}`m_\mathrm{crit}` is the critical-state solid fraction, and {math}`N` is a dimensionless variable defined as
+where {math}`c_1` is a dimensionless constant (typically 1), {math}`m_\mathrm{crit}` is the critical-state solid fraction, and {math}`N` is a dimensionless number defined as
 
 ```{math}
 N = \frac{\mu \dot{\gamma}}{\rho_s \dot{\gamma}^2 \delta^2 + \sigma_e}.
@@ -227,7 +231,7 @@ As the mixture shears, species {math}`A` moves to the surface of the flow, and i
 \frac{\partial}{\partial x} \left (\beta h \chi u \left( 1-\chi\right) \right)=0
 ```
 
-The representation of the feedback between the value of {math}`\chi` and flow behavior is highly experimental (c.f., Jones et al., 2023). At present the value for the permeability, {math}`k`, given above is modified as follows:
+The representation of the feedback between the value of {math}`\chi` and flow behavior is highly experimental (c.f., Jones et al., 2023). At present the value for the mixture permeability, {math}`k`, given above is modified as follows:
 
 ```{math}
 k = k_{chi} k_r\exp{\frac{m-m_r}{0.04}}
@@ -266,7 +270,7 @@ The options for {math}`\frac{\partial h_e}{\partial t}` are:
 
 #### Old-style entrainment
 
-With `entrainment_method==0` the following is done to calculate the depth of entrainment `dh` associated with a time step `dt`.
+With `entrainment_method==0` the following is done to calculate the depth of entrainment `dh` associated with a time step `dt`. This entrainment formulation is consistent witht he cnservation laws and jump conditions derived in Iverson and Ouyang (2015).
 
 See `entrainment.f90` for additional details and context.
 
@@ -299,10 +303,16 @@ dh = min(dh,b_remaining)
 
 ## References
 
+Barnhart, K. R., George, D. L., Collins, A. L., Schaefer, L. N., and Staley, D.M., 2025, Uncertainty reduction for subaerial landslide-tsunami hazards. Journal of Geophysical Research: Earth Surface, 130, e2024JF007906. <https://doi.org/10.1029/2024JF007906>.
+
+Karasözen, E., West, M.E., Barnhart, K.R., Lyons, J.J., Nichols, T., Schaefer, L.N., Bahng, B., Ohlendorf, S., Staley, D.M. and Wolken, G.J., 2025, 2024 Surprise Inlet landslides---Insights from a prototype landslide‐triggered tsunami monitoring system in Prince William Sound, Alaska: Geophysical Research Letters, v.52, e2025GL115911, <https://doi.org/10.1029/2025GL115911>.
+
 George, D.L., and Iverson, R.M., 2014, A depth-averaged debris-flow model that includes the effects of evolving dilatancy—II. Numerical predictions and experimental tests: Proceedings of the Royal Society of London. Series A, v. 470, no. 2170, p. 20130820,  <https://doi.org/10.1098/rspa.2013.0820>.
 
 Gray, J.M.N.T., and Kokelaar, B.P., 2010, Large particle segregation, transport and accumulation in granular free-surface flows: Journal of Fluid Mechanics, v. 652, p. 105–137 <https://doi.org/10.1017/S002211201000011X>.
 
 Iverson, R.M., and George, D.L., 2014, A depth-averaged debris-flow model that includes the effects of evolving dilatancy—I. Physical basis: Proceedings of the Royal Society of London. Series A, v. 470, no. 2170, p. 20130819, <https://doi.org/10.1098/rspa.2013.0819>.
+
+Iverson, R.M., and Ouyang, C., 2015, Entrainment of bed material by Earth-surface mass flows: Review and reformulation of depth-integrated theory: Rev. Geophys., 53, 27–58. <https://doi.org/10.1002/2013RG000447>.
 
 Jones, R.P., Rengers, F.K., Barnhart, K.R., George, D.L., Staley, D.M., and Kean, J.W., 2023, Simulating Debris Flow and Levee Formation in the 2D Shallow Flow Model D‐Claw: Channelized and Unconfined Flow: Earth and Space Science, v. 10, p. e2022EA002590, <https://doi.org/10.1029/2022EA002590>.

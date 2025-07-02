@@ -1,6 +1,11 @@
 # D-Claw
 
-D-Claw is a software library for the simulation of dense granular flows over spatially variable topography. D-Claw builds on [clawpack](https://www.clawpack.org/), is written in Fortran, and has a python wrapper. The code is hosted on [code.usgs.gov](https://code.usgs.gov/claw/dclaw) and mirrored on [github](https://github.com/geoflows/dclaw).
+D-Claw is a software library for the simulation of grain-liquid mixtures flowing over spatially variable topography. In the limit of zero grain concentration D-Claw reduces to a shallow-water flow model, and in the limit of no intergranular liquid it reduces to a dry granular flow model.  D-Claw builds on [clawpack](https://www.clawpack.org/), is written in Fortran, and has a python wrapper. The code is hosted on [code.usgs.gov](https://code.usgs.gov/claw/dclaw) and mirrored on [github](https://github.com/geoflows/dclaw).
+
+:::{tip}
+We encourage all users of D-Claw to study the derivation of the governing equations provided by Iverson and George (2014). Understanding the equations is necessary to grasp what the model means and interpret results.
+:::
+
 
 D-Claw is supported on Linux/Unix only.
 
@@ -8,7 +13,7 @@ D-Claw is supported on Linux/Unix only.
 
 The documentation contains multiple elements. Most users should start with the [background](src/background.md) and [theory](src/theory.md) pages, which provide an introduction to what D-Claw is and what equations it solves. Should a user find that they want to install and use D-Claw themselves, they can refer to the [installation instructions](src/installation.md). A few [example applications](src/examples.md) are provided.
 
-Each application of D-Claw is specified through a parameter input file called `setrun.py`. This file includes information about the simulation domain, the initial conditions, and scalar values. Many parameters in setrun are inherited from [clawpack](https://www.clawpack.org/) and a user should expect to read the clawpack documentation to fully understand all options. [This page](src/setrun.md) provides a template `setrun.py`. This template includes extensive comments that describe the nature and format of D-Claw specific parameters.
+Each application of D-Claw is specified through a parameter input file called `setrun.py`. This file includes information about the simulation domain, the initial conditions, and constants (e.g., the fluid and solid densities). Many parameters in setrun are inherited from [clawpack](https://www.clawpack.org/) and a user should expect to read the clawpack documentation to fully understand all options. [This page](src/setrun.md) provides a template `setrun.py`. This template includes extensive comments that describe the nature and format of D-Claw specific parameters.
 
 D-Claw has a data model written in python and a set of utility functions that assist with use of clawpack's [visclaw](https://www.clawpack.org/plotting.html) tools. Refer to the [API](src/autodoc2/index.rst) for the documentation of these python tools. Most users will find the [setrun.py](src/setrun.md) page a more usable description of the D-Claw data model than the API documentation.
 
@@ -61,3 +66,7 @@ src/version_control.md
 src/build-docs.md
 src/autodoc2/index.rst
 ```
+
+## References
+
+Iverson, R.M., and George, D.L., 2014, A depth-averaged debris-flow model that includes the effects of evolving dilatancy—I. Physical basis: Proceedings of the Royal Society of London. Series A, v. 470, no. 2170, p. 20130819, <https://doi.org/10.1098/rspa.2013.0819>.
