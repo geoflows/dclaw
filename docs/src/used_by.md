@@ -10,6 +10,8 @@ Barnhart, K.R., and Collins, A.L., 2025, Barry Arm landslide complex tsunami mod
 
 Barnhart, K. R., George, D. L., Collins, A. L., Schaefer, L. N., and Staley, D.M., 2025, Uncertainty reduction for subaerial landslide-tsunami hazards. Journal of Geophysical Research: Earth Surface, 130, e2024JF007906. <https://doi.org/10.1029/2024JF007906>.
 
+Gardner, C.A., Benage, M.C, Cannon, C.M., and George, D.L., 2025, Using the D-Claw software package to model lahars in the Middle Fork Nooksack River drainage and beyond, Mount Baker, Washington, U.S. Geological Survey Scientific Investigations Report 2024-5133. <https://doi.org/10.3133/sir20245133>.
+
 Karasözen, E., West, M.E., Barnhart, K.R., Lyons, J.J., Nichols, T., Schaefer, L.N., Bahng, B., Ohlendorf, S., Staley, D.M. and Wolken, G.J., 2025, 2024 Surprise Inlet landslides---Insights from a prototype landslide‐triggered tsunami monitoring system in Prince William Sound, Alaska: Geophysical Research Letters, v.52, e2025GL115911, <https://doi.org/10.1029/2025GL115911>.
 
 
