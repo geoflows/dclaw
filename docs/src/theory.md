@@ -8,7 +8,7 @@ Similarly, we suggest that users undertake systematic parameter sensitivity anal
 
 ## State variables and auxiliary variables
 
-D-Claw considers the flow of material under gravity ({math}`\vec{g} = (g_x,g_y,g_z)^\mathrm{T}`) with thickness {math}`h`, x- and y- directed velocities {math}`u` and {math}`v`, solid-volume fraction {math}`m`, and basal pore-fluid pressure {math}`p_b` over an arbitrary surface {math}`b`. Optionally, entrainment of erodible sediment and particle size segregation are implemented. The depth of eroded and entrained material is given by {math}`\Delta b` (positive indicating entrainment has occurred). Segregation considers two species fractions {math}`A` and {math}`B` with {math}`\chi` representing the fraction of species {math}`A`.
+D-Claw considers the flow of material driven by gravity ({math}`\vec{g} = (g_x,g_y,g_z)^\mathrm{T}`) with thickness {math}`h`, x- and y- directed velocities {math}`u` and {math}`v`, solid-volume fraction {math}`m`, and basal pore-fluid pressure {math}`p_b` over an arbitrary basal surface {math}`b(x,y)`. Optionally, entrainment of erodible sediment and particle size segregation are implemented. The depth of eroded and entrained material is given by {math}`\Delta b` (positive indicating entrainment has occurred). Segregation considers two species fractions {math}`A` and {math}`B` with {math}`\chi` representing the fraction of species {math}`A`.
 
 The variables which vary in space and time are:
 
@@ -65,7 +65,7 @@ The variables which vary in space only are
 
 ## Core equations
 
-D-Claw solves the following set of partial differential equations. See Iverson and George (2014) and George and Iverson (2014) for derivation, explanation, and references.
+D-Claw solves the following set of depth-averaged partial differential equations. See Iverson and George (2014) and George and Iverson (2014) for derivation, explanation, and references.
 
 
 ```{math}
