@@ -50,8 +50,8 @@ This will place the D-Claw source code in a subfolder (`dclaw/`) of the parent C
 Running D-Claw, or any Clawpack application requires that the following two environment variables be set.
 
 ```
-CLAW=/path/to/top/level/clawpack/directory
-PYTHONPATH=/path/to/top/level/clawpack/directory
+export CLAW=/path/to/top/level/clawpack/directory
+export PYTHONPATH=/path/to/top/level/clawpack/directory
 ```
 
 If you typically have other elements of your python path, the `CLAW` variable may be appended.
