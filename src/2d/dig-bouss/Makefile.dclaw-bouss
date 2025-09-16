@@ -168,7 +168,9 @@ COMMON_SOURCES += \
   $(DIGLIB)/mp_update.f90 \
 
 
-# list of source files from BOUSSLIB library.  **NEED TO CLEAN BOUSS UP FIRST**
+# list of source files from BOUSSLIB library.
+# ** NEED TO CLEAN BOUSS UP FIRST **
+# ** some routines are listed above too, which to use?? **
 COMMON_SOURCES += \
   $(BOUSSLIB)/bound.f90 \
   $(BOUSSLIB)/flagregions2.f90  \
