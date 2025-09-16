@@ -1,6 +1,6 @@
 !! D-Claw specific core file
 !! This file is a modified version of
-!! clawpack/geoclaw/src/2d/shallow/qinit_module.f90 
+!! clawpack/geoclaw/src/2d/shallow/qinit_module.f90
 !!
 
 ! ============================================================================
@@ -292,7 +292,7 @@ contains
         use utility_module, only: parse_values
         character(len=*), intent(in) :: fname
         integer :: iunit,i,j,n
-        real(kind=8) :: values(10), nodata_value
+        real(kind=8) :: values(16), nodata_value
         character(len=80) :: str
 
         iunit = 8
@@ -509,7 +509,7 @@ contains
         logical, parameter :: maketype2 = .false.
         integer :: i,j,num_points,missing,status,qinit_start,n
         double precision :: no_data_value,x,y,z
-        real(kind=8) :: values(10)
+        real(kind=8) :: values(16)
         character(len=80) :: str
 
         print *, ' '
@@ -614,7 +614,7 @@ contains
         integer :: qinit_size, status, n
         real(kind=8) :: x,y,z,nodata_value
         logical :: found_file
-        real(kind=8) :: values(10)
+        real(kind=8) :: values(16)
         character(len=80) :: str
         logical :: verbose
         logical :: xll_registered, yll_registered
