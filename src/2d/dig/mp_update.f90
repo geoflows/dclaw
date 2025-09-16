@@ -81,6 +81,8 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        real(kind=8) :: hu,hv,hm
        real(kind=8) :: rho_c,h_c,p_eq_c,m_c,m_lower,m_upper
        real(kind=8) :: m_c0,p_eq_c0,sig_c,Nd,Nn,normc,shear,convtol,m_eq1
+       real(kind=8) :: dtfact
+
        integer :: debugloop,iter,itermax,quad0,quad1
        logical :: outquad,debug
 
@@ -114,8 +116,10 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        c_d0 = -3.d0*vnorm*(alphainv*rho0/(rhoh))*tanpsi
        kp0 = (kperm/(h0*mu))*(3.d0*alphainv*rho0/rhoh - 1.5d0*rho_f*gz*h0*(rho0-rho_f)/rhoh)
 
-       ! kp0 is guaranteed to be greater or equal to zero if alphamethod = 1
+       ! kp0 is expected to be greater or equal to zero if alphamethod = 1
        ! but not if alphamethod = 0 (old style).
+       ! 9/15/2025 - kp0 observed as -1e-13 with alphamethod 1
+
        if (debug.and.kp0<0.d0) then
           write(*,*) '------------SRC WARNING: kp0<0 ---------->>>>>>>>'
           write(*,*) 'kp0<0:', kp0
@@ -125,8 +129,8 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        kp0 = max(kp0,1.d-3) ! shouldn't happen with alphamethod=1 but prevent
        ! small rounding error
 
-              ! if m == 0 return
-       if (m==0.d0) then
+       ! if m == 0 return
+       if (m.le.0.3d0) then
           ! relax to hydrostatic, call qfix_cmass and return
           p_exc = p_exc0*exp(-kp0*dtr)
           call qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
@@ -216,6 +220,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        ! pressure change is balanced by relaxation.
        ! p-nullcline located in UL (q1) and LR (q3) in between p=p_eq and m=m_eq
 
+       dtfact = 1.0d0
        select case (quad0)
 
        case(1) !UL quadrant, variable material and p_exc
@@ -230,7 +235,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
           if (p_exc0<-1.d-3*rhoh*gz) then
              debugloop=debugloop + 100
              if (c_d0>0.d0) then !don't exceed p_exc = 0 until next substep
-                dtp = -(1.d0/kp0)*log(-c_d0/(kp0*p_exc0-c_d0))
+                dtp = -(1.d0/kp0)*log(-c_d0/(kp0*p_exc0-c_d0)) !* dtfact
              else
                 dtp = dtr
              endif
@@ -243,8 +248,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
           ! next consider region 1B - in UL quadrant, below the p-nullcline
           ! this includes the portion of UL that is the m-nullcline.
-          ! in this region, p increases
-          ! m increases except in the sliver at or below the m-nullcline
+          ! in this region, p increases and m increases
           elseif ((-kp0*p_exc0+c_d0)>0.d0) then
              debugloop=debugloop + 200
              !bound time step
@@ -474,33 +478,34 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
        if (debug) then
           call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq1,tanpsi,tau)
-
-          if (dtk/dtr<1.d-6.and.quad0==quad1) then
-             write(*,*) '---------------SRC WARNING: SMALL TIMESTEP---------->>>>>>'
-             write(*,*) 'dtk,dtr:', dtk,dtr
-             write(*,*) 'dtm,dtp:', dtm,dtp
-             write(*,*) 'debugloop:', debugloop
-             write(*,*) ' quad0,quad1', quad0,quad1
-             write(*,*) 'm_0, m_c:', m_0, m_c
-             write(*,*) 'm_0 - m_c:', m_0 - m_c
-             write(*,*) 'm_0 - m_eq0:', m_0 - m_eq
-             write(*,*) 'meq0 - m_c:', m_eq - m_c
-             write(*,*) 'm1, m_eq1', m, m_eq1
-             write(*,*) 'm1 - m_c:', m - m_c
-             write(*,*) 'm1 - m_eq1:', m - m_eq1
-             write(*,*) 'meq1 - m_c:', m_eq1 - m_c
-             write(*,*) 'p0,p1:', p0,p
-             write(*,*) 'p_exc0,p_exc:', p_exc0,p_exc
-             write(*,*) 'h0,h_c,diff', h0,h_c,h0-h_c
-             write(*,*)  'p,p_eq0,diff', p0,p_eq0,p-p_eq0
-             write(*,*)  'p,p_eq_c,diff', p0,p_eq_c,p-p_eq_c
-             write(*,*)  'p_eq0,p_eq_c,diff', p_eq0,p_eq_c,p_eq0-p_eq_c
-             !stop
-             write(*,*) '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
-             !stop
+          if (dtr>0.d0) then
+             if (dtk/dtr<1.d-6.and.quad0==quad1) then
+                write(*,*) '---------------SRC WARNING: SMALL TIMESTEP---------->>>>>>'
+                write(*,*) 'dtk,dtr:', dtk,dtr
+                write(*,*) 'dtm,dtp:', dtm,dtp
+                write(*,*) 'debugloop:', debugloop
+                write(*,*) ' quad0,quad1', quad0,quad1
+                write(*,*) 'm_0, m_c:', m_0, m_c
+                write(*,*) 'm_0 - m_c:', m_0 - m_c
+                write(*,*) 'm_0 - m_eq0:', m_0 - m_eq
+                write(*,*) 'meq0 - m_c:', m_eq - m_c
+                write(*,*) 'm1, m_eq1', m, m_eq1
+                write(*,*) 'm1 - m_c:', m - m_c
+                write(*,*) 'm1 - m_eq1:', m - m_eq1
+                write(*,*) 'meq1 - m_c:', m_eq1 - m_c
+                write(*,*) 'p0,p1:', p0,p
+                write(*,*) 'p_exc0,p_exc:', p_exc0,p_exc
+                write(*,*) 'h0,h_c,diff', h0,h_c,h0-h_c
+                write(*,*)  'p,p_eq0,diff', p0,p_eq0,p-p_eq0
+                write(*,*)  'p,p_eq_c,diff', p0,p_eq_c,p-p_eq_c
+                write(*,*)  'p_eq0,p_eq_c,diff', p_eq0,p_eq_c,p_eq0-p_eq_c
+                !stop
+                write(*,*) '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+                !stop
+             endif
           endif
 
-          if (quad1-quad0==-1) then
+          if ((quad1-quad0)==-1) then
              write(*,*) '------------SRC WARNING: COUNTERCLOCKWISE ---------->>>>>>>>'
              write(*,*) ' quad0,quad1',quad0,quad1
              write(*,*) 'debugloop:',debugloop
@@ -509,7 +514,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
              !stop
           endif
 
-          if (dtm<0.d0.or.dtp<0.d0) then
+          if ((dtm<0.d0).or.(dtp<0.d0)) then
              write(*,*) '------------SRC WARNING: negative dt ---------->>>>>>>>'
              write(*,*) 'dtk,dtr:', dtk,dtr
              write(*,*) 'dtm,dtp:', dtm,dtp
