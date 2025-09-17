@@ -279,40 +279,40 @@ c============segregation================================================
          s(4,i) = sw(2)
          s(5,i) = sw(3)
 
-         fwave(1,1,i) =   fw(1,1)
+         fwave(i_h,1,i) =   fw(1,1)
          fwave(mhu,1,i) = fw(2,1)
          fwave(nhv,1,i) = fw(3,1)
-         fwave(4,1,i)   = fw(4,1)
-         fwave(5,1,i) =   fw(5,1)
-         fwave(6,1,i) =   fw(6,1)
+         fwave(i_hm,1,i)   = fw(4,1)
+         fwave(i_pb,1,i) =   fw(5,1)
+         fwave(i_hchi,1,i) =   fw(6,1)
 
-         fwave(1,5,i) =   fw(1,3)
+         fwave(i_h,5,i) =   fw(1,3)
          fwave(mhu,5,i) = fw(2,3)
          fwave(nhv,5,i) = fw(3,3)
-         fwave(4,5,i)   = fw(4,3)
-         fwave(5,5,i) =   fw(5,3)
-         fwave(6,5,i) =   fw(6,3)
+         fwave(i_hm,5,i)   = fw(4,3)
+         fwave(i_pb,5,i) =   fw(5,3)
+         fwave(i_hchi,5,i) =   fw(6,3)
 
-         fwave(1,2,i) =   fw(1,2)
+         fwave(i_h,2,i) =   fw(1,2)
          fwave(mhu,2,i) = fw(2,2)
          fwave(nhv,2,i) = fw(3,2)
-         fwave(4,2,i)   = 0.0d0
-         fwave(5,2,i) =  0.0d0
-         fwave(6,2,i) = fw(6,2)
+         fwave(i_hm,2,i)   = 0.0d0
+         fwave(i_pb,2,i) =  0.0d0
+         fwave(i_hchi,2,i) = fw(6,2)
 
-         fwave(1,3,i) =   0.0d0
+         fwave(i_h,3,i) =   0.0d0
          fwave(mhu,3,i) = 0.0d0
          fwave(nhv,3,i) = 0.0d0
-         fwave(4,3,i)   = fw(4,2)
-         fwave(5,3,i) =  0.0d0
-         fwave(6,3,i) =  0.0d0
+         fwave(i_hm,3,i)   = fw(4,2)
+         fwave(i_pb,3,i) =  0.0d0
+         fwave(i_hchi,3,i) =  0.0d0
 
-         fwave(1,4,i) =   0.0d0
+         fwave(i_h,4,i) =   0.0d0
          fwave(mhu,4,i) = 0.0d0
          fwave(nhv,4,i) = 0.0d0
-         fwave(4,4,i)   = 0.0d0
-         fwave(5,4,i) =  fw(5,2)
-         fwave(6,4,i) =  0.0d0
+         fwave(i_hm,4,i)   = 0.0d0
+         fwave(i_pb,4,i) =  fw(5,2)
+         fwave(i_hchi,4,i) =  0.0d0
 
  30      continue
       enddo

@@ -22,7 +22,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
     use storm_module, only: landfall, display_landfall_time
 !!   Start of D-Claw specific code: get variables needed for momentum autostop
     use geoclaw_module, only: dry_tolerance
-    use digclaw_module, only: mom_autostop, momlevel, amidoneyet
+    use digclaw_module, only: mom_autostop, momlevel, amidoneyet, i_bdif
 !!   End of D-Claw specific code: 
 
 #ifdef HDF5
@@ -200,7 +200,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                             eta = h + alloc(iaddaux(1,i,j))
 
 			     !!   Start of D-Claw specific code: 
-                            eta = eta - alloc(iadd(7,i,j))   ! Adjust eta based on entrainment
+                            eta = eta - alloc(iadd(i_bdif,i,j))   ! Adjust eta based on entrainment
 			     !! End of D-Claw specific code
                             if (abs(eta) < 1d-99) then
                                 eta = 0.d0
@@ -270,7 +270,7 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
                         endif
 
                         eta = alloc(iadd(1, i, j)) + alloc(iaddaux(1, i ,j))
-                        eta = eta - alloc(iadd(7,i,j))  ! Adjust eta based on entrainment
+                        eta = eta - alloc(iadd(i_bdif,i,j))  ! Adjust eta based on entrainment
 
 			!!   End of D-Claw specific code: 
                         qeta(iaddqeta(num_eqn + 1, i, j)) = eta
@@ -491,9 +491,9 @@ subroutine valout(level_begin, level_end, time, num_eqn, num_aux)
              status='unknown', action='write', position='append')
              !status='old', action='write', position='append')
 
-    timing_line = "(e16.6, ', ', e16.6, ', ', e16.6,"
+    timing_line = "(e16.6, ', ', e16.6, ', ', e16.6"
     do level=1, mxnest
-        timing_substr = "', ', e16.6, ', ', e16.6, ', ', e16.6"
+        timing_substr = ", ', ', e16.6, ', ', e16.6, ', ', e16.6"
         timing_line = trim(timing_line) // timing_substr
     end do
     timing_line = trim(timing_line) // ")"
