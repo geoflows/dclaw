@@ -37,6 +37,9 @@ module digclaw_module
     integer ::  i_hchi
     integer ::  i_bdif
 
+    ! flag for boussinesq
+    integer ::  i_bouss
+
     ! indicies of aux
     integer ::  i_dig
     integer ::  i_phi
@@ -81,14 +84,20 @@ contains
             i_dig = 2
          endif
 
+         ! flag for whether boussinesq equations are used
+         ! (not yet implemented)
+         ! if bouss is active (based on reading in a data file)
+         ! this will be 2
+         i_bouss = 0
+
          ! hard code q indicies.
          i_h=1
          i_hu=2
          i_hv=3
-         i_hm=4
-         i_pb=5
-         i_hchi=6
-         i_bdif=7
+         i_hm=4 + i_bouss
+         i_pb=5 + i_bouss
+         i_hchi=6 + i_bouss
+         i_bdif=7 + i_bouss
 
          ! set aux index values based on coordinate system
          i_phi    = i_dig

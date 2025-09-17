@@ -17,8 +17,17 @@ except:
     raise Exception("*** Must first set CLAW environment variable")
 
 from clawpack.amrclaw.data import FlagRegion
-from clawpack.geoclaw import fgout_tools
+from clawpack.geoclaw import fgout_tools, fgmax_tools
 
+bouss = False
+if bouss:
+    i_eta = 10
+    i_hm = 6
+    num_eqn = 9
+else:
+    i_eta = 8
+    i_hm = 4
+    num_eqn = 7
 
 # ------------------------------
 def setrun(claw_pkg="dclaw"):
@@ -81,7 +90,7 @@ def setrun(claw_pkg="dclaw"):
     # ---------------
 
     # Number of equations in the system:
-    clawdata.num_eqn = 7
+    clawdata.num_eqn = num_eqn
 
     # Number of auxiliary variables in the aux array (initialized in setaux)
     clawdata.num_aux = 10
@@ -325,6 +334,7 @@ def setrun(claw_pkg="dclaw"):
     # ---------------
     # for gauges append lines of the form  [gaugeno, x, y, t1, t2]
     rundata.gaugedata.gauges = []
+    rundata.gaugedata.gauges.append([1, 2000, 0, 0, 100])
 
     # Set GeoClaw specific runtime parameters.
 
@@ -367,18 +377,44 @@ def setrun(claw_pkg="dclaw"):
     qinitdclaw_data = rundata.qinitdclaw_data  # initialized when rundata instantiated
 
     etafile = "surface_topo.tt3"
-    qinitdclaw_data.qinitfiles.append([3, 8, etafile])
+    qinitdclaw_data.qinitfiles.append([3, i_eta, etafile])
 
     mfile = "mass_frac.tt3"
     # mfile = 'mass_frac0.tt3' # with m0 = 0 below
-    qinitdclaw_data.qinitfiles.append([3, 4, mfile])
+    qinitdclaw_data.qinitfiles.append([3, i_hm, mfile])
 
     # == setauxinit.data values ==
     # auxinitdclaw_data = rundata.auxinitdclaw_data  # initialized when rundata instantiated
 
-    # == fgmax.data values ==
-    # fgmax_files = rundata.fgmax_data.fgmax_files
-    # for fixed grids append to this list names of any fgmax input files
+    # == fgmax_grids.data values ==
+    # NEW STYLE STARTING IN v5.7.0
+
+    # set num_fgmax_val = 1 to save only max depth,
+    #                     2 to also save max speed,
+    #                     5 to also save max hs,hss,hmin
+    rundata.fgmax_data.num_fgmax_val = 5  # Save all quantities
+    fgmax_grids = rundata.fgmax_data.fgmax_grids  # empty list to start
+
+    fg = fgmax_tools.FGmaxGrid()
+
+    fg.point_style = 2  # uniform rectangular x-y grid
+
+    dx_fg = 20
+
+    fg.x1 = clawdata.lower[0] + dx_fg / 2
+    fg.x2 = clawdata.upper[0] - dx_fg / 2
+    fg.y1 = clawdata.lower[1] + dx_fg / 2
+    fg.y2 = clawdata.upper[1] - dx_fg / 2
+    fg.dx = dx_fg  # desired resolution of fgmax grid
+    fg.tstart_max = 0.0  # when to start monitoring max values
+    fg.tend_max = 1.0e10  # when to stop monitoring max values
+    fg.dt_check = 1.0  # target time (sec) increment between updating
+    # max values
+    fg.min_level_check = 2  # which levels to monitor max on
+    fg.arrival_tol = 1.0e-2  # tolerance for flagging arrival
+    fg.interp_method = 0  # 0 ==> pw const in cells, recommended
+    fgmax_grids.append(fg)  # written to fgmax_grids.data
+
 
     # == setdclaw.data values ==
     dclaw_data = rundata.dclaw_data  # initialized when rundata instantiated

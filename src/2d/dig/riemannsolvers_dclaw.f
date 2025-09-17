@@ -37,8 +37,8 @@ c-----------------------------------------------------------------------
       logical wallprob
 
 
-      double precision fw(meqn,mwaves)
-      double precision sw(mwaves)
+      double precision fw(6,3)
+      double precision sw(3)
       double precision psi(4)
 
 *     !local
