@@ -155,7 +155,7 @@ contains
         logical, parameter :: maketype2 = .false.
         integer :: i,j,num_points,missing,status,auxinit_start,n
         double precision :: no_data_value,x,y,z
-        real(kind=8) :: values(10)
+        real(kind=8) :: values(16)
         character(len=80) :: str
 
         print *, ' '
@@ -261,7 +261,7 @@ contains
         integer :: auxinit_size, status,n
         double precision :: x,y,z,nodata_value
         logical :: found_file
-        real(kind=8) :: values(10)
+        real(kind=8) :: values(16)
         character(len=80) :: str
         logical :: xll_registered, yll_registered
 
