@@ -17,7 +17,17 @@ from clawpack.visclaw import colormaps, geoplot, gridtools
 sea_level = 50.0
 
 outdir2 = None
-# outdir2 = '_output_SL50_order2_trans0'
+
+bouss = False
+# setplot uses python indexing
+if bouss:
+    i_eta = 10-1
+    i_hm = 6-1
+    i_pb = 7-1
+else:
+    i_eta = 8-1
+    i_hm = 4-1
+    i_pb = 5-1
 
 
 # --------------------------
@@ -126,7 +136,7 @@ def setplot(plotdata=None):
     def pure_water(current_data):
         q = current_data.q
         h = q[0, :, :]
-        hm = q[3, :, :]
+        hm = q[i_hm, :, :]
         eta = dplot.eta(current_data)
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
@@ -150,7 +160,7 @@ def setplot(plotdata=None):
     def landslide(current_data):
         q = current_data.q
         h = q[0, :, :]
-        hm = q[3, :, :]
+        hm = q[i_hm, :, :]
         eta = dplot.eta(current_data)
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
@@ -228,7 +238,7 @@ def setplot(plotdata=None):
         hout = gridtools.grid_output_2d(framesoln, 0, xout, yout)
         zetaout = where(hout > 0.001, etaout, nan)
         Bout = etaout - hout
-        hmout = gridtools.grid_output_2d(framesoln, 3, xout, yout)
+        hmout = gridtools.grid_output_2d(framesoln, i_hm, xout, yout)
         with np.errstate(divide="ignore", invalid="ignore"):
             mout = hmout / hout
         water = where(mout < 0.1, etaout, nan)
@@ -262,7 +272,7 @@ def setplot(plotdata=None):
     def water_or_landslide_depth(current_data):
         q = current_data.q
         h = q[0, :, :]
-        hm = q[3, :, :]
+        hm = q[i_hm, :, :]
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
         water = np.where(np.logical_and(h > 1e-3, m < 0.1), h, np.nan)
@@ -327,16 +337,11 @@ def setplot(plotdata=None):
     def mass_frac(current_data):
         q = current_data.q
         h = q[0, :, :]
-        hm = q[3, :, :]
+        hm = q[i_hm, :, :]
         with np.errstate(divide="ignore", invalid="ignore"):
             m = hm / h
         mwet = np.where(h > 0.01, m, np.nan)
         mmax = np.nanmax(mwet)
-        print("mmax = %.3e" % mmax)
-        q3max = abs(q[3, :, :]).max()
-        q4max = abs(q[4, :, :]).max()
-        q5max = abs(q[5, :, :]).max()
-        print("q3max = %.3e" % q3max, "q4max = %.3e" % q4max, "q5max = %.3e" % q5max)
         return mwet
 
     plotitem = plotaxes.new_plotitem(plot_type="2d_pcolor")
@@ -421,7 +426,7 @@ def setplot(plotdata=None):
         y = current_data.y
         r = np.sqrt(x**2 + y**2)
         q = current_data.q
-        p = q[4, :, :]
+        p = q[i_pb, :, :]
         return r, p
 
     plotitem = plotaxes.new_plotitem(plot_type="1d_from_2d_data")
