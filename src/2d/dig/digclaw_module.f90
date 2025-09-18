@@ -394,6 +394,7 @@ contains
       !local
       real(kind=8) :: vnorm,shear,Nden,Nnum,psi,delta_kr_order,kr_chi
       real(kind=8) :: sig_0,sig_eff
+      real(kind=8) :: alpha_meq ! tanh function for setting meqn to m when m is less than ~0.3
 
 
       !calculate rho ! DIG: Cleaner approach would be for rho to be in, and
@@ -447,10 +448,15 @@ contains
       !m_eq = m_crit* sqrt(Nden)/(sqrt(Nden)+sqrt(Nnum))
       Nden = rho_s*(shear*delta)**2 + sig_eff
       Nnum = mu*shear
+
+      alpha_meq = min(max(0.5d0*(1-tanh(60.d0*(m-0.35d0))), 0.d0), 1.d0)
+      if (m.gt.0.4) alpha_meq = 0.d0
+      if (m.lt.0.3) alpha_meq = 1.d0
+
       if (Nnum<=0.d0) then
-         m_eq = m_crit
+         m_eq = alpha_meq*m + (1-alpha_meq)*m_crit
       else
-         m_eq = m_crit*(sqrt(Nden)/(sqrt(Nden)+ sqrt(Nnum)))
+         m_eq = alpha_meq*m + (1-alpha_meq)*m_crit*(sqrt(Nden)/(sqrt(Nden)+ sqrt(Nnum)))
       endif
 
       !Note: c1 is an adjustable parameter that we have traditionally set to 1.0.

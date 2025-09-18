@@ -81,7 +81,6 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        real(kind=8) :: hu,hv,hm
        real(kind=8) :: rho_c,h_c,p_eq_c,m_c,m_lower,m_upper
        real(kind=8) :: m_c0,p_eq_c0,sig_c,Nd,Nn,normc,shear,convtol,m_eq1
-       real(kind=8) :: dtfact
 
        integer :: debugloop,iter,itermax,quad0,quad1
        logical :: outquad,debug
@@ -93,13 +92,53 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
 
        !explicit integration (hybrid FE and explicit exponential solution)---------------------------------------------------
        ! q1 = q0 + dtk*f(q0)
+
+       if (debug) then
+          write(*,*) '------------SRC MPUPDATE STARTING CONDITIONS ---------->>>>>>>>'
+          write(*,*) 'h:', h
+          write(*,*) 'u:', u
+          write(*,*) 'v:', v
+          write(*,*) 'm:', m
+          write(*,*) 'p:', p
+
+          rho0 = m*(rho_s-rho_f)+rho_f
+          write(*,*) 'rho: ', rho0
+          write(*,*) 'p/hydro: ', p/(rho_f*gz*h)
+          write(*,*) 'p/litho: ', p/(rho0*gz*h)
+
+          write(*,*) 'dtr: ', dt ! lower this will be set
+          write(*,*) '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+       endif
+
+
        call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
+
+       ! Save starting conditions
        h0 = h
        m_0 = m
        rho0 = m_0*(rho_s-rho_f)+rho_f
        p0 = p
        p_eq0 = rho_f*gz*h0
        p_exc0 = p0 - p_eq0
+
+       ! initial recording of timesteps.
+       ! definition of different timesteps used
+       ! dtk is : time step used by this call of mpupdate (calculated internally)
+       ! dtr is : dt remaining
+       ! other dts used below
+       ! dtp :
+       ! dtm :
+
+
+      if (debug) then
+          write(*,*) '------------SRC MPUPDATE initial setvars results ---------->>>>>>>>'
+          write(*,*) 'kperm:', kperm
+          write(*,*) 'alphainv:', alphainv
+          write(*,*) 'tanpsi:', tanpsi
+          write(*,*) 'm_eq:', m_eq
+          write(*,*) 'tau:', tau
+          write(*,*) '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+       endif
 
        dtk = 0.d0
        dtr = dt
@@ -116,6 +155,16 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        c_d0 = -3.d0*vnorm*(alphainv*rho0/(rhoh))*tanpsi
        kp0 = (kperm/(h0*mu))*(3.d0*alphainv*rho0/rhoh - 1.5d0*rho_f*gz*h0*(rho0-rho_f)/rhoh)
 
+
+      if (debug) then
+          write(*,*) '------------SRC MPUPDATE initial coefficients ---------->>>>>>>>'
+          write(*,*) 'p_exc0: ', p_exc0
+          write(*,*) 'km0:', km0
+          write(*,*) 'c_d0:', c_d0
+          write(*,*) 'kp0:', kp0
+          write(*,*) '<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+       endif
+
        ! kp0 is expected to be greater or equal to zero if alphamethod = 1
        ! but not if alphamethod = 0 (old style).
        ! 9/15/2025 - kp0 observed as -1e-13 with alphamethod 1
@@ -129,9 +178,8 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        kp0 = max(kp0,1.d-3) ! shouldn't happen with alphamethod=1 but prevent
        ! small rounding error
 
-       ! if m == 0 return
-       if (m.le.0.3d0) then
-          ! relax to hydrostatic, call qfix_cmass and return
+       ! if m == 0 relax to hydrostatic, call qfix_cmass and return
+       if (m==0.d0) then
           p_exc = p_exc0*exp(-kp0*dtr)
           call qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
           dtk = dtr
@@ -144,9 +192,10 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
           return
        endif
 
-       ! if vnorm or alphainv are zero, or if only tanpsi is zero (but not
-       ! pe_exc0)-> only pressure relaxes, then return
-       if (c_d0==0.d0) then
+       ! if vnorm is zero -> pressure relaxes toward equilibrum
+       ! (no dilatancy effects on pressure.
+       ! m evolves per dmdt. calculate both, then return
+       if (vnorm==0.d0) then
           p_exc = p_exc0*exp(-kp0*dtr)
           m = m_0*exp(km0*p_exc*dtr)
           call qfix_cmass(h,m,p,rho,p_exc,hu,hv,hm,u,v,rhoh,gz)
@@ -220,7 +269,6 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
        ! pressure change is balanced by relaxation.
        ! p-nullcline located in UL (q1) and LR (q3) in between p=p_eq and m=m_eq
 
-       dtfact = 1.0d0
        select case (quad0)
 
        case(1) !UL quadrant, variable material and p_exc
@@ -235,7 +283,7 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
           if (p_exc0<-1.d-3*rhoh*gz) then
              debugloop=debugloop + 100
              if (c_d0>0.d0) then !don't exceed p_exc = 0 until next substep
-                dtp = -(1.d0/kp0)*log(-c_d0/(kp0*p_exc0-c_d0)) !* dtfact
+                dtp = -(1.d0/kp0)*log(-c_d0/(kp0*p_exc0-c_d0))
              else
                 dtp = dtr
              endif
