@@ -209,7 +209,7 @@
                   if (itercount>=itercountmax) then
                      exit
                   endif
-                  if (debug.and.(itercount>50)) then
+                  if (debug.and.(itercount>99)) then
                      write(*,*) 'WARNING SRC2: update iteration'
                      write(*,*) 'itercount,dt,dtremaining:',itercount,dt,dtremaining
                   endif
@@ -255,6 +255,7 @@
             !===================================================================
             ! end of entrainment
 
+            ! if we add deposition, ensure that deposition decrements hu and hv.
 
             !===========Manning friction========================================
             if ((friction_forcing).and.(coeffmanning>0.d0)) then
