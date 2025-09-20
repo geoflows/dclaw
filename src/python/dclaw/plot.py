@@ -22,7 +22,7 @@ _i_hm = 3
 _i_pb = 4
 _i_hchi = 5
 _i_beroded = 6
-_i_eta = 7
+_i_eta = -1
 
 # aux indices
 _i_topo = 0
