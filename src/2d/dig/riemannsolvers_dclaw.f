@@ -22,7 +22,8 @@ c-----------------------------------------------------------------------
       !-----------------------------------------------------------------
 
       use geoclaw_module, only: grav, dry_tolerance
-      use digclaw_module, only: beta_seg, rho_f, kappa
+      use digclaw_module, only: beta_seg, rho_f, kappa, src2method
+      use digclaw_module, only: setvars
 
       implicit none
 
@@ -97,7 +98,7 @@ c-----------------------------------------------------------------------
          gammaR = rho_f/rhoR
 
       case(0:1)
-         gamma = 0.25d0*(rho_f + 3.0d0*rho)/rho_bar
+         gamma = 0.25d0*(rho_f + 3.0d0*rho_bar)/rho_bar
          gammaL = 0.25d0*(rho_f + 3.0d0*rhoL)/rhoL
          gammaR = 0.25d0*(rho_f + 3.0d0*rhoR)/rhoR
       end select

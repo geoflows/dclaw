@@ -218,6 +218,21 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
            as :math:`\sigma_0 = 0.5 \alpha (\rho_s-\rho_f)g_z h/\rho`.
 
 
+    One parameter control the numerical method used for handling friction.
+
+    .. list-table::
+       :widths: 10 30
+       :header-rows: 1
+
+       * - ``riemann_method``
+         - Description
+       * - 0
+         - Traditional Riemann solver, handles friction in the right hand side (source term).
+       * - 1
+         - Experimental Riemann solver, handles friction in left-hand side (Riemann solver).
+
+
+
     The following parameters are used to control whether and how bed
     normal coordinates, segregation, and entrainment are implemented.
 
@@ -323,6 +338,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
 
         self.add_attribute("src2method", 0)
         self.add_attribute("alphamethod", 0)
+        self.add_attribute("riemann_method", 0)
 
         self.add_attribute("bed_normal", 0)
         self.add_attribute("theta_input", 0.0)
@@ -383,6 +399,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
             "src2method", description="-1=swe, 0=orig,1=intermediate,2=new"
         )  # DIG: update text
         self.data_write("alphamethod", description="0=,1=,2=")  # DIG: update text
+        self.data_write("riemann_method", description="0=orig,1=new")
 
         self.data_write(
             "bed_normal",
