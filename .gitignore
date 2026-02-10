@@ -20,3 +20,6 @@ xdclaw
 fgout*.*
 public
 docs/src/autodoc2
+*.mp4
+*.csv
+examples/idealized_slides/results

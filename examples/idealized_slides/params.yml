@@ -1,0 +1,29 @@
+m0: 0.63
+mc: 0.64
+kr: 1e-10
+phi: 35
+
+src2method: 2
+alphamethod: 1
+
+# geometry
+slope: 40
+length_scale: 100
+depth: 5
+xlower: 0
+xupper: 500
+ylower: -100
+yupper: 100
+xls : 50
+yls : 0
+rls : 10
+
+# for interpolation of initial input data
+nxpoints: 201
+nypoints: 501
+
+# initial grids
+num_cells_x: 30
+num_cells_y: 20
+
+
