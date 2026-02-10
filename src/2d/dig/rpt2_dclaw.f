@@ -35,6 +35,7 @@
       use geoclaw_module, only: coordinate_system,earth_radius,deg2rad
       use digclaw_module, only: rho_f,rho_s,bed_normal,i_theta
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
+      use digclaw_module, only: src2method
 
       implicit none
 
@@ -117,7 +118,19 @@
          endif
 
          rho = m*rho_s + (1.d0-m)*rho_f
-         gamma = 0.25d0*(rho_f + 3.d0*rho)/rho
+
+         select case (src2method)
+         case(-1)
+            ! gamma is chi in the papers
+            gamma = rho_f/rho
+         case(0:1)
+            gamma = 0.25d0*(rho_f + 3.d0*rho)/rho
+
+            ! DIG - Could consider another case-select or other options
+            ! here that allows gamma to become rho_f/rho when no
+            ! dilatency is present. And/or in other cases.
+
+         end select
 
          ! check if cell that transverse waves go into are both too high:
          ! Note: prior to v5.8.0 this checked against max rather than min
@@ -218,19 +231,31 @@ c        Set-up eigenvectors
 
          do  mw=1,3
             if ((s(mw) < 0.d0) .and. (eta >= topo1)) then
-                 bmasdq(1,i) =bmasdq(1,i) + dxdcm*s(mw)*beta(mw)*r(1,mw)
-                 bmasdq(mu,i)=bmasdq(mu,i)+ dxdcm*s(mw)*beta(mw)*r(2,mw)
-                 bmasdq(mv,i)=bmasdq(mv,i)+ dxdcm*s(mw)*beta(mw)*r(3,mw)
-                 bmasdq(4,i) =bmasdq(4,i) + dxdcm*s(mw)*beta(mw)*r(4,mw)
-                 bmasdq(5,i) =bmasdq(5,i) + dxdcm*s(mw)*beta(mw)*r(5,mw)
-                 bmasdq(6,i) =bmasdq(6,i) + dxdcm*s(mw)*beta(mw)*r(6,mw)
+                 bmasdq(i_h,i) = bmasdq(i_h,i) +
+     &                           dxdcm*s(mw)*beta(mw)*r(1,mw)
+                 bmasdq(mu,i) = bmasdq(mu,i) +
+     &                          dxdcm*s(mw)*beta(mw)*r(2,mw)
+                 bmasdq(mv,i) = bmasdq(mv,i) +
+     &                          dxdcm*s(mw)*beta(mw)*r(3,mw)
+                 bmasdq(i_hm,i) = bmasdq(i_hm,i) +
+     &                            dxdcm*s(mw)*beta(mw)*r(4,mw)
+                 bmasdq(i_pb,i)=bmasdq(i_pb,i) +
+     &                          dxdcm*s(mw)*beta(mw)*r(5,mw)
+                 bmasdq(i_hchi,i) = bmasdq(i_hchi,i) +
+     &                              dxdcm*s(mw)*beta(mw)*r(6,mw)
             elseif ((s(mw) > 0.d0) .and. (eta >= topo3)) then
-                 bpasdq(1,i) =bpasdq(1,i) + dxdcp*s(mw)*beta(mw)*r(1,mw)
-                 bpasdq(mu,i)=bpasdq(mu,i)+ dxdcp*s(mw)*beta(mw)*r(2,mw)
-                 bpasdq(mv,i)=bpasdq(mv,i)+ dxdcp*s(mw)*beta(mw)*r(3,mw)
-                 bpasdq(4,i) =bpasdq(4,i) + dxdcp*s(mw)*beta(mw)*r(4,mw)
-                 bpasdq(5,i) =bpasdq(5,i) + dxdcp*s(mw)*beta(mw)*r(5,mw)
-                 bpasdq(6,i) =bpasdq(6,i) + dxdcp*s(mw)*beta(mw)*r(6,mw)
+                 bpasdq(i_h,i) = bpasdq(i_h,i) +
+     &                           dxdcp*s(mw)*beta(mw)*r(1,mw)
+                 bpasdq(mu,i) = bpasdq(mu,i) +
+     &                          dxdcp*s(mw)*beta(mw)*r(2,mw)
+                 bpasdq(mv,i) = bpasdq(mv,i) +
+     &                          dxdcp*s(mw)*beta(mw)*r(3,mw)
+                 bpasdq(i_hm,i) = bpasdq(i_hm,i) +
+     &                          dxdcp*s(mw)*beta(mw)*r(4,mw)
+                 bpasdq(i_pb,i) = bpasdq(i_pb,i) +
+     &                            dxdcp*s(mw)*beta(mw)*r(5,mw)
+                 bpasdq(i_hchi,i) = bpasdq(i_hchi,i)+
+     &                              dxdcp*s(mw)*beta(mw)*r(6,mw)
             endif
          enddo  ! loop on mw
 

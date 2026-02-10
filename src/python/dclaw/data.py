@@ -743,6 +743,11 @@ class PInitDClawInputData(clawpack.clawutil.data.ClawData):
        *   - 2
            - Same as case 1, except that the average failure pressure is used.
              :math:`p_b = \mathrm{mean} (R_f) \rho_f g_z h`.
+       *   - 3
+           - Hydrostatic pressure times a specified coefficient, :math:`C_p`
+             given by ``init_pratio``, :math:`p_b=C_p \rho_f g_z h`.
+             Cannot exceed lithostatic pressure, :math:`p_b=((m\rho_s + (1-m)\rho_f) g_z h`
+             such that :math:`C_p\leq((m\rho_s + (1-m)\rho_f)/\rho_f``.
 
     """
 
@@ -752,6 +757,8 @@ class PInitDClawInputData(clawpack.clawutil.data.ClawData):
 
         # Set default values:
         self.add_attribute("init_ptype", 0)
+        self.add_attribute("init_pratio", 1)
+
 
     def write(self, out_file="pinit_dclaw.data", data_source="setrun.py"):
         """Write the contents of a ``PInitDClawInputData`` to a file."""
@@ -760,7 +767,11 @@ class PInitDClawInputData(clawpack.clawutil.data.ClawData):
         # open file and write a warning header:
         self.data_write(
             "init_ptype",
-            description="-1 = zero pressure or user defined files in qinit, 0 = hydrostatic, 1,2 = failure pressure (1=min, 2=avg)",
+            description="-1 = zero pressure or user defined files in qinit, 0 = hydrostatic, 1,2 = failure pressure (1=min, 2=avg), 3=hydrostatic*init_pratio",
+        )
+        self.data_write(
+            "init_pratio",
+            description="Initialization pressure ratio, used if init_ptype==3.",
         )
         self.close_data_file()
 

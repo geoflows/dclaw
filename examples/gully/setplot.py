@@ -153,6 +153,31 @@ def setplot(plotdata=None):
     plotitem.imshow_cmap = "pink_r"
     plotitem.imshow_norm = mpl.colors.Normalize(vmin=0, vmax=1)
 
+    # Panel 4: Hillshade and Pressure
+    plotaxes = plotfigure.new_plotaxes("Pressure")
+    plotaxes.title = "Pressure Ratio"
+    plotaxes.scaled = True
+    plotaxes.axescmd = "subplot(224)"
+    plotaxes.xlimits = xlimits
+    plotaxes.ylimits = ylimits
+    plotaxes.afteraxes = aa
+    plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
+    plotitem.show = True
+    plotitem.plot_var = dplot.eta
+    plotitem.add_colorbar = False
+    plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
+    plotitem.plot_var = dplot.basal_pressure_over_hydrostatic
+    plotitem.add_colorbar = True
+    plotitem.colorbar_kwargs = {
+        "shrink": 0.5,
+        "location": "bottom",
+        "orientation": "horizontal",
+    }
+    plotitem.colorbar_label = "P_b/Hydrostatic (-)"
+    plotitem.imshow_cmap = "BrBG"
+    plotitem.imshow_norm = mpl.colors.TwoSlopeNorm(vcenter=1, vmin=0, vmax=2.5)
+    plotitem.patchedges_show = True
+
     # eventually add segregation and entrained depth
 
     # -------------------------------------

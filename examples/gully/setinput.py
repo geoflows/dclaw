@@ -71,7 +71,7 @@ def make_plots():
 
     h = eta.Z - basal.Z
     figure()
-    pcolormesh(eta.X, eta.Y, h, cmap=colormaps.white_red)
+    pcolormesh(eta.X, eta.Y, h, cmap='bone')
     xlim(x0, x2)
     ylim(y0, y2)
     axis("equal")

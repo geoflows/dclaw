@@ -22,7 +22,7 @@ _i_hm = 3
 _i_pb = 4
 _i_hchi = 5
 _i_beroded = 6
-_i_eta = 7
+_i_eta = -1
 
 # aux indices
 _i_topo = 0
@@ -620,6 +620,19 @@ def Iv(current_data):
     return (mu * gamma) / sigma_e(current_data)
 
 
+
+def Froude(current_data):
+    # Froude number
+    if hasattr(current_data.plotdata, "geoclaw_data"):
+        grav = current_data.plotdata.geoclaw_data.gravity
+    else:
+        grav = _grav
+
+    h = depth(current_data)
+    u = velocity_magnitude(current_data)
+    return u/np.sqrt(grav*h)
+
+
 def Stokes(current_data):
     # stokes number
 
@@ -694,11 +707,12 @@ def local_slope(current_data):
     etaT[-1, :] = np.nan
 
     row, col = eta.shape
+
     detadx = np.zeros((row, col, 4))
-    detadx[_i_h, :, :] = np.abs((eta - etaL) / (dx))
-    detadx[_i_hu, :, :] = np.abs((eta - etaB) / (dy))
-    detadx[_i_hu, :, :] = np.abs((etaR - eta) / (dx))
-    detadx[_i_hm, :, :] = np.abs((etaT - eta) / (dy))
+    detadx[:, :, 0] = np.abs((eta - etaL) / (dx))
+    detadx[:, :, 1] = np.abs((eta - etaB) / (dy))
+    detadx[:, :, 2] = np.abs((etaR - eta) / (dx))
+    detadx[:, :, 3] = np.abs((etaT - eta) / (dy))
 
     maxdetadx = np.max(detadx, axis=-1)
     slope = np.rad2deg(np.arctan(maxdetadx))

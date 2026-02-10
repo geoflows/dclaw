@@ -20,7 +20,7 @@ module digclaw_module
 
     integer :: src2method,alphamethod,bed_normal,entrainment,entrainment_method
     integer :: segregation,curvature,init_ptype
-    double precision :: init_pmin_ratio
+    double precision :: init_pmin_ratio,init_pratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
 
     ! momentum autostop
@@ -36,6 +36,9 @@ module digclaw_module
     integer ::  i_pb
     integer ::  i_hchi
     integer ::  i_bdif
+
+    ! flag for boussinesq
+    integer ::  i_bouss
 
     ! indicies of aux
     integer ::  i_dig
@@ -81,14 +84,20 @@ contains
             i_dig = 2
          endif
 
+         ! flag for whether boussinesq equations are used
+         ! (not yet implemented)
+         ! if bouss is active (based on reading in a data file)
+         ! this will be 2
+         i_bouss = 0
+
          ! hard code q indicies.
          i_h=1
          i_hu=2
          i_hv=3
-         i_hm=4
-         i_pb=5
-         i_hchi=6
-         i_bdif=7
+         i_hm=4 + i_bouss
+         i_pb=5 + i_bouss
+         i_hchi=6 + i_bouss
+         i_bdif=7 + i_bouss
 
          ! set aux index values based on coordinate system
          i_phi    = i_dig
@@ -241,6 +250,8 @@ contains
 
          call opendatafile(iunit, file_name)
          read(iunit,*) init_ptype
+         read(iunit,*) init_pratio
+
          close(unit=iunit)
 
          init_pmin_ratio = 1.d16
@@ -255,6 +266,7 @@ contains
          write(PINIT_PARM_UNIT,*) 'SETPINIT:'
          write(PINIT_PARM_UNIT,*) '---------'
          write(PINIT_PARM_UNIT,*) '    init_ptype:',init_ptype
+         write(PINIT_PARM_UNIT,*) '    init_pratio:',init_pratio
          close(PINIT_PARM_UNIT)
 
    end subroutine set_pinit
@@ -385,6 +397,7 @@ contains
       !local
       real(kind=8) :: vnorm,shear,Nden,Nnum,psi,delta_kr_order,kr_chi
       real(kind=8) :: sig_0,sig_eff
+      real(kind=8) :: alpha_meq ! tanh function for setting meqn to m when m is less than ~0.3
 
 
       !calculate rho ! DIG: Cleaner approach would be for rho to be in, and
@@ -438,10 +451,15 @@ contains
       !m_eq = m_crit* sqrt(Nden)/(sqrt(Nden)+sqrt(Nnum))
       Nden = rho_s*(shear*delta)**2 + sig_eff
       Nnum = mu*shear
+
+      alpha_meq = min(max(0.5d0*(1-tanh(60.d0*(m-0.35d0))), 0.d0), 1.d0)
+      if (m.gt.0.4) alpha_meq = 0.d0
+      if (m.lt.0.3) alpha_meq = 1.d0
+
       if (Nnum<=0.d0) then
-         m_eq = m_crit
+         m_eq = alpha_meq*m + (1-alpha_meq)*m_crit
       else
-         m_eq = m_crit*(sqrt(Nden)/(sqrt(Nden)+ sqrt(Nnum)))
+         m_eq = alpha_meq*m + (1-alpha_meq)*m_crit*(sqrt(Nden)/(sqrt(Nden)+ sqrt(Nnum)))
       endif
 
       !Note: c1 is an adjustable parameter that we have traditionally set to 1.0.

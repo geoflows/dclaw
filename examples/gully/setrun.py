@@ -643,7 +643,8 @@ def setrun(claw_pkg="dclaw"):
 
     # == pinitdclaw.data values ==
     pinitdclaw_data = rundata.pinitdclaw_data  # initialized when rundata instantiated
-    pinitdclaw_data.init_ptype = 0  # hydrostatic (-1 ==> zero everywhere)
+    pinitdclaw_data.init_ptype = 3
+    pinitdclaw_data.init_pratio = 1.5
 
     # == flowgrades.data values ==
     flowgrades_data = rundata.flowgrades_data  # initialized when rundata instantiated

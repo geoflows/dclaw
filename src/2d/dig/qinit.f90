@@ -19,8 +19,9 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
 
     use digclaw_module, only: qfix,calc_pmin,calc_taudir
-    use digclaw_module, only: bed_normal,chi0,init_ptype,segregation
-    use digclaw_module, only: i_theta,m0,rho_f,rho_s,init_pmin_ratio
+    use digclaw_module, only: bed_normal,chi0,segregation
+    use digclaw_module, only: init_ptype,init_pratio,init_pmin_ratio
+    use digclaw_module, only: i_theta,m0,rho_f,rho_s
     use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi
 
     implicit none
@@ -260,6 +261,30 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                  q(i_pb,i,j) = rho_f*gz*q(i_h,i,j)
                enddo
             enddo
+
+
+         case (3)
+            !set to hydrostatic * init_pcoeff
+            do i=1-mbc,mx+mbc
+               do j=1-mbc,my+mbc
+                 if (bed_normal.eq.1) then
+                     gz = grav*dcos(aux(i_theta,i,j))
+                 else
+                     gz=grav
+                 endif
+
+                 q(i_pb,i,j) = init_pratio*rho_f*gz*q(i_h,i,j)
+
+                 ! if init_pratio is greater than lithostatic,
+                 ! enforce lithostatic with qfix.
+                 call qfix(q(i_h,i,j),q(i_hu,i,j),q(i_hv,i,j), &
+                       q(i_hm,i,j),q(i_pb,i,j),q(i_hchi,i,j), &
+                          u,v,sv,chi,rho,gz)
+
+
+               enddo
+            enddo
+
 
          case(1:2) ! DIG: Not yet tested
             !set to failure
