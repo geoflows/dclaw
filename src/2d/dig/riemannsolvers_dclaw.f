@@ -1208,6 +1208,6 @@ c           !root finding using a Newton iteration on dsqrt(h)===
       endif
 
       return
+      end ! subroutine riemanntype
 
-      end ! subroutine riemanntype----------------------------------------------------------------
-
+   c-----------------------------------------------------------------------
