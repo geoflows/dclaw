@@ -33,6 +33,7 @@
       use digclaw_module, only: bed_normal,curvature
       use digclaw_module, only: entrainment,entrainment_method
       use digclaw_module, only: src2method
+      use digclaw_module, only: riemann_method
       use digclaw_module, only: i_ent,i_theta
       use digclaw_module, only: mu,rho_f,rho_s
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
@@ -159,8 +160,15 @@
             vnorm = hvnorm0/h
 
             if (hvnorm0>0.d0) then
-               !integrate dynamic friction !DIG: TO DO - move dynamic friction to Riemann solver
-               !vnorm = max(0.d0,vnorm - dt*tau/rhoh) !exact solution for Coulomb friction
+               !integrate dynamic friction
+
+               select case (riemann_method)
+               case(0)
+                  vnorm = max(0.d0,vnorm - dt*tau/rhoh) !exact solution for Coulomb friction
+               case(1)
+                  !exact solution for Coulomb friction is in Riemann solver.
+               end select
+
                vnorm = vnorm*exp(-(1.d0-m)*2.0d0*mu*dt/(h*rhoh)) !exact solution (prior to h change) for effective viscous friction
                ! velocity determined, calculate directions etc. from vnorm
                hvnorm = h*vnorm

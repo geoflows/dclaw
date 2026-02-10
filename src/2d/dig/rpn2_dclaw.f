@@ -58,6 +58,7 @@ c
       use digclaw_module, only: bed_normal,i_theta,qfix
       use digclaw_module, only: i_fsphi,i_phi,i_taudir_x,i_taudir_y
       use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
+      use digclaw_module, only: riemann_method
 
       implicit none
 
@@ -258,10 +259,31 @@ c               bL=hstartest+bR
          maxiter = 1
 
           ! current dclaw Riemann solver
-          call riemann_dig2_aug_sswave_ez(ixy,6,3,hL,hR,huL,huR,
+
+
+         select case (riemann_method)
+         case(0)
+
+         call riemann0_dig2_aug_sswave_ez(ixy,6,3,hL,hR,huL,huR,
      &         hvL,hvR,hmL,hmR,pL,pR,bL,bR,uL,uR,vL,vR,mL,mR,
      &         thetaL,thetaR,phi_bedL,phi_bedR,sw,fw,wallprob,
      &         taudirL,taudirR,chiL,chiR,fsL,fsR,i)
+
+         case(1)
+
+         call riemann1_dig2_aug_sswave_ez(ixy,6,3,hL,hR,huL,huR,
+     &         hvL,hvR,hmL,hmR,pL,pR,bL,bR,uL,uR,vL,vR,mL,mR,
+     &         thetaL,thetaR,phi_bedL,phi_bedR,sw,fw,wallprob,
+     &         taudirL,taudirR,chiL,chiR,fsL,fsR,i)
+
+         end select
+
+
+
+
+
+
+
 
 c        !eliminate ghost fluxes for wall
          do mw=1,3
