@@ -11,6 +11,8 @@ c-----------------------------------------------------------------------
       ! This solver is an extension of GeoClaw's solver described in (George, 2008).
       ! See (George & Iverson, 2014) for an overview of this D-Claw extension.
       !
+      ! This solver is used if riemann_method == 0 (friction in src2)
+      !
       ! The Riemann solver solves the left-hand side of the PDEs, neglecting source terms
       ! except for the topographic source terms, -ghb_x and -ghb_y.
       ! In the case of static material that does not fail (deform)
@@ -449,12 +451,14 @@ c-----------------------------------------------------------------------
       !
       ! This solver is an extension of GeoClaw's solver described in (George, 2008).
       ! See (George & Iverson, 2014) for an overview of this D-Claw extension.
-      ! 
+      !
+      ! This solver is used if riemann_method == 1 (friction in Riemann solver)
+      !
       ! The Riemann solver solves the left-hand side of the PDEs, neglecting source terms
       ! except for the topographic source terms, -ghb_x and -ghb_y.
       ! In the case of static material that does not fail (deform)
       ! topographic source terms and static friction balance, accounted for here.
-      ! For moving material, frictional resistance is handled with the other 
+      ! For moving material, frictional resistance is handled with the other
       ! source terms (the right hand side) accounted for in a fractional step
       ! implemented in src2 subroutine
       !-----------------------------------------------------------------

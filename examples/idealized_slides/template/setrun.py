@@ -30,6 +30,8 @@ kr = float(params["kr"])
 mc = params["mc"]
 alphamethod = params["alphamethod"]
 src2method = params["src2method"]
+riemann_method = params["riemann_method"]
+
 order = params["order"]
 
 amr = params["amr"]
@@ -472,6 +474,7 @@ def setrun(claw_pkg="dclaw"):
 
     dclaw_data.src2method = src2method
     dclaw_data.alphamethod = alphamethod
+    dclaw_data.riemann_method = riemann_method
 
     dclaw_data.segregation = 0
     dclaw_data.beta_seg = 0.0

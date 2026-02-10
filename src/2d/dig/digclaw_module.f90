@@ -716,9 +716,6 @@ subroutine calc_taudir_riemann0(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
 end subroutine calc_taudir_riemann0
 
-
-
-
    ! ========================================================================
    !  calc_taudir_riemann1
    ! ========================================================================
