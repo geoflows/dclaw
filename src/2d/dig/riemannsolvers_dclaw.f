@@ -128,11 +128,9 @@ c-----------------------------------------------------------------------
 
       select case (src2method)
       case(-1)
-         ! gamma is
          gamma = rho_f/rho
          gammaL = rho_f/rhoL
          gammaR = rho_f/rhoR
-
       case(0:1)
          gamma = 0.25d0*(rho_f + 3.0d0*rho)/rho
          gammaL = 0.25d0*(rho_f + 3.0d0*rhoL)/rhoL
@@ -486,7 +484,7 @@ c-----------------------------------------------------------------------
       integer m,mw,k,cwavetype
       !double precision h,u,v
       double precision det1,det2,det3,determinant
-      double precision R(0:2,1:3),del(0:4) 
+      double precision R(0:2,1:3),del(0:4)
       double precision beta(3)
       double precision pratL,pratR,tan_phi_max,source2dxf
       double precision phiL_effective, phiR_effective,phi_eff
@@ -530,15 +528,14 @@ c-----------------------------------------------------------------------
 
       hbar = 0.5d0*(hL + hR)
       rho_bar = 0.5d0*(rhoL + rhoR)
-      
+
       !tau = 0.5d0*(tauL + tauR)
+
       select case (src2method)
       case(-1)
-         ! gamma is
          gamma = rho_f/rho_bar
          gammaL = rho_f/rhoL
          gammaR = rho_f/rhoR
-
       case(0:1)
          gamma = 0.25d0*(rho_f + 3.0d0*rho_bar)/rho_bar
          gammaL = 0.25d0*(rho_f + 3.0d0*rhoL)/rhoL
@@ -599,7 +596,7 @@ c     !determine the middle entropy corrector wave------------------------
          if (hstarHLL.lt.min(hL,hR)/5.d0) rarecorrector=.false.
       endif
 
-      !determine cell edge conditions for friction 
+      !determine cell edge conditions for friction
 
       delb=(bR-bL)!#kappa
 
@@ -609,12 +606,12 @@ c     !determine the middle entropy corrector wave------------------------
 
 c     !find if sonic problem (or very far from steady state)
       !sonic=.false.
-      
+
       !if (s1s2bar*s1s2tilde.le.criticaltol**2) then
       !   sonic=.true.
       !elseif (dabs(s1s2bar).le.criticaltol) then
       !   sonic=.true.
-      !elseif (uL*uR.lt.0.d0) then 
+      !elseif (uL*uR.lt.0.d0) then
       !   sonic =.true.
       !elseif (s1s2bar*sw(1)*sw(3).le.criticaltol**2) then
       !   sonic = .true.
@@ -675,7 +672,7 @@ c     !find if sonic problem (or very far from steady state)
       endif
       ! 2nd Riemann invariant
       ss_delta = max(ss_delta,
-     &  dabs(0.5*uR**2 + gz*hR +gz*bR - 0.5*uL**2 - gz*hL -gz*bL 
+     &  dabs(0.5*uR**2 + gz*hR +gz*bR - 0.5*uL**2 - gz*hL -gz*bL
      &   + gz*taudirR*tan(phi_eff)*0.5d0*
      &     (dsign(1.d0,uR)+dsign(1.d0,uL)))/
      &   (dabs(0.5*uR**2 +gz*hR)+dabs(0.5*uL**2 +gz*hL)+dabs(bR-bL)
@@ -689,7 +686,7 @@ c     !find if sonic problem (or very far from steady state)
       ! bound jump in h at interface, positivity constraint, also constrains source term
       sonic = .false.
       ctn = criticaltol/dsqrt(gz*hbar) !normalize the tolerance to depth (very small depths not necessarily near critical)
-      if (sw(1).gt.ctn) then 
+      if (sw(1).gt.ctn) then
         if (hL.gt.drytol) then
             s1s2bar = max(delb*gz*hbar*sw(1)/(hstarHLL*dels),
      &         max(s1s2bar,gz*hbar*delb/-hL))
@@ -699,16 +696,16 @@ c     !find if sonic problem (or very far from steady state)
       elseif (sw(3).lt.-ctn) then
         if (hR.gt.drytol) then
             s1s2bar = max(gz*hbar*delb*sw(3)/(hstarHLL*dels),
-     &       max(s1s2bar,gz*hbar*delb/hR))    
-        else      
+     &       max(s1s2bar,gz*hbar*delb/hR))
+        else
             s1s2bar = max(s1s2bar,0.d0)
-        endif 
+        endif
       elseif (sw(1).lt.-ctn*0.d0.and.sw(3).gt.
      &                          0.d0*ctn) then
          if (hstarHLL.gt.drytol) then
             s1s2bar=min(sw(1)*gz*hbar*delb/(hstarHLL*dels),
      &           min(s1s2bar,sw(3)*gz*hbar*delb/(hstarHLL*dels)))
-         else 
+         else
             !s1s2bar = min(s1s2bar,0.d0)
             s1s2bar = min(s1s2bar,min(uL**2-gz*hL,uR**2-gz*hR)) !for either shock or rare we want subcrit. estimate
             ss_delta = 1.d0
@@ -756,13 +753,13 @@ c     !find if sonic problem (or very far from steady state)
          !deldelh = delb*((1.d0-ss_delta)*(gz*hbar/s1s2bar)-ss_delta)
 
       s1s2_ratio = ((1.d0-ss_delta)*s1s2_ratio + ss_delta)
-      s1s2_denom = ((1.d0-ss_delta)*(1.d0/s1s2bar) 
+      s1s2_denom = ((1.d0-ss_delta)*(1.d0/s1s2bar)
      &        + ss_delta*(1.d0/(-gz*hbar)))
       deldelh = delb*gz*hbar*s1s2_denom !jump in h at interface from bathy not friction
       source2dx = -gz*hbar*delb*s1s2_ratio !source from bathy no friction yet
-      !source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb)) 
+      !source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb))
       !source2dx=max(source2dx,gz*min(-hL*delb,-hR*delb))
-      
+
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
       !hu at interface not considering friction. friction should oppose this velocity
       !if this is a static problem (vnorm=0) then friction opposes net force and determined further below
@@ -799,7 +796,7 @@ c     !find if sonic problem (or very far from steady state)
      &       max(abs(gz*hbar*s1s2_ratio*taudirUfrac),1.d-12)
         tan_phi_max = 0.99999d0*tan_phi_max
         !write(*,*) 'tan_phi_max,tan(phi_eff)',tan_phi_max,tan(phi_eff)
-        
+
 
       if (vnorm.gt.veltol1) then
         delbf = taudirUfrac*min(tan(phi_eff),tan_phi_max)
@@ -837,16 +834,16 @@ c     !find jump in h, deldelh
       !endif
 c     !find bounds on deltah at interface based on depth positivity constraint and energy
       !constraint ensures energy does not increase accross interface
-      
+
       if (sE1.lt.-ctn.and.sE2.gt.ctn) then
-        hsmallest = 0.d0*((hustarHLL)**2/(2.d0*gz))**(1.d0/3.d0) 
+        hsmallest = 0.d0*((hustarHLL)**2/(2.d0*gz))**(1.d0/3.d0)
         hmin = max(hstarHLL -hsmallest,0.d0)!small depth for energy constraint
         deldelh = min(deldelh,hmin*(sE2-sE1)/sE2)
         deldelh = max(deldelh,hmin*(sE2-sE1)/sE1)
       elseif (sE1.ge.ctn) then
         deldelh = min(deldelh,hmin*(sE2-sE1)/sE1)
         deldelh = max(deldelh,-hL)
-            
+
       elseif (sE2.le.-ctn) then
         deldelh = min(deldelh,hR)
         deldelh = max(deldelh,hmin*(sE2-sE1)/sE2)
@@ -875,13 +872,13 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
       endif
 
       !determine del
-      del(0) = hR- hL 
+      del(0) = hR- hL
       del(1) = huR - huL
       del(2) = hR*uR**2 + 0.5d0*kappa*gz*hR**2 -
      &      (hL*uL**2 + 0.5d0*kappa*gz*hL**2)
       del(2) = del(2) + (1.d0-kappa)*hbar*(pR-pL)/rho_bar
       del(3) = pR - pL - gamma*rho_bar*gz*deldelh
-      del(4) = -gamma*rho_bar*gz*uhat*(hR-hL) 
+      del(4) = -gamma*rho_bar*gz*uhat*(hR-hL)
      &    + gamma*rho_bar*gz*del(1) + uhat*(pR-pL)
 
 *     !determine the source term
@@ -893,9 +890,9 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
          ! until fixed, bed_normal = 1 yields error in make .data (1/30/24)
       !endif
 
-      if (vnorm.le.veltol1) then 
+      if (vnorm.le.veltol1) then
         ! static problem
-        ! 2 possibilities: friction should not be larger than net force in x-direction. 
+        ! 2 possibilities: friction should not be larger than net force in x-direction.
         ! taudirR has already been reduced to dx Fx/|F| in module
         ! friction can be less than Fx but it cannot be larger than Fx
         ! otherwise Riemann problem would fail in the wrong direction
@@ -908,7 +905,7 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
             source2dxf = - gz*hbar*delbf
             deldelhf = -delbf
             deldelh = deldelh + deldelhf
-        else 
+        else
             !friction opposes net force, no waves
             del(0) = deldelh
             del(1) = 0.0d0
@@ -921,7 +918,7 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
       !if (wallprob) then
       !   tausource = 0.0d0
       !endif
-      del(0) = del(0) - deldelh 
+      del(0) = del(0) - deldelh
       del(2) = del(2) - source2dx -source2dxf
 
       !--------theta--------------------
@@ -948,7 +945,7 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
         a = sw(1)
         b = sw(2)
         c = sw(3)
-  
+
         !solve for beta = Rinv*delta
         if (cwavetype==1) then
           !r2 is (0,0,1)
@@ -1092,6 +1089,7 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
         if (.not.(del(3) == del(3))) then
             write(*,*) 'NaN detected: del(3)'
         endif
+
 
 
       return
