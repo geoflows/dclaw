@@ -160,13 +160,14 @@
             vnorm = hvnorm0/h
 
             if (hvnorm0>0.d0) then
-               !integrate dynamic friction
 
+               !Integrate dynamic friction
                select case (riemann_method)
                case(0)
-                  vnorm = max(0.d0,vnorm - dt*tau/rhoh) !exact solution for Coulomb friction
+                  ! Handle Coulomb friction here.
+                  vnorm = max(0.d0,vnorm - dt*tau/rhoh)
                case(1)
-                  !exact solution for Coulomb friction is in Riemann solver.
+                  ! Handle Coulomb friction in Riemann solver.
                end select
 
                vnorm = vnorm*exp(-(1.d0-m)*2.0d0*mu*dt/(h*rhoh)) !exact solution (prior to h change) for effective viscous friction
