@@ -627,6 +627,7 @@ def setrun(claw_pkg="dclaw"):
 
     dclaw_data.src2method = 2
     dclaw_data.alphamethod = 1
+    dclaw_data.riemann_method = 1
 
     dclaw_data.segregation = 0
     dclaw_data.beta_seg = 0.0

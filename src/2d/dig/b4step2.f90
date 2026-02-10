@@ -27,8 +27,10 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     use amr_module, only: xperdom,yperdom,spheredom,NEEDS_TO_BE_SET
     use amr_module, only: outunit
 
-    use digclaw_module, only: i_theta,bed_normal,qfix,calc_taudir
+    use digclaw_module, only: i_theta,bed_normal,qfix
     use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi,i_bdif
+    use digclaw_module, only: riemann_method
+    use digclaw_module, only: calc_taudir_riemann0,calc_taudir_riemann1
 
     implicit none
 
@@ -108,6 +110,12 @@ subroutine b4step2(mbc,mx,my,meqn,q,xlower,ylower,dx,dy,t,dt,maux,aux,actualstep
     endif
 
     ! find factor of safety ratios and friction orientation
-      call calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+
+    select case (riemann_method)
+    case(0)
+      call calc_taudir_riemann0(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+    case(1)
+      call calc_taudir_riemann1(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+    end select
 
 end subroutine b4step2

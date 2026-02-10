@@ -487,7 +487,240 @@ contains
 end subroutine setvars
 
    ! ========================================================================
-   !  calc_taudir
+   !  calc_taudir_riemann0
+   ! ========================================================================
+   !  Determines the resistive force vector for static cells
+   !  outputs direction cosines at each interface
+   !
+   !  This method is used when riemann_method = 0
+   ! ========================================================================
+
+subroutine calc_taudir_riemann0(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+
+      implicit none
+
+      !Input
+      double precision :: dx,dy,xlower,ylower
+      double precision :: q(meqn,1-mbc:mx+mbc, 1-mbc:my+mbc)
+      double precision :: aux(maux,1-mbc:mx+mbc,1-mbc:my+mbc)
+      integer :: mx,my,mbc,meqn,maux
+
+      !Locals
+      double precision :: gz
+      double precision :: h,hu,hv,hm,p,hchi,b,eta
+      double precision :: hL,huL,hvL,hmL,pL,hchiL,bL,etaL
+      double precision :: hR,huR,hvR,hmR,pR,hchiR,bR,etaR
+      double precision :: hB,huB,hvB,hmB,pB,hchiB,bB,etaB
+      double precision :: hT,huT,hvT,hmT,pT,hchiT,bT,etaT
+
+      double precision :: u,v,m,chi
+      double precision :: uL,vL,mL,chiL,rhoL
+      double precision :: uR,vR,mR,chiR,rhoR
+      double precision :: uB,vB,mB,chiB,rhoB
+      double precision :: uT,vT,mT,chiT,rhoT
+      double precision :: theta
+      double precision :: tau,rho,alphainv
+      double precision :: tanpsi,kperm,m_eq
+      double precision :: Fx,Fy,FxL,FxR,FyL,FyR,FyC,FxC,dot,hvnorm,Fproj
+
+      integer :: i,j
+
+      gz = grav
+
+      do j=2-mbc,my+mbc-1
+         do i=2-mbc,mx+mbc-1
+
+            if (bed_normal.eq.1) then
+              theta = aux(i_theta,i,j)
+              gz = grav*dcos(theta)
+            else
+              theta = 0.d0
+            endif
+
+            ! Get h, hu, hv, hm, p, hchi at cell center (no suffix)
+            ! (L)eft (R)ight (T)op and (B)ottom cells of the 3x3
+            ! cell stencil surrounding cell i,j
+
+            h = q(i_h,i,j)
+            hu = q(i_hu,i,j)
+            hv = q(i_hv,i,j)
+            hm = q(i_hm,i,j)
+            p  = q(i_pb,i,j)
+            hchi = q(i_hchi,i,j)
+
+            call qfix(h,hu,hv,hm,p,hchi,u,v,m,chi,rho,gz)
+
+            b = aux(1,i,j)-q(i_bdif,i,j)
+            eta = h+b
+            phi = aux(i_phi,i,j)
+
+            hL = q(i_h,i-1,j)
+            huL= q(i_hu,i-1,j)
+            hvL= q(i_hv,i-1,j)
+            hmL = q(i_hm,i-1,j)
+            pL  = q(i_pb,i-1,j)
+            hchiL = q(i_hchi,i-1,j)
+
+            call qfix(hL,huL,hvL,hmL,pL,hchiL,uL,vL,mL,chiL,rhoL,gz)
+
+            bL = aux(1,i-1,j)-q(i_bdif,i-1,j)
+            etaL= hL+bL
+            if (hL<dry_tolerance) then
+               etaL = min(etaL,eta)
+            endif
+
+            hR = q(i_h,i+1,j)
+            huR= q(i_hu,i+1,j)
+            hvR= q(i_hv,i+1,j)
+            hmR = q(i_hm,i+1,j)
+            pR  = q(i_pb,i+1,j)
+            hchiR = q(i_hchi,i+1,j)
+
+            call qfix(hR,huR,hvR,hmR,pR,hchiR,uR,vR,mR,chiR,rhoR,gz)
+
+            bR = aux(1,i+1,j)-q(i_bdif,i+1,j)
+            etaR= hR+bR
+            if (hR<dry_tolerance) then
+               etaR = min(etaR,eta)
+            endif
+
+            hB = q(i_h,i,j-1)
+            huB= q(i_hu,i,j-1)
+            hvB= q(i_hv,i,j-1)
+            hmB = q(i_hm,i,j-1)
+            pB  = q(i_pb,i,j-1)
+            hchiB = q(i_hchi,i,j-1)
+
+            call qfix(hB,huB,hvB,hmB,pB,hchiB,uB,vB,mB,chiB,rhoB,gz)
+
+            bB = aux(1,i,j-1)-q(i_bdif,i,j-1)
+            etaB= hB+bB
+            if (hB<dry_tolerance) then
+               etaB = min(etaB,eta)
+            endif
+
+            hT = q(i_h,i,j+1)
+            huT= q(i_hu,i,j+1)
+            hvT= q(i_hv,i,j+1)
+            hmT = q(i_hm,i,j+1)
+            pT  = q(i_pb,i,j+1)
+            hchiT = q(i_hchi,i,j+1)
+
+            call qfix(hT,huT,hvT,hmT,pT,hchiT,uT,vT,mT,chiT,rhoT,gz)
+
+            bT = aux(1,i,j+1)-q(i_bdif,i,j+1)
+            etaT= hT+bT
+            if (hT<dry_tolerance) then
+               etaT = min(etaT,eta)
+            endif
+
+            ! If cell center is dry, set value used for
+            ! cell center here based on left/right cell
+            ! values.
+
+            if (h<dry_tolerance) then
+               eta = min(etaL,eta)
+               eta = min(etaB,eta)
+            endif
+
+            ! If all cells in the center are dry, return
+            ! zeros for taudir_x, _y, and fsphi
+
+            if ((h+hL+hB+hR+hT)<dry_tolerance) then
+               aux(i_taudir_x,i,j) = 0.d0
+               aux(i_taudir_y,i,j) = 0.d0
+               aux(i_fsphi,i,j) = 0.d0
+               cycle
+            endif
+
+            call setvars(h,u,v,m,p,chi,gz,rho,kperm,alphainv,m_eq,tanpsi,tau)
+
+            !minmod gradients
+            FxC = -gz*h*(EtaR-EtaL)/(2.d0*dx) + gz*h*dsin(theta)
+            FyC = -gz*h*(EtaT-EtaB)/(2.d0*dy)
+
+            FxL = -gz*0.5d0*(h+hL)*(Eta-EtaL)/(dx) + gz*0.5d0*(h+hL)*dsin(theta)
+            FyL = -gz*0.5d0*(h+hB)*(Eta-EtaB)/(dy)
+
+            FxR = -gz*0.5d0*(h+hR)*(EtaR-Eta)/(dx) + gz*0.5d0*(h+hR)*dsin(theta)
+            FyR = -gz*0.5d0*(h+hT)*(EtaT-Eta)/(dy)
+
+            if (FxL*FxR>0.d0) then
+               Fx = sign(min(abs(FxL),abs(FxR)),FxL)
+            else
+               Fx = 0.d0
+            endif
+
+            if (FyL*FyR>0.d0) then
+               Fy = sign(min(abs(FyL),abs(FyR)),FyL)
+            else
+               Fy = 0.d0
+            endif
+
+            ! Calculate the magnitude of momentum.
+            hvnorm = sqrt(hu**2 + hv**2)
+            if (hvnorm>0.d0) then ! If moving.
+
+               ! In D-Claw 4 dx and dy were accessible in the riemann solver.
+               ! To fix in the transition, dx and dy are multiplied by taudir_x and y
+               ! here. This works for everything except for bed normal and produces
+               ! equivalent results (1/13/24)
+               aux(i_taudir_x,i,j) = -dx*hu/hvnorm
+               aux(i_taudir_y,i,j) = -dy*hv/hvnorm
+               dot = min(max(0.d0,Fx*hu) , max(0.d0,Fy*hv))
+               if (dot>0.d0) then
+                  !friction should oppose direction of velocity
+                  !if net force is in same direction, split friction source term
+                  !splitting is useful for small velocities and nearly balanced forces
+                  !only split amount up to maximum net force for large velocities
+                  !aux has cell centered interpretation in Riemann solver
+                  Fproj = dot/hvnorm
+                  aux(i_fsphi,i,j) = min(1.d0,Fproj*rho/max(tau,1.d-16))
+
+                  ! DIG: ensure that very low m does not contribute to static friction.
+                  ! KRB thinks that this might be the right place to handle.
+
+               else
+                  !net force is in same direction as friction
+                  !if nearly balanced steady state not due to friction
+                  !no splitting, integrate friction in src
+                  aux(i_fsphi,i,j) = 0.d0
+               endif
+
+            else
+               !aux now have cell edge interpretation in Riemann solver
+               !friction should oppose net force. resolve in Riemann solver
+               if ((FxL**2+Fy**2)>0.d0) then
+                  aux(i_taudir_x,i,j) = -dx*FxL/sqrt(FxL**2+Fy**2)
+               else
+                  aux(i_taudir_x,i,j) = dx*1.d0
+               endif
+
+               if ((Fx**2+FyL**2)>0.d0) then
+                  aux(i_taudir_y,i,j) = -dy*FyL/sqrt(Fx**2+FyL**2)
+               else
+                  !There is no motion or net force. Resolve in src after Riemann
+                  aux(i_taudir_y,i,j) = dy*1.d0
+               endif
+
+               ! Calculate factor of safety
+               if ((aux(i_taudir_y,i,j)**2 + aux(i_taudir_x,i,j)**2)>0.d0) then
+                  aux(i_fsphi,i,j) = 1.d0
+               else
+                  aux(i_fsphi,i,j) = 0.d0
+               endif
+            endif
+
+         enddo
+      enddo
+
+end subroutine calc_taudir_riemann0
+
+
+
+
+   ! ========================================================================
+   !  calc_taudir_riemann1
    ! ========================================================================
    !  Determines the force balance for static cell interface
    !  using estimates of the total force direction
@@ -499,9 +732,11 @@ end subroutine setvars
    ! RS may not necessarily lead to waves (e.g., steep slope in transverse direction
    ! but uniform in normal direction, like a flume).
    ! for interfaces with motion or connected to an interface with motion, failure allowed
+   !
+   ! This method is used for riemann_method = 1
    ! ========================================================================
 
-subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+subroutine calc_taudir_riemann1(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
 
       implicit none
 
@@ -850,7 +1085,7 @@ subroutine calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
         enddo
       endif
 
-end subroutine calc_taudir
+end subroutine calc_taudir_riemann1
 
 
    ! ========================================================================

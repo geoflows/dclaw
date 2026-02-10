@@ -18,11 +18,13 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     use qinit_module, only: qinitwork,mqinitfiles
 
 
-    use digclaw_module, only: qfix,calc_pmin,calc_taudir
+    use digclaw_module, only: qfix,calc_pmin
     use digclaw_module, only: bed_normal,chi0,segregation
     use digclaw_module, only: init_ptype,init_pratio,init_pmin_ratio
     use digclaw_module, only: i_theta,m0,rho_f,rho_s
     use digclaw_module, only: i_h,i_hu,i_hv,i_hm,i_pb,i_hchi
+    use digclaw_module, only: riemann_method
+    use digclaw_module, only: calc_taudir_riemann0,calc_taudir_riemann1
 
     implicit none
 
@@ -321,6 +323,12 @@ subroutine qinit(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
       end select
 
       !===============set factor of safety=============================
-      call calc_taudir(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+
+      select case (riemann_method)
+      case(0)
+         call calc_taudir_riemann0(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+      case(1)
+         call calc_taudir_riemann1(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
+      end select
 
 end subroutine qinit
