@@ -123,7 +123,7 @@
          case(-1)
             ! gamma is chi in the papers
             gamma = rho_f/rho
-         case(0:1)
+         case(0:2)
             gamma = 0.25d0*(rho_f + 3.d0*rho)/rho
 
             ! DIG - Could consider another case-select or other options

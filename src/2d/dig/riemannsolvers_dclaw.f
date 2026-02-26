@@ -132,7 +132,7 @@ c-----------------------------------------------------------------------
          gammaL = rho_f/rhoL
          gammaR = rho_f/rhoR
 
-      case(0:1)
+      case(0:2)
          gamma = 0.25d0*(rho_f + 3.0d0*rho)/rho
          gammaL = 0.25d0*(rho_f + 3.0d0*rhoL)/rhoL
          gammaR = 0.25d0*(rho_f + 3.0d0*rhoR)/rhoR
