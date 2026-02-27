@@ -19,6 +19,7 @@ module digclaw_module
     logical :: dd_manning
 
     integer :: src2method,alphamethod,bed_normal,entrainment,entrainment_method
+    logical :: rarecorrectortest
     integer :: segregation,curvature,init_ptype
     double precision :: init_pmin_ratio,init_pratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
@@ -142,6 +143,7 @@ contains
 
          read(iunit,*) src2method
          read(iunit,*) alphamethod
+         read(iunit,*) rarecorrectortest
 
          read(iunit,*) bed_normal
          read(iunit,*) theta_input
@@ -201,6 +203,7 @@ contains
          write(DIG_PARM_UNIT,*) '    manning_max:', manning_max
          write(DIG_PARM_UNIT,*) '    src2method:', src2method
          write(DIG_PARM_UNIT,*) '    alphamethod:', alphamethod
+         write(DIG_PARM_UNIT,*) '    rarecorrectortest:', rarecorrectortest
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal
          write(DIG_PARM_UNIT,*) '    theta_input:', theta_input/deg2rad
          write(DIG_PARM_UNIT,*) '    entrainment:', entrainment
