@@ -100,7 +100,17 @@
 
             ! Get state variable
             h = q(i_h,i,j)
-            if (h<=dry_tolerance) cycle
+
+            if (h<=dry_tolerance) then
+               q(i_h,i,j) = 0.d0
+               q(i_hu,i,j) = 0.d0
+               q(i_hv,i,j) = 0.d0
+               q(i_hm,i,j) = 0.d0
+               q(i_pb,i,j) = 0.d0
+               q(i_hchi,i,j) = 0.d0
+               cycle
+            endif
+
             hu = q(i_hu,i,j)
             hv = q(i_hv,i,j)
             hm = q(i_hm,i,j)
@@ -214,7 +224,7 @@
                   dtremaining = dtremaining-dtk
                   itercount = itercount + 1
                   if (dtk==0.d0.and.(.not.debug)) exit
-                  if (h<dry_tolerance) exit
+                  if (h<dry_tolerance) exit ! skip the rest of while loop, if lt drytol, will get zeros next.
                   if (itercount>=itercountmax) then
                      exit
                   endif
@@ -234,12 +244,12 @@
 
             if (h<=dry_tolerance) then
             ! put state variables back in q.
-               q(i_h,i,j) = h
-               q(i_hu,i,j) = hu
-               q(i_hv,i,j) = hv
-               q(i_hm,i,j) = hm
-               q(i_pb,i,j) = p
-               q(i_hchi,i,j) = hchi
+               q(i_h,i,j) = 0.d0
+               q(i_hu,i,j) = 0.d0
+               q(i_hv,i,j) = 0.d0
+               q(i_hm,i,j) = 0.d0
+               q(i_pb,i,j) = 0.d0
+               q(i_hchi,i,j) = 0.d0
                cycle
             endif
 

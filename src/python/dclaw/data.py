@@ -338,6 +338,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
 
         self.add_attribute("src2method", 0)
         self.add_attribute("alphamethod", 0)
+        self.add_attribute("rarecorrectortest", False)
         self.add_attribute("riemann_method", 0)
 
         self.add_attribute("bed_normal", 0)
@@ -399,7 +400,8 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
             "src2method", description="-1=swe, 0=orig,1=intermediate,2=new"
         )  # DIG: update text
         self.data_write("alphamethod", description="0=,1=,2=")  # DIG: update text
-        self.data_write("riemann_method", description="0=orig,1=new")
+        self.data_write("rarecorrectortest", description="True=, False=")  # DIG: update text
+        self.data_write("riemann_method", description="0=orig,1=new") # DIG: update text
 
         self.data_write(
             "bed_normal",

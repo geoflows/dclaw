@@ -23,7 +23,7 @@ c-----------------------------------------------------------------------
 
       use geoclaw_module, only: grav, dry_tolerance
       use digclaw_module, only: beta_seg, rho_f, kappa
-      use digclaw_module, only: setvars,src2method
+      use digclaw_module, only: setvars,src2method,rarecorrectortest
 
       implicit none
 
@@ -43,7 +43,7 @@ c-----------------------------------------------------------------------
 
 *     !local
       integer m,mw,k,cwavetype
-      double precision h,u,v,mbar
+      double precision h,u,v,mbar,hustar
       double precision det1,det2,det3,determinant
       double precision R(0:2,1:3),del(0:4) !A(3,3)
       double precision beta(3)
@@ -59,7 +59,9 @@ c-----------------------------------------------------------------------
       double precision gammaL,gammaR,theta1,theta2,theta3,vnorm
       double precision alpha_seg,a,b,c
       logical sonic,rare1,rare2
-      logical rarecorrectortest,rarecorrector
+      logical rarecorrector,s2patch
+
+      s2patch = .false.
 
       veltol1=1.d-6
       veltol2=0.d0
@@ -160,11 +162,10 @@ c-----------------------------------------------------------------------
      &                                          1,drytol,geps)
       sw(1)= min(sw(1),s2m) !Modified Einfeldt speed
       sw(3)= max(sw(3),s1m) !Modified Einfeldt speed
-      sw(2) = 0.5d0*(sw(3)+sw(1))
+      sw(2) = 0.5d0*(sw(3)+sw(1)) !placeholder
 
       hstarHLL = max((huL-huR+sE2*hR-sE1*hL)/(sE2-sE1),0.d0) ! middle state in an HLL solve
 c     !determine the middle entropy corrector wave------------------------
-      rarecorrectortest = .false.
       rarecorrector=.false.
       if (rarecorrectortest) then
          sdelta=sw(3)-sw(1)
@@ -200,7 +201,7 @@ c     !determine the middle entropy corrector wave------------------------
 
       !dig save for later
       !supercritical, bound jump in h at interface to hL. also reduces source
-      !if (sw(1).gt.0.d0.and.hL.gt.0.d0.and.delb.lt.0.d0) then 
+      !if (sw(1).gt.0.d0.and.hL.gt.0.d0.and.delb.lt.0.d0) then
       !  s1s2bar = max(s1s2bar,-gz*hbar*delb/hL)
       !elseif (sw(3).lt.0.d0.and.hR.gt.0.d0.and.delb.gt.0.d0) then
       !  s1s2bar = max(s1s2bar,gz*hbar*delb/hR)
@@ -231,7 +232,7 @@ c     !find if sonic problem
       if (sonic) then
          source2dx = -gz*hbar*delb
       else
-         source2dx = -gz*hbar*delb*s1s2tilde/s1s2bar 
+         source2dx = -gz*hbar*delb*s1s2tilde/s1s2bar
       endif
 
       source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb))
@@ -356,14 +357,54 @@ c     !find bounds in case of critical state resonance, or negative states
         a = sw(1)
         b = sw(2)
         c = sw(3)
-  
+
+        !
         !solve for beta = Rinv*delta
         if (cwavetype==1) then
           !r2 is (0,0,1)
           beta(1) = (c*del(0) - del(1))/(c-a)
           beta(2) = a*c*del(0) - (a+c)*del(1) + del(2)
           beta(3) = (del(1)-a*del(0))/(c-a)
+
+
+          if (s2patch.eqv..true.) then
+          ! s2 patch ensures that the middle (2nd)
+          ! wave speed has the same sign as hustar
+          ! (hustar = hu of the middle state)
+          ! this implies that the contact discontinuity has
+          ! the same sign as hustar
+
+          ! added Feb 26, 2026 - still needs testing
+          ! and perhaps refinement of the three cases.
+
+             ! hustar is well defined by
+             ! (huR-huL) = Delta hu = beta(1)*sw(1) + beta(3)*sw(3)
+             hustar = huL + beta(1)*a
+
+             ! hstarHLL = hL + beta(1)
+             ! hR-hL = Delta h = beta(1) + beta(3)
+
+             ! if the middle state depth is greater than zero,
+             ! set sw(2) to u middle (ustar)
+             if (hstarHLL.gt.0.d-14) then
+               sw(2) = hustar/hstarHLL
+
+             ! this block is intended to handle if middle
+             ! state is dry, but hustar is between
+             ! zero and 1e-14
+             elseif (dabs(hustar).gt.0.d0) then
+               sw(2) = dsign(sw(2),hustar)
+
+             ! if hustar == 0, set sw(2) to zero
+             else
+               sw(2) = 0.d0
+             endif
+          endif
+
         elseif (cwavetype==2) then
+
+        ! if rarecorector is .true. this block will be used
+
           !r2 is (1, s2, s2**2)
           beta(1) = (b*c*del(0) - (b+c)*del(1) +del(2))/
      &          (a**2- a*b - a*c + b*c)

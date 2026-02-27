@@ -20,6 +20,7 @@ module digclaw_module
 
     integer :: src2method,alphamethod,bed_normal,entrainment,entrainment_method
     integer :: riemann_method
+    logical :: rarecorrectortest
     integer :: segregation,curvature,init_ptype
     double precision :: init_pmin_ratio,init_pratio
     double precision :: grad_eta_max,cohesion_max,grad_eta_ave,eta_cell_count
@@ -143,6 +144,7 @@ contains
 
          read(iunit,*) src2method
          read(iunit,*) alphamethod
+         read(iunit,*) rarecorrectortest
          read(iunit,*) riemann_method
 
          read(iunit,*) bed_normal
@@ -203,6 +205,7 @@ contains
          write(DIG_PARM_UNIT,*) '    manning_max:', manning_max
          write(DIG_PARM_UNIT,*) '    src2method:', src2method
          write(DIG_PARM_UNIT,*) '    alphamethod:', alphamethod
+         write(DIG_PARM_UNIT,*) '    rarecorrectortest:', rarecorrectortest
          write(DIG_PARM_UNIT,*) '    riemann_method:', riemann_method
          write(DIG_PARM_UNIT,*) '    bed_normal:', bed_normal
          write(DIG_PARM_UNIT,*) '    theta_input:', theta_input/deg2rad
@@ -844,7 +847,7 @@ subroutine calc_taudir_riemann1(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             bT = aux(1,i,j+1)-q(i_bdif,i,j+1)
             etaT= hT+bT
             call qfix(hT,huT,hvT,hmT,pT,hchiT,uT,vT,mT,chiT,rhoT,gz)
-         
+
             hTL = q(i_h,i-1,j+1)
             huTL= q(i_hu,i-1,j+1)
             hvTL= q(i_hv,i-1,j+1)
@@ -885,7 +888,7 @@ subroutine calc_taudir_riemann1(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             !Find if failure for i'th cell edge (x-direction, j row)
             !Force in normal direction (x)
             call calc_interface_force(Fdx,gz,h,hL,b,bL,dx,theta)
-            
+
             !Force in y-direction at 4 edges connected to i'th cell edge
             call calc_interface_force(FdyBL,gz,hL,hBL,bL,bBL,dy,0.d0)
             call calc_interface_force(FdyB,gz,h,hB,b,bB,dy,0.d0)
@@ -936,7 +939,7 @@ subroutine calc_taudir_riemann1(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             else
               theta = 0.d0
             endif
-            
+
             ! Get h, hu, hv, hm, p, hchi at cell center (no suffix)
             ! (L)eft (R)ight (T)op and (B)ottom cells of the 3x3
             ! cell stencil surrounding cell i,j
@@ -1029,7 +1032,7 @@ subroutine calc_taudir_riemann1(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
             !Find if failure for j'th cell edge (y-direction, i column)
             !Force in normal direction (y)
             call calc_interface_force(Fdy,gz,h,hB,b,bB,dx,0.d0)
-            
+
             !Force in y-direction at 4 edges connected to i'th cell edge
             call calc_interface_force(FdxL,gz,h,hL,b,bL,dx,theta)
             call calc_interface_force(FdxBL,gz,hBL,hB,bBL,bB,dx,theta)
@@ -1076,7 +1079,7 @@ subroutine calc_taudir_riemann1(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
                 ny = aux(i_taudir_y,i,j)/dy
                 dirnorm = max(sqrt(nx**2 + ny**2),1.d-12)
 
-                aux(i_taudir_x,i,j) = aux(i_taudir_x,i,j)/(dirnorm) 
+                aux(i_taudir_x,i,j) = aux(i_taudir_x,i,j)/(dirnorm)
                 aux(i_taudir_y,i,j) = aux(i_taudir_y,i,j)/(dirnorm)
             enddo
         enddo
@@ -1225,14 +1228,14 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
     !========================================
     !calc_interface_force
     !========================================
-    !calculate the driving force at a cell edge between arbitrary 
+    !calculate the driving force at a cell edge between arbitrary
     !(static) left and right states
     !=======================================
 
     subroutine calc_interface_force(Fx,gz,hR,hL,bR,bL,dx,theta)
 
         implicit none
-        
+
         !Input/Output
         double precision :: gz,hR,hL,bR,bL,dx,theta,Fx
 
