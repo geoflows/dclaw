@@ -140,8 +140,8 @@
                bTL = aux(1,i-1,j+1)-q(i_bdif,i-1,j+1)
                bBR = aux(1,i+1,j-1)-q(i_bdif,i+1,j-1)
                bBL = aux(1,i-1,j-1)-q(i_bdif,i-1,j-1)
-               b_x = (bR-bL)/2.d0*dx
-               b_y = (bT-bB)/2.d0*dy
+               b_x = (bR-bL)/(2.d0*dx)
+               b_y = (bT-bB)/(2.d0*dy)
                b_xx=(bR - 2.d0*b + bL)/(dx**2)
                b_yy=(bT - 2.d0*b + bB)/(dy**2)
                b_xy=((bTR-bTL) - (bBR-bBL))/(4.0*dx*dy)
