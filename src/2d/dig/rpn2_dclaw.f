@@ -271,7 +271,7 @@ c               bL=hstartest+bR
 
          case(1)
 
-         call riemann1_dig2_aug_sswave_ez(ixy,6,3,hL,hR,huL,huR,
+         call riemann0_dig2_aug_sswave_ez(ixy,6,3,hL,hR,huL,huR,
      &         hvL,hvR,hmL,hmR,pL,pR,bL,bR,uL,uR,vL,vR,mL,mR,
      &         thetaL,thetaR,phi_bedL,phi_bedR,sw,fw,wallprob,
      &         taudirL,taudirR,chiL,chiR,fsL,fsR,i)

@@ -1,6 +1,6 @@
 
 c-----------------------------------------------------------------------
-      subroutine riemann_dig2_aug_sswave_ez(ixy,meqn,mwaves,hL,hR,
+      subroutine riemann0_dig2_aug_sswave_ez(ixy,meqn,mwaves,hL,hR,
      &         huL,huR,hvL,hvR,hmL,hmR,pL,pR,bL,bR,uL,uR,vL,vR,mL,mR,
      &         thetaL,thetaR,phiL,phiR,sw,fw,wallprob,taudirL,
      &         taudirR,chiL,chiR,fsL,fsR,ilook)
