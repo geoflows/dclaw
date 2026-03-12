@@ -502,7 +502,7 @@ c-----------------------------------------------------------------------
 
       use geoclaw_module, only: grav, dry_tolerance
       use digclaw_module, only: beta_seg, rho_f, kappa
-      use digclaw_module, only: setvars
+      use digclaw_module, only: setvars,src2method,rarecorrectortest
 
       implicit none
 
@@ -538,9 +538,11 @@ c-----------------------------------------------------------------------
       double precision hstarHLL,deldelh,drytol,gz,geps,tausource
       double precision raremin,raremax,rare1st,rare2st,sdelta
       double precision gammaL,gammaR,theta1,theta2,theta3,vnorm
-      double precision alpha_seg,a,b,c,ctn,hsmallest,uedge,vedge
+      double precision alpha_seg,a,b,c,ctn,hsmallest,uedge,vedge,hustar
       logical sonic,rare1,rare2
-      logical rarecorrectortest,rarecorrector
+      logical rarecorrector,s2patch
+
+      s2patch = .true.
 
       veltol1=1.d-6
       veltol2=0.d0
@@ -600,7 +602,8 @@ c-----------------------------------------------------------------------
       hstarHLL = max((huL-huR+sw(3)*hR-sw(1)*hL)/(sw(3)-sw(1)),drytol) ! single middle state in an HLL solve
       hustarHLL = (dels*huL + sw(1)*sw(3)*(hR-hL)+sw(1)*(huL-huR))/dels
 c     !determine the middle entropy corrector wave------------------------
-      rarecorrectortest = .false.
+      !# set in setrun
+      !rarecorrectortest = .true.
       rarecorrector=.false.
       if (rarecorrectortest) then
          sdelta=sw(3)-sw(1)
@@ -983,6 +986,37 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
           beta(1) = (c*del(0) - del(1))/(c-a)
           beta(2) = a*c*del(0) - (a+c)*del(1) + del(2)
           beta(3) = (del(1)-a*del(0))/(c-a)
+
+         if (s2patch.eqv..true.) then
+          ! s2 patch ensures that the middle (2nd)
+          ! wave speed has the same sign as hustar
+          ! (hustar = hu of the middle state)
+          ! this implies that the contact discontinuity has
+          ! the same sign as hustar
+
+          ! added Feb 26, 2026 - still needs testing
+          ! and perhaps refinement of the three cases.
+
+             ! hustar is well defined by
+             ! (huR-huL) = Delta hu = beta(1)*sw(1) + beta(3)*sw(3)
+             hustar = huL + beta(1)*a
+
+             ! hstarHLL = hL + beta(1)
+             ! hR-hL = Delta h = beta(1) + beta(3)
+
+             ! if the middle state depth is greater than zero,
+             ! set sw(2) to u middle (ustar)
+             if (hstarHLL.gt.0.d0) then
+               sw(2) = 2.d0*hustar/(hL+hR)
+               sw(2) = min(sw(3),sw(2))
+               sw(2) = max(sw(1),sw(2))
+             else
+               sw(2) = 2.d0*hustar/(hL+hR)
+               sw(2) = min(sw(3),sw(2))
+               sw(2) = max(sw(1),sw(2))
+             endif
+          endif
+
         elseif (cwavetype==2) then
           !r2 is (1, s2, s2**2)
           beta(1) = (b*c*del(0) - (b+c)*del(1) +del(2))/
