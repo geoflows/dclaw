@@ -974,6 +974,8 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
          theta3 = thetaR
       endif
 
+        sw(2) = min(sw(3),sw(2))
+        sw(2) = max(sw(1),sw(2))
 
        !R beta = del
         a = sw(1)
