@@ -791,8 +791,8 @@ c     !find if sonic problem (or very far from steady state)
      &        + ss_delta*(1.d0/(-gz*hbar)))
       deldelh = delb*gz*hbar*s1s2_denom !jump in h at interface from bathy not friction
       source2dx = -gz*hbar*delb*s1s2_ratio !source from bathy no friction yet
-      !source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb)) 
-      !source2dx=max(source2dx,gz*min(-hL*delb,-hR*delb))
+        !source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb)) !CHANGE_MARCH commented->uncommented
+        !source2dx=max(source2dx,gz*min(-hL*delb,-hR*delb))  !CHANGE_MARCH commented->uncommented
       
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
       !hu at interface not considering friction. friction should oppose this velocity
@@ -976,7 +976,7 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
 
         sw(2) = min(sw(3),sw(2))
         sw(2) = max(sw(1),sw(2))
-
+        
        !R beta = del
         a = sw(1)
         b = sw(2)
@@ -1002,22 +1002,23 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
              ! hustar is well defined by
              ! (huR-huL) = Delta hu = beta(1)*sw(1) + beta(3)*sw(3)
              hustar = huL + beta(1)*a
-
+             if (.false.) then
+             !if ((sw(2)*hustar).lt.0.d0) then
+               write(*,*) 'interesting:', sw(2),hustar,huR-beta(3)*c
+               write(*,*) 'hL,hR',hL,hR
+               write(*,*) 's1,s2,s3',a,b,c
+               write(*,*) 'uR,uL',uR,uL
+               write(*,*) 'cL,cR',uL**2-gz*hL,uR**2-gz*hR
+            endif
              ! hstarHLL = hL + beta(1)
              ! hR-hL = Delta h = beta(1) + beta(3)
 
              ! if the middle state depth is greater than zero,
              ! set sw(2) to u middle (ustar)
-             if (hstarHLL.gt.0.d0) then
-               sw(2) = 2.d0*hustar/(hL+hR)
-               sw(2) = min(sw(3),sw(2))
-               sw(2) = max(sw(1),sw(2))
-             else
-               sw(2) = 2.d0*hustar/(hL+hR)
-               sw(2) = min(sw(3),sw(2))
-               sw(2) = max(sw(1),sw(2))
-             endif
-          endif
+            sw(2) = 2.d0*hustar/(hL+hR)
+            sw(2) = min(sw(3),sw(2))
+            sw(2) = max(sw(1),sw(2))
+         endif
 
         elseif (cwavetype==2) then
           !r2 is (1, s2, s2**2)
