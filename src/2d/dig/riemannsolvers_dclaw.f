@@ -791,8 +791,8 @@ c     !find if sonic problem (or very far from steady state)
      &        + ss_delta*(1.d0/(-gz*hbar)))
       deldelh = delb*gz*hbar*s1s2_denom !jump in h at interface from bathy not friction
       source2dx = -gz*hbar*delb*s1s2_ratio !source from bathy no friction yet
-        !source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb)) !CHANGE_MARCH commented->uncommented
-        !source2dx=max(source2dx,gz*min(-hL*delb,-hR*delb))  !CHANGE_MARCH commented->uncommented
+      source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb)) !CHANGE_MARCH commented->uncommented
+      source2dx=max(source2dx,gz*min(-hL*delb,-hR*delb))  !CHANGE_MARCH commented->uncommented
       
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
       !hu at interface not considering friction. friction should oppose this velocity
@@ -934,8 +934,12 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
         if (abs(hbar*gz*taudirR*min(tan(phi_eff),tan_phi_max))
      &            .lt.abs(del(2)-source2dx)) then
             !failure and friction opposes failure
-            delbf = dsign(1.d0,del(2)-source2dx)*
+            if (abs(del(2)-source2dx).gt.0.d0) then
+               delbf = dsign(1.d0,del(2)-source2dx)*
      &       taudirR*min(tan(phi_eff),tan_phi_max)
+            else
+               delbf = 0.d0
+            endif
             source2dxf = - gz*hbar*delbf
             deldelhf = -delbf
             deldelh = deldelh + deldelhf
@@ -988,38 +992,6 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
           beta(1) = (c*del(0) - del(1))/(c-a)
           beta(2) = a*c*del(0) - (a+c)*del(1) + del(2)
           beta(3) = (del(1)-a*del(0))/(c-a)
-
-         if (s2patch.eqv..true.) then
-          ! s2 patch ensures that the middle (2nd)
-          ! wave speed has the same sign as hustar
-          ! (hustar = hu of the middle state)
-          ! this implies that the contact discontinuity has
-          ! the same sign as hustar
-
-          ! added Feb 26, 2026 - still needs testing
-          ! and perhaps refinement of the three cases.
-
-             ! hustar is well defined by
-             ! (huR-huL) = Delta hu = beta(1)*sw(1) + beta(3)*sw(3)
-             hustar = huL + beta(1)*a
-             if (.false.) then
-             !if ((sw(2)*hustar).lt.0.d0) then
-               write(*,*) 'interesting:', sw(2),hustar,huR-beta(3)*c
-               write(*,*) 'hL,hR',hL,hR
-               write(*,*) 's1,s2,s3',a,b,c
-               write(*,*) 'uR,uL',uR,uL
-               write(*,*) 'cL,cR',uL**2-gz*hL,uR**2-gz*hR
-            endif
-             ! hstarHLL = hL + beta(1)
-             ! hR-hL = Delta h = beta(1) + beta(3)
-
-             ! if the middle state depth is greater than zero,
-             ! set sw(2) to u middle (ustar)
-            sw(2) = 2.d0*hustar/(hL+hR)
-            sw(2) = min(sw(3),sw(2))
-            sw(2) = max(sw(1),sw(2))
-         endif
-
         elseif (cwavetype==2) then
           !r2 is (1, s2, s2**2)
           beta(1) = (b*c*del(0) - (b+c)*del(1) +del(2))/
@@ -1037,9 +1009,19 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
       enddo
 
       !split the jump in phi (mom. flux) in middle wave into outer waves
-      fw(2,1) = fw(2,1) + 0.5d0*fw(2,2)
-      fw(2,3) = fw(2,3) + 0.5d0*fw(2,2)
-      fw(2,2) = 0.d0
+      !sw(2) is not exactly an estimate of u yet, it is an estimate of inner fan speed
+      if (sw(2).lt.0.d0) then
+         fw(2,1) = fw(2,1) + fw(2,2)
+         fw(2,2) = 0.d0
+      elseif (sw(2).gt.0.d0) then
+         fw(2,3) = fw(2,3) + fw(2,2)
+         fw(2,2) = 0.d0
+      else
+         fw(2,1) = fw(2,1) + 0.5d0*fw(2,2)
+         fw(2,3) = fw(2,3) + 0.5d0*fw(2,2)
+         fw(2,2) = 0.d0
+      endif
+      
       !waves and fwaves for delta hum
       fw(4,1) = fw(1,1)*mL
       fw(4,3) = fw(1,3)*mR
@@ -1063,6 +1045,39 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
       fw(6,3) = fw(1,3)*chiR*(1.0+(1.0d0-alpha_seg)*(1.0d0-chiR))
       fw(6,2) = seg_R - seg_L - fw(6,1) - fw(6,3)
 
+      !sw(2) might differ in sign than hustar, fix
+      if (s2patch) then
+         ! s2 patch ensures that the middle (2nd)
+         ! wave speed has the same sign as hustar
+         ! (hustar = hu of the middle state)
+         ! this implies that the contact discontinuity has
+         ! the same sign as hustar
+
+         ! added Feb 26, 2026 - still needs testing
+         ! and perhaps refinement of the three cases.
+
+         ! hustar is well defined by
+         ! (huR-huL) = Delta hu = beta(1)*sw(1) + beta(3)*sw(3)
+         hustar = huL + beta(1)*a
+         if (.false.) then
+         !if ((sw(2)*hustar).lt.0.d0) then
+            write(*,*) 'interesting:', sw(2),hustar,huR-beta(3)*c
+            write(*,*) 'hL,hR',hL,hR
+            write(*,*) 's1,s2,s3',a,b,c
+            write(*,*) 'uR,uL',uR,uL
+            write(*,*) 'cL,cR',uL**2-gz*hL,uR**2-gz*hR
+         endif
+         ! hstarHLL = hL + beta(1)
+         ! hR-hL = Delta h = beta(1) + beta(3)
+
+         ! if the middle state depth is greater than zero,
+         ! set sw(2) to u middle (ustar)
+         sw(2) = 2.d0*hustar/(hL+hR)
+         sw(2) = min(sw(3),sw(2))
+         sw(2) = max(sw(1),sw(2))
+      endif
+
+      if (.false.) then
         ! NaN / Inf diagnostic block
         if (.not.(hstarHLL == hstarHLL)) then
             write(*,*) 'NaN detected: hstarHLL'
@@ -1157,7 +1172,7 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
         if (.not.(del(3) == del(3))) then
             write(*,*) 'NaN detected: del(3)'
         endif
-
+      endif
 
       return
       end !subroutine riemann1_dig2_aug_sswave_ez
@@ -1214,7 +1229,11 @@ c     !Test for Riemann structure
 
             hm=(1.d0/(16.d0*g))*
      &               max(0.d0,-delu+2.d0*(dsqrt(g*hL)+dsqrt(g*hR)))**2
-            um=dsign(1.d0,hm)*(uL+2.d0*(dsqrt(g*hL)-dsqrt(g*hm)))
+            if (abs(hm).gt.0.d0) then
+               um=dsign(1.d0,hm)*(uL+2.d0*(dsqrt(g*hL)-dsqrt(g*hm)))
+            else
+               um=0.d0 
+            endif
 
             s1m=uL+2.d0*dsqrt(g*hL)-3.d0*dsqrt(g*hm)
             s2m=uR-2.d0*dsqrt(g*hR)+3.d0*dsqrt(g*hm)
