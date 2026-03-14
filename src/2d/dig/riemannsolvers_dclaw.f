@@ -539,6 +539,7 @@ c-----------------------------------------------------------------------
       double precision raremin,raremax,rare1st,rare2st,sdelta
       double precision gammaL,gammaR,theta1,theta2,theta3,vnorm
       double precision alpha_seg,a,b,c,ctn,hsmallest,uedge,vedge,hustar
+      double precision uLsign,uRsign
       logical sonic,rare1,rare2
       logical rarecorrector,s2patch
 
@@ -688,7 +689,7 @@ c     !find if sonic problem (or very far from steady state)
        !phiL_effective = atan(max(0.d0,(tauratL+pratL))*tan(phiL))
        !phiR_effective = atan(max(0.d0,(tauratR+pratR))*tan(phiR))
        phi_eff = max(0.5d0*(phiL_effective + phiR_effective),0.d0)
-       if (phi_eff.lt.1.d-6) then
+       if (phi_eff.lt.1.d-16) then
           phi_eff=0.d0
         endif
         
@@ -704,16 +705,28 @@ c     !find if sonic problem (or very far from steady state)
       else
         ss_delta = 0.d0
       endif
+
       ! 2nd Riemann invariant
+      if (dabs(uR).eq.0.d0) then
+        uRsign = 0.d0
+      else 
+        uRsign = dsign(1.d0,uR)
+      endif
+      if (dabs(uL).eq.0.d0) then
+        uLsign = 0.d0
+      else 
+        uLsign = dsign(1.d0,uL)
+      endif
+
       ss_delta = max(ss_delta,
      &  dabs(0.5*uR**2 + gz*hR +gz*bR - 0.5*uL**2 - gz*hL -gz*bL 
      &   + gz*taudirR*tan(phi_eff)*0.5d0*
-     &     (dsign(1.d0,uR)+dsign(1.d0,uL)))/
+     &     (uRsign+uLsign))/
      &   (dabs(0.5*uR**2 +gz*hR)+dabs(0.5*uL**2 +gz*hL)+dabs(bR-bL)
      &    + dabs(gz*taudirR*tan(phi_eff))))
       ! transcritical (metric either 1 or zero)
-       ss_delta = max(ss_delta,
-     &  dabs(dsign(1.d0,(uR**2-gz*hR))-dsign(1.d0,(uL**2-gz*hL))))/2.d0
+       !ss_delta = max(ss_delta,
+     !&  dabs(dsign(1.d0,(uR**2-gz*hR))-dsign(1.d0,(uL**2-gz*hL))))/2.d0
         !fix rounding error if any ss_delta in [0,1]
        ss_delta = max(0.d0, min(ss_delta,1.d0))
        !ss_delta = 1.d0
@@ -734,8 +747,7 @@ c     !find if sonic problem (or very far from steady state)
         else      
             s1s2bar = max(s1s2bar,0.d0)
         endif 
-      elseif (sw(1).lt.-ctn*0.d0.and.sw(3).gt.
-     &                          0.d0*ctn) then
+      elseif (sw(1).lt.-ctn.and.sw(3).gt.ctn) then
          if (hstarHLL.gt.drytol) then
             s1s2bar=min(sw(1)*gz*hbar*delb/(hstarHLL*dels),
      &           min(s1s2bar,sw(3)*gz*hbar*delb/(hstarHLL*dels)))
