@@ -742,6 +742,7 @@ c     !find if sonic problem (or very far from steady state)
       ! bound jump in h at interface, positivity constraint, also constrains source term
       sonic = .false.
       ctn = criticaltol/dsqrt(gz*hbar) !normalize the tolerance to depth (very small depths not necessarily near critical)
+
       if (sw(1).gt.ctn) then 
         if (hL.gt.drytol) then
             s1s2bar = max(delb*gz*hbar*sw(1)/(hstarHLL*dels),
@@ -890,7 +891,7 @@ c     !find jump in h, deldelh
       !endif
 c     !find bounds on deltah at interface based on depth positivity constraint and energy
       !constraint ensures energy does not increase accross interface
-      
+
       if (sE1.lt.-ctn.and.sE2.gt.ctn) then
         hsmallest = 0.d0*((hustarHLL)**2/(2.d0*gz))**(1.d0/3.d0) 
         hmin = max(hstarHLL -hsmallest,0.d0)!small depth for energy constraint
