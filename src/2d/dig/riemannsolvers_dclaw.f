@@ -572,9 +572,18 @@ c-----------------------------------------------------------------------
       rho_bar = 0.5d0*(rhoL + rhoR)
       
       !tau = 0.5d0*(tauL + tauR)
-      gamma = 0.25d0*(rho_f + 3.0d0*rho_bar)/rho_bar
-      gammaL = 0.25d0*(rho_f + 3.0d0*rhoL)/rhoL
-      gammaR = 0.25d0*(rho_f + 3.0d0*rhoR)/rhoR
+      select case (src2method)
+      case(-1)
+         ! gamma is
+         gamma = rho_f/rho_bar
+         gammaL = rho_f/rhoL
+         gammaR = rho_f/rhoR
+
+      case(0:2)
+         gamma = 0.25d0*(rho_f + 3.0d0*rho_bar)/rho_bar
+         gammaL = 0.25d0*(rho_f + 3.0d0*rhoL)/rhoL
+         gammaR = 0.25d0*(rho_f + 3.0d0*rhoR)/rhoR
+      end select
 
       eps = kappa + (1.d0-kappa)*gamma
       geps = gz*eps
@@ -786,7 +795,7 @@ c     !find if sonic problem (or very far from steady state)
       if (dabs(s1s2bar).le.ctn**2) then
         s1s2bar = dsign(ctn**2,s1s2bar)
         !s1s2bar = min(uL**2-gz*hL,uR**2-gz*hR)
-        !sonic=.true.
+        sonic=.true.
         ss_delta = 1.d0
       endif
       !if (sonic) then
@@ -896,6 +905,11 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
         deldelh = max(deldelh,hmin*(sE2-sE1)/sE2)
       endif
 
+      !----!tweak CHANAGE-----
+      if (sonic) then
+        deldelh = 0.d0
+      endif
+      !----------------------
 
 *     !determine R
       R(0,2) = 0.d0
