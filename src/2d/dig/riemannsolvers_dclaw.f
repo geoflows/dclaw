@@ -813,8 +813,8 @@ c     !find if sonic problem (or very far from steady state)
      &        + ss_delta*(1.d0/(-gz*hbar)))
       deldelh = delb*gz*hbar*s1s2_denom !jump in h at interface from bathy not friction
       source2dx = -gz*hbar*delb*s1s2_ratio !source from bathy no friction yet
-      source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb)) !CHANGE_MARCH commented->uncommented
-      source2dx=max(source2dx,gz*min(-hL*delb,-hR*delb))  !CHANGE_MARCH commented->uncommented
+      !source2dx=min(source2dx,gz*max(-hL*delb,-hR*delb)) !CHANGE_MARCH original commented->uncommented
+      !source2dx=max(source2dx,gz*min(-hL*delb,-hR*delb))  !CHANGE_MARCH original commented->uncommented
       
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
       !hu at interface not considering friction. friction should oppose this velocity
@@ -906,9 +906,9 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
       endif
 
       !----!tweak CHANAGE-----
-      if (sonic) then
-        deldelh = 0.d0
-      endif
+      !if (sonic) then
+      !  deldelh = 0.d0
+      !endif
       !----------------------
 
 *     !determine R
