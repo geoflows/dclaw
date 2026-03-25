@@ -363,7 +363,9 @@ c============= compute fluctuations=============================================
          apdq(1:meqn,:) = 0.d0
          do i=2-mbc,mx+mbc
             do  mw=1,mwaves
-               if (s(mw,i) < -1.d-14) then
+               if (s(mw,i) ==0.d0) then
+                 !do nothing - should be no flux jump on wave, eg. wall
+               else if (s(mw,i) < -1.d-14) then
                      amdq(1:meqn,i) = amdq(1:meqn,i)
      &                              + fwave(1:meqn,mw,i)
                else if (s(mw,i) > 1.d-14) then
@@ -384,6 +386,12 @@ c============= compute fluctuations=============================================
 ! Because of how the source term is handled, DLG does not think we should add
 ! this back in. (1/30/2024) Also unclear how often s(mw,i)=0 and
 ! fwave(1:meqn,mw,i)>0 occurs.
+
+! see the change above about s=0 exactly. The reasoning is if s==0, del f should be zero
+! an example where s==0 exactly is a wall. If delf has small rounding error, small spurious updates
+! occur. Now that is accounted for above. Below handles where s is small but s!=0., so del f is split.
+! I think this now resolves the debate above, but ...still an issue that ultimately should be resolved in the 
+! RS, because if s=0 then delf !=0 should be ensured there. DLG 3/25/26
 
                  amdq(1:meqn,i) = amdq(1:meqn,i)
      &                              + 0.5d0 * fwave(1:meqn,mw,i)
