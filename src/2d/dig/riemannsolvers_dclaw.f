@@ -61,8 +61,7 @@ c-----------------------------------------------------------------------
       logical sonic,rare1,rare2
       logical rarecorrector,s2patch
 
-      s2patch = .false.
-
+      s2patch = .true. 
       veltol1=1.d-6
       veltol2=0.d0
       !criticaltol=1.d-6
@@ -366,41 +365,6 @@ c     !find bounds in case of critical state resonance, or negative states
           beta(2) = a*c*del(0) - (a+c)*del(1) + del(2)
           beta(3) = (del(1)-a*del(0))/(c-a)
 
-
-          if (s2patch.eqv..true.) then
-          ! s2 patch ensures that the middle (2nd)
-          ! wave speed has the same sign as hustar
-          ! (hustar = hu of the middle state)
-          ! this implies that the contact discontinuity has
-          ! the same sign as hustar
-
-          ! added Feb 26, 2026 - still needs testing
-          ! and perhaps refinement of the three cases.
-
-             ! hustar is well defined by
-             ! (huR-huL) = Delta hu = beta(1)*sw(1) + beta(3)*sw(3)
-             hustar = huL + beta(1)*a
-
-             ! hstarHLL = hL + beta(1)
-             ! hR-hL = Delta h = beta(1) + beta(3)
-
-             ! if the middle state depth is greater than zero,
-             ! set sw(2) to u middle (ustar)
-             if (hstarHLL.gt.0.d-14) then
-               sw(2) = hustar/hstarHLL
-
-             ! this block is intended to handle if middle
-             ! state is dry, but hustar is between
-             ! zero and 1e-14
-             elseif (dabs(hustar).gt.0.d0) then
-               sw(2) = dsign(sw(2),hustar)
-
-             ! if hustar == 0, set sw(2) to zero
-             else
-               sw(2) = 0.d0
-             endif
-          endif
-
         elseif (cwavetype==2) then
 
         ! if rarecorector is .true. this block will be used
@@ -473,6 +437,31 @@ c     !solve for beta(k) using Cramers Rule=================
       fw(6,1) = fw(1,1)*chiL*(1.0+(1.0d0-alpha_seg)*(1.0d0-chiL))
       fw(6,3) = fw(1,3)*chiR*(1.0+(1.0d0-alpha_seg)*(1.0d0-chiR))
       fw(6,2) = seg_R - seg_L - fw(6,1) - fw(6,3)
+
+      !sw(2) might differ in sign than hustar, fix
+      !note that sw(2) is the contact discontinuity = u
+      !if rarecorrector=.false. it should be changed above as well
+      if (s2patch) then
+         ! s2 patch ensures that the middle (2nd)
+         ! wave speed has the same sign as hustar
+         ! (hustar = hu of the middle state)
+         ! this implies that the contact discontinuity has
+         ! the same sign as hustar
+
+         ! added Feb 26, 2026 - still needs testing
+         ! and perhaps refinement of the three cases.
+
+         ! hustar is well defined by
+         ! (huR-huL) = Delta hu = beta(1)*sw(1) + beta(3)*sw(3)
+         hustar = huL + beta(1)*a
+
+         ! if the middle state depth is greater than zero,
+         ! set sw(2) to u middle (ustar)
+         sw(2) = 2.d0*hustar/(hL+hR)
+         sw(2) = min(sw(3),sw(2))
+         sw(2) = max(sw(1),sw(2))
+      endif
+
       return
       end !subroutine riemann0_dig2_aug_sswave_ez
 
