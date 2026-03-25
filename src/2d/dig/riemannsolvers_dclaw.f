@@ -698,7 +698,7 @@ c     !find if sonic problem (or very far from steady state)
        !phiL_effective = atan(max(0.d0,(tauratL+pratL))*tan(phiL))
        !phiR_effective = atan(max(0.d0,(tauratR+pratR))*tan(phiR))
        phi_eff = max(0.5d0*(phiL_effective + phiR_effective),0.d0)
-       if (phi_eff.lt.1.d-16) then
+       if (phi_eff.lt.1.d-6) then
           phi_eff=0.d0
         endif
         
@@ -734,8 +734,8 @@ c     !find if sonic problem (or very far from steady state)
      &   (dabs(0.5d0*uR**2 +gz*hR)+dabs(0.5d0*uL**2 +gz*hL)+dabs(bR-bL)
      &    + dabs(gz*taudirR*tan(phi_eff))))
       ! transcritical (metric either 1 or zero)
-       !ss_delta = max(ss_delta,
-       !&  dabs(dsign(1.d0,(uR**2-gz*hR))-dsign(1.d0,(uL**2-gz*hL))))/2.d0
+       ss_delta = max(ss_delta,
+     &  dabs(dsign(1.d0,(uR**2-gz*hR))-dsign(1.d0,(uL**2-gz*hL))))/2.d0
         !fix rounding error if any ss_delta in [0,1]
        ss_delta = max(0.d0, min(ss_delta,1.d0))
        !ss_delta = 1.d0
@@ -757,7 +757,7 @@ c     !find if sonic problem (or very far from steady state)
         else      
             s1s2bar = max(s1s2bar,0.d0)
         endif 
-      elseif (sw(1).lt.-ctn.and.sw(3).gt.ctn) then
+      elseif (sw(1).lt.-ctn*0.d0.and.sw(3).gt.ctn*0.d0) then
          if (hstarHLL.gt.drytol) then
             s1s2bar=min(sw(1)*gz*hbar*delb/(hstarHLL*dels),
      &           min(s1s2bar,sw(3)*gz*hbar*delb/(hstarHLL*dels)))
@@ -772,17 +772,17 @@ c     !find if sonic problem (or very far from steady state)
         ss_delta = 1.d0
       endif
 
-      if (s1s2bar*sw(1)*sw(3).le.criticaltol**4) then
-         s1s2bar = dsign(max(abs(s1s2bar),abs(sw(1)*sw(3))),sw(1)*sw(3))
-         sonic=.true.
-         ss_delta = 1.d0
-      endif
+      !if (s1s2bar*sw(1)*sw(3).le.criticaltol**4) then
+       !  s1s2bar = dsign(max(abs(s1s2bar),abs(sw(1)*sw(3))),sw(1)*sw(3))
+       !  sonic=.true.
+       !  ss_delta = 1.d0
+      !endif
 
-      if (s1s2bar*s1s2tilde.le.criticaltol**4) then
-         s1s2bar = dsign(max(abs(s1s2bar),abs(sw(1)*sw(3))),sw(1)*sw(3))
-         sonic=.true.
-         ss_delta = 1.d0
-      endif
+      !if (s1s2bar*s1s2tilde.le.criticaltol**4) then
+       !  s1s2bar = dsign(max(abs(s1s2bar),abs(sw(1)*sw(3))),sw(1)*sw(3))
+       !  sonic=.true.
+       !  ss_delta = 1.d0
+      !endif
       
 
       ! if actual ubar**2-ghbar at interface = 0
@@ -796,7 +796,7 @@ c     !find if sonic problem (or very far from steady state)
       if (dabs(s1s2bar).le.ctn**2) then
         s1s2bar = dsign(ctn**2,s1s2bar)
         !s1s2bar = min(uL**2-gz*hL,uR**2-gz*hR)
-        sonic=.true.
+        !sonic=.true.
         ss_delta = 1.d0
       endif
       !if (sonic) then
