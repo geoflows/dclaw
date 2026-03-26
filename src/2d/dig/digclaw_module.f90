@@ -1255,8 +1255,7 @@ subroutine calc_pmin(meqn,mbc,mx,my,xlower,ylower,dx,dy,q,maux,aux)
         else
             bRdx = bR
         endif
-        !Fx = (-.5d0*gz*(hR**2-hL**2)-gz*0.5*(hL+hR)*(bRdx-bLdx))/dx-(gz*0.5*(hL+hR)*tan(theta))*dx
-        Fx = (-.5d0*gz*(hR**2-hL**2)-gz*0.5*(hL+hR)*(bRdx-bLdx))/dx-0.d0*(gz*0.5*(hL+hR)*tan(theta))*dx
+        Fx = (-.5d0*gz*(hR**2-hL**2)-gz*0.5*(hL+hR)*(bRdx-bLdx))/dx-(gz*0.5*(hL+hR)*tan(theta))*dx
 
 
     end subroutine calc_interface_force
