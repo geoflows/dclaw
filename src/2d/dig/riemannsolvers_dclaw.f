@@ -59,9 +59,11 @@ c-----------------------------------------------------------------------
       double precision gammaL,gammaR,theta1,theta2,theta3,vnorm
       double precision alpha_seg,a,b,c
       logical sonic,rare1,rare2
-      logical rarecorrector,s2patch
+      logical rarecorrector,s2patch,splitcwave
 
       s2patch = .true. 
+      splitcwave = .true.
+
       veltol1=1.d-6
       veltol2=0.d0
       !criticaltol=1.d-6
@@ -415,6 +417,22 @@ c     !solve for beta(k) using Cramers Rule=================
          enddo
       enddo
 
+      !split the jump in phi (mom. flux) in middle wave into outer waves
+      !sw(2) is not exactly an estimate of u yet, it is an estimate of inner fan speed
+      if (splitcwave) then
+        if (sw(2).lt.0.d0) then
+            fw(2,1) = fw(2,1) + fw(2,2)
+            fw(2,2) = 0.d0
+        elseif (sw(2).gt.0.d0) then
+            fw(2,3) = fw(2,3) + fw(2,2)
+            fw(2,2) = 0.d0
+        else
+            fw(2,1) = fw(2,1) + 0.5d0*fw(2,2)
+            fw(2,3) = fw(2,3) + 0.5d0*fw(2,2)
+            fw(2,2) = 0.d0
+        endif
+      endif
+
       !waves and fwaves for delta hum
       fw(4,1) = fw(1,1)*mL
       fw(4,3) = fw(1,3)*mR
@@ -530,9 +548,10 @@ c-----------------------------------------------------------------------
       double precision alpha_seg,a,b,c,ctn,hsmallest,uedge,vedge,hustar
       double precision uLsign,uRsign
       logical sonic,rare1,rare2
-      logical rarecorrector,s2patch
+      logical rarecorrector,s2patch,splitcwave
 
       s2patch = .true.
+      splitcwave = .true.
 
       veltol1=1.d-6
       veltol2=0.d0
@@ -1027,18 +1046,19 @@ c     !find bounds on deltah at interface based on depth positivity constraint a
 
       !split the jump in phi (mom. flux) in middle wave into outer waves
       !sw(2) is not exactly an estimate of u yet, it is an estimate of inner fan speed
-      if (sw(2).lt.0.d0) then
-         fw(2,1) = fw(2,1) + fw(2,2)
-         fw(2,2) = 0.d0
-      elseif (sw(2).gt.0.d0) then
-         fw(2,3) = fw(2,3) + fw(2,2)
-         fw(2,2) = 0.d0
-      else
-         fw(2,1) = fw(2,1) + 0.5d0*fw(2,2)
-         fw(2,3) = fw(2,3) + 0.5d0*fw(2,2)
-         fw(2,2) = 0.d0
+      if (splitcwave) then
+        if (sw(2).lt.0.d0) then
+            fw(2,1) = fw(2,1) + fw(2,2)
+            fw(2,2) = 0.d0
+        elseif (sw(2).gt.0.d0) then
+            fw(2,3) = fw(2,3) + fw(2,2)
+            fw(2,2) = 0.d0
+        else
+            fw(2,1) = fw(2,1) + 0.5d0*fw(2,2)
+            fw(2,3) = fw(2,3) + 0.5d0*fw(2,2)
+            fw(2,2) = 0.d0
+        endif
       endif
-      
       !waves and fwaves for delta hum
       fw(4,1) = fw(1,1)*mL
       fw(4,3) = fw(1,3)*mR
