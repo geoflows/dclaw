@@ -15,6 +15,7 @@ module digclaw_module
     double precision :: rho_s,rho_f,m_crit,m0,mref,kref,phi,delta,mu,alpha_c
     double precision :: c1,sigma_0,kappa
     double precision :: theta_input,entrainment_rate,me,beta_seg,chi0,chie
+    double precision :: delta_kr_order
     double precision :: manning_max
     logical :: dd_manning
 
@@ -158,6 +159,7 @@ contains
          read(iunit,*) beta_seg
          read(iunit,*) chi0
          read(iunit,*) chie
+         read(iunit,*) delta_kr_order
 
          read(iunit,*) mom_autostop
          read(iunit,*) momlevel
@@ -214,6 +216,7 @@ contains
          write(DIG_PARM_UNIT,*) '    beta_seg:', beta_seg
          write(DIG_PARM_UNIT,*) '    chi0:', chi0
          write(DIG_PARM_UNIT,*) '    chie:', chie
+         write(DIG_PARM_UNIT,*) '    delta_kr_order:', delta_kr_order
          write(DIG_PARM_UNIT,*) '    mom_autostop:', mom_autostop
          write(DIG_PARM_UNIT,*) '    momlevel:', momlevel
          write(DIG_PARM_UNIT,*) '    curvature:', curvature
@@ -398,7 +401,7 @@ contains
       real(kind=8), intent(out) :: rho
 
       !local
-      real(kind=8) :: vnorm,shear,Nden,Nnum,psi,delta_kr_order,kr_chi
+      real(kind=8) :: vnorm,shear,Nden,Nnum,psi,kr_chi
       real(kind=8) :: sig_0,sig_eff
       real(kind=8) :: alpha_meq ! tanh function for setting meqn to m when m is less than ~0.3
 
@@ -416,9 +419,15 @@ contains
       kr_chi = 1.0d0
       if (segregation==1) then
          !how many orders of magnitude should kperm change with chi=[0,1]
-         delta_kr_order = 2.d0
-         !DIG: check whether chi = 1 is coarse or fine
+         ! delta_kr_order user defined (April 15, 2026)
+         
+         !kr_chi = 1 when chi = 0.5 (50% mixture)
+         !kr_chi = 10**(delta_kr_order) when chi = 1.0 (all species A 'coarse')
+         !kr_chi = 10**(-delta_kr_order) when chi = 0.0 (all species B 'fine')
+         ! --> full range of kperm values span 2 x delta_kr_order orders of magnitude
+
          kr_chi = 10.d0**(delta_kr_order*2.d0*(chi-0.5d0))
+
       endif
       kperm = kr_chi*kref*exp(-(m-mref)/(0.04d0))
 

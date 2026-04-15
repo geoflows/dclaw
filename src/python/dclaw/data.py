@@ -134,7 +134,6 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - float
          - Pa
 
-
     Optionally, D-Claw may use a depth-dependent Manning friction value. The value provided to
     ``geo_data.manning_coefficient`` is used for flows greater than 6 cm. For flows less
     than 4 cm the Manning coefficient will be the value specified by ``manning_max`` if
@@ -262,13 +261,21 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
          - 0
          - int
        * - ``beta_seg``
-         - The value of :math:`\beta`. When :math:`\beta>0`, segregation is
+         - The value of :math:`\beta`. When :math:`\beta>0` and ``segregation==1``, segregation is
            active.
          - 0.0
          - float
-       * - ``chi_init_val``
+       * - ``chi0``
          - The initial value of :math:`\chi`. Only used if :math:`\beta>0`.
          - 0.5
+         - float
+       * - ``chie``
+         - The value of :math:`\chi` for entrained material. Only used if :math:`\beta>0` and entrainment is active.
+         - 0.5
+         - float
+       * - ``delta_kr_order``
+         - Segregation permeability factor (:math:`\Delta_{kr}`).
+         - 2.0
          - float
 
     Finally, the following parameters control whether the simulation will halt
@@ -337,6 +344,7 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.add_attribute("beta_seg", 0.0)
         self.add_attribute("chi0", 0.5)
         self.add_attribute("chie", 0.5)
+        self.add_attribute("delta_kr_order", 2.0)
 
         self.add_attribute("mom_autostop", False)
         self.add_attribute("momlevel", 1)
@@ -420,6 +428,10 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
         self.data_write(
             "chie",
             description="fraction of species A of entrainable material (#). Between 0-1.",
+        )
+        self.data_write(
+            "delta_kr_order",
+            description="Order of magnitude of permeability change due to segregation.",
         )
 
         self.data_write(

@@ -231,18 +231,18 @@ As the mixture shears, species {math}`A` moves to the surface of the flow, and i
 \frac{\partial}{\partial x} \left (\beta h \chi u \left( 1-\chi\right) \right)=0
 ```
 
-The representation of the feedback between the value of {math}`\chi` and flow behavior is highly experimental (c.f., Jones et al., 2023). At present the value for the mixture permeability, {math}`k`, given above is modified as follows:
+The representation of the feedback between the value of {math}`\chi` and flow behavior is highly experimental (c.f., Jones et al., 2023). At present the value for the mixture permeability, {math}`k`, given above is modified by defining a factor {math}`k_{\chi}` that modifies the mixture permeability based on the relative fraction of species {math}`A` and {math}`B`.
 
 ```{math}
-k = k_{chi} k_r\exp{\frac{m-m_r}{0.04}}
+k = k_{\chi} k_r\exp{\frac{m-m_r}{0.04}}
 ```
 where
 
 ```{math}
-\log_{10} kr_chi = 4(\chi-0.5))
+\log_{10} k_{\chi} = 2 \Delta_{kr} (\chi-0.5))
 ```
 
-This implementation results material that is 50% each of Species {math}`A` and {math}`B` having a permeability of {math}`k_r`. Material that is 100% species {math}`A` will have a higher permeability and material that is 100% {math}`B` will have a lower permeability.
+This implementation results material that is 50% each of Species {math}`A` and {math}`B` having a permeability of {math}`k_r`. For values of {math}`\Delta_{kr}>0`, material that is greater than 50% species {math}`A` will have a higher permeability and material that is greater than 50% {math}`B` will have a lower permeability than the 50% mixture. The magnitude of the change in permeability as a function of species fraction {math}`\chi` is controlled by {math}`\Delta_{kr}`. A value of {math}`\Delta_{kr}=0` is equivalent to not using segregation. A value of {math}`\Delta_{kr}=2` (default) is equivalent to material composed of 100% species {math}`A` having a permeability that is 100x larger than a 50% mixture and 10,000x larger than material composed of 100% species {math}`B`.
 
 
 :::{admonition} Warning
