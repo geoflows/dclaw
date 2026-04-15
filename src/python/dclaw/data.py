@@ -392,7 +392,9 @@ class DClawInputData(clawpack.clawutil.data.ClawData):
             "src2method", description="-1=swe, 0=orig,1=intermediate,2=new"
         )  # DIG: update text
         self.data_write("alphamethod", description="0=,1=,2=")  # DIG: update text
-        self.data_write("rarecorrectortest", description="True=, False=")  # DIG: update text
+        self.data_write(
+            "rarecorrectortest", description="True=, False="
+        )  # DIG: update text
 
         self.data_write(
             "bed_normal",
@@ -772,7 +774,6 @@ class PInitDClawInputData(clawpack.clawutil.data.ClawData):
         # Set default values:
         self.add_attribute("init_ptype", 0)
         self.add_attribute("init_pratio", 1)
-
 
     def write(self, out_file="pinit_dclaw.data", data_source="setrun.py"):
         """Write the contents of a ``PInitDClawInputData`` to a file."""
