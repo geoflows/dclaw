@@ -620,7 +620,6 @@ def Iv(current_data):
     return (mu * gamma) / sigma_e(current_data)
 
 
-
 def Froude(current_data):
     # Froude number
     if hasattr(current_data.plotdata, "geoclaw_data"):
@@ -630,7 +629,7 @@ def Froude(current_data):
 
     h = depth(current_data)
     u = velocity_magnitude(current_data)
-    return u/np.sqrt(grav*h)
+    return u / np.sqrt(grav * h)
 
 
 def Stokes(current_data):

@@ -84,7 +84,7 @@ def setplot(plotdata=None):
     plotaxes = plotfigure.new_plotaxes("depth")
     plotaxes.title = "Depth"
     plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(221)"
+    plotaxes.axescmd = "subplot(231)"
     plotaxes.xlimits = xlimits
     plotaxes.ylimits = ylimits
     plotaxes.afteraxes = aa
@@ -109,7 +109,7 @@ def setplot(plotdata=None):
     plotaxes = plotfigure.new_plotaxes("velocity")
     plotaxes.title = ""
     plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(222)"
+    plotaxes.axescmd = "subplot(232)"
     plotaxes.xlimits = xlimits
     plotaxes.ylimits = ylimits
     plotaxes.afteraxes = aa_notime
@@ -133,7 +133,7 @@ def setplot(plotdata=None):
     plotaxes = plotfigure.new_plotaxes("solidfrac")
     plotaxes.title = ""
     plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(223)"
+    plotaxes.axescmd = "subplot(233)"
     plotaxes.xlimits = xlimits
     plotaxes.ylimits = ylimits
     plotaxes.afteraxes = aa_notime
@@ -157,7 +157,7 @@ def setplot(plotdata=None):
     plotaxes = plotfigure.new_plotaxes("Pressure")
     plotaxes.title = "Pressure Ratio"
     plotaxes.scaled = True
-    plotaxes.axescmd = "subplot(224)"
+    plotaxes.axescmd = "subplot(234)"
     plotaxes.xlimits = xlimits
     plotaxes.ylimits = ylimits
     plotaxes.afteraxes = aa
@@ -177,6 +177,33 @@ def setplot(plotdata=None):
     plotitem.imshow_cmap = "BrBG"
     plotitem.imshow_norm = mpl.colors.TwoSlopeNorm(vcenter=1, vmin=0, vmax=2.5)
     plotitem.patchedges_show = True
+
+
+    # Panel 5: Hillshade and Species A
+    plotaxes = plotfigure.new_plotaxes("Species A")
+    plotaxes.title = "Species A Fraction"
+    plotaxes.scaled = True
+    plotaxes.axescmd = "subplot(235)"
+    plotaxes.xlimits = xlimits
+    plotaxes.ylimits = ylimits
+    plotaxes.afteraxes = aa
+    plotitem = plotaxes.new_plotitem(plot_type="2d_hillshade")
+    plotitem.show = True
+    plotitem.plot_var = dplot.eta
+    plotitem.add_colorbar = False
+    plotitem = plotaxes.new_plotitem(plot_type="2d_imshow")
+    plotitem.plot_var = dplot.species1_fraction
+    plotitem.add_colorbar = True
+    plotitem.colorbar_kwargs = {
+        "shrink": 0.5,
+        "location": "bottom",
+        "orientation": "horizontal",
+    }
+    plotitem.colorbar_label = "Fraction (-)"
+    plotitem.imshow_cmap = "PuOr_r"
+    plotitem.imshow_norm = mpl.colors.Normalize(vmin=0, vmax=1)
+    plotitem.patchedges_show = True
+
 
     # eventually add segregation and entrained depth
 

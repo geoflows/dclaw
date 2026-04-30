@@ -628,10 +628,11 @@ def setrun(claw_pkg="dclaw"):
     dclaw_data.src2method = 2
     dclaw_data.alphamethod = 1
 
-    dclaw_data.segregation = 0
-    dclaw_data.beta_seg = 0.0
-    dclaw_data.chi0 = 0.0
+    dclaw_data.segregation = 1
+    dclaw_data.beta_seg = 1.0
+    dclaw_data.chi0 = 0.5
     dclaw_data.chie = 0.0
+    dclaw_data.delta_kr_order = 2.0
 
     dclaw_data.bed_normal = 0
     dclaw_data.theta_input = 0.0
