@@ -22,7 +22,9 @@ c
      &                         fgout_write,fgout_grid, FGOUT_ttol
 
 c   Start of D-Claw specific code: use amidoneyet from digclaw_module
+c   and keep_fine from refinement module
       use digclaw_module, only: amidoneyet
+      use refinement_module, only: keep_fine
 c   End of D-Claw specific code
 
       implicit double precision (a-h,o-z)
@@ -498,6 +500,21 @@ c             ! use same alg. as when setting refinement when first make new fin
           if ((num_dtopo>0).and.(topo_finalized.eqv..false.)) then
               dtnew(1) = min(dtnew(1),dt_max_dtopo)
           endif
+
+        if (keep_fine) then 
+        ! If keep_keep fine is active, and variable timestepping is used,
+        ! then there is the possibility that material on lower
+        ! levels its totally gone and dtnew(those_levels) = rinfinity
+        ! to address this, use the same agorithm as the 115 block above 
+        ! that block only active if varaible timestepping is not active.
+
+          ! find new dt for next cycle (passed back from integration routine).
+          ! ii sweeps back from lfine-1 to level 1 and uses the min of each level
+           do 116 i = 2, lfine
+             ii = lfine+1-i
+             dtnew(ii) = min(dtnew(ii),dtnew(ii+1)*kratio(ii))
+ 116       continue
+        endif ! end keep fine block
 
           possk(1) = dtnew(1)
           do 125 i = 2, lfine

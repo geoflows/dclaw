@@ -43,7 +43,7 @@ c-----------------------------------------------------------------------
 
 *     !local
       integer m,mw,k,cwavetype
-      double precision h,u,v,mbar,hustar
+      double precision h,u,v,mbar,hustar,hustar_interface,u_interface
       double precision det1,det2,det3,determinant
       double precision R(0:2,1:3),del(0:4) !A(3,3)
       double precision beta(3)
@@ -59,9 +59,11 @@ c-----------------------------------------------------------------------
       double precision gammaL,gammaR,theta1,theta2,theta3,vnorm
       double precision alpha_seg,a,b,c
       logical sonic,rare1,rare2
-      logical rarecorrector,s2patch
+      logical rarecorrector
+      logical delta_huvm_revert,static
 
-      s2patch = .false.
+
+      delta_huvm_revert = .true. 
 
       veltol1=1.d-6
       veltol2=0.d0
@@ -290,9 +292,9 @@ c     !find bounds in case of critical state resonance, or negative states
       del(2) = hR*uR**2 + 0.5d0*kappa*gz*hR**2 -
      &      (hL*uL**2 + 0.5d0*kappa*gz*hL**2)
       del(2) = del(2) + (1.d0-kappa)*h*(pR-pL)/rho
-      del(3) = pR - pL - gamma*rho*gz*deldelh
+      del(3) = pR - pL - gamma*rho*gz*deldelh ! jump in p
       del(4) = -gamma*rho*gz*u*(hR-hL) + gamma*rho*gz*del(1)
-     &         + u*(pR-pL)
+     &         + u*(pR-pL) ! u=uhat (rho) ! Jacobian * Jump in p
 
 *     !determine the source term
 
@@ -304,6 +306,7 @@ c     !find bounds in case of critical state resonance, or negative states
       !endif
 
       vnorm = sqrt(uR**2 + uL**2 + vR**2 + vL**2)
+      static = .false.
       if (vnorm>0.0d0) then
 
          tausource =  0.0d0 ! if vnorm>0 then src2 handles friction.
@@ -320,7 +323,11 @@ c     !find bounds in case of critical state resonance, or negative states
          tausource = del(2) - source2dx
          del(1) = 0.0d0
          del(0) = 0.0d0
+         del(3) = 0.0d0
          del(4) = 0.0d0
+
+         static = .true.
+
       else
          ! failure of static material
          tausource = 0.5d0*((taudirR*tauR/rhoR)+(tauL*taudirR/rhoL))!*dx
@@ -365,41 +372,6 @@ c     !find bounds in case of critical state resonance, or negative states
           beta(1) = (c*del(0) - del(1))/(c-a)
           beta(2) = a*c*del(0) - (a+c)*del(1) + del(2)
           beta(3) = (del(1)-a*del(0))/(c-a)
-
-
-          if (s2patch.eqv..true.) then
-          ! s2 patch ensures that the middle (2nd)
-          ! wave speed has the same sign as hustar
-          ! (hustar = hu of the middle state)
-          ! this implies that the contact discontinuity has
-          ! the same sign as hustar
-
-          ! added Feb 26, 2026 - still needs testing
-          ! and perhaps refinement of the three cases.
-
-             ! hustar is well defined by
-             ! (huR-huL) = Delta hu = beta(1)*sw(1) + beta(3)*sw(3)
-             hustar = huL + beta(1)*a
-
-             ! hstarHLL = hL + beta(1)
-             ! hR-hL = Delta h = beta(1) + beta(3)
-
-             ! if the middle state depth is greater than zero,
-             ! set sw(2) to u middle (ustar)
-             if (hstarHLL.gt.0.d-14) then
-               sw(2) = hustar/hstarHLL
-
-             ! this block is intended to handle if middle
-             ! state is dry, but hustar is between
-             ! zero and 1e-14
-             elseif (dabs(hustar).gt.0.d0) then
-               sw(2) = dsign(sw(2),hustar)
-
-             ! if hustar == 0, set sw(2) to zero
-             else
-               sw(2) = 0.d0
-             endif
-          endif
 
         elseif (cwavetype==2) then
 
@@ -451,6 +423,17 @@ c     !solve for beta(k) using Cramers Rule=================
          enddo
       enddo
 
+      ! some changes for delta hum and delta huv added 
+      ! 4/30/2026 based on 
+      ! https://github.com/clawpack/riemann/pull/187/files
+      ! changes are 
+      ! fw(4,2) and fw(3,2) set to 0.d0 and the addition 
+      ! of the hstar_interface block.
+      ! if delta_huvm_revert = True, this is reverted.
+      ! this reversion eliminates the middle wave (2) and 
+      ! puts it into either the first or third depending on 
+      ! the middle state velocity.
+
       !waves and fwaves for delta hum
       fw(4,1) = fw(1,1)*mL
       fw(4,3) = fw(1,3)*mR
@@ -466,6 +449,16 @@ c     !solve for beta(k) using Cramers Rule=================
       fw(5,3) = fw(1,3)*gammaR*rhoR*grav*dcos(theta3)
       fw(5,2) = del(4) - fw(5,3) - fw(5,1)
 
+      !option 2:
+      !change to splitting pressure itself instead of A Delta Q
+      !fw(5,1) = beta(1)*R(0,1)*gammaL*rhoL*grav*dcos(theta1)
+      !fw(5,3) = beta(3)*R(0,3)*gammaR*rhoR*grav*dcos(theta3)
+      !fw(5,2) = del(3) - fw(5,3) - fw(5,1)
+      !above aren't really f-waves yet, they are jumps in pressure.
+      !make in flux units or units of A*Delta Q.:
+      !fw(5,1) = fw(5,1)*sw(1)
+      !fw(5,3) = fw(5,3)*sw(3)
+      !fw(5,2) = fw(5,2)*sw(2)
 
       !fwaves for segregation
       seg_L = chiL*hL*uL*(1.0d0+(1.0d0-alpha_seg)*(1.0d0-chiL))
@@ -473,6 +466,57 @@ c     !solve for beta(k) using Cramers Rule=================
       fw(6,1) = fw(1,1)*chiL*(1.0+(1.0d0-alpha_seg)*(1.0d0-chiL))
       fw(6,3) = fw(1,3)*chiR*(1.0+(1.0d0-alpha_seg)*(1.0d0-chiR))
       fw(6,2) = seg_R - seg_L - fw(6,1) - fw(6,3)
+
+
+      if (delta_huvm_revert) then
+      hustar_interface = huL + fw(1,1)   ! = huR - fw(1,3)
+
+        if (static) then 
+          ! if del(4) was previously set to zero (because static)
+          ! we want to keep it zero
+         else
+          ! redefine del(4) to not use Roe speed (u = uhat)
+          ! and instead use hustar_interface/hstarHLL
+          u_interface = hustar_interface/hstarHLL
+
+          del(4) = -gamma*rho*gz*u_interface*(hR-hL) 
+     &          + gamma*rho*gz*del(1)
+     &          + u_interface*(pR-pL) 
+
+          ! reset based on revised del(4)
+          fw(5,2) = del(4) - fw(5,3) - fw(5,1)
+
+         endif ! end of reset of del(4)
+
+      ! put f(:,2) into either wave 1 or 3 depending
+      ! on sign or hustar_interface
+      if (hustar_interface <= 0.0d0) then
+          ! huv
+          fw(3,1) = fw(3,1) + fw(3,2)
+          ! hum
+          fw(4,1) = fw(4,1) + fw(4,2)
+          ! hupressure
+          fw(5,1) = fw(5,1) + fw(5,2)
+          ! huchi
+          fw(6,1) = fw(6,1) + fw(6,2)
+      else
+          ! huv
+          fw(3,3) = fw(3,3) + fw(3,2)
+          ! hum
+          fw(4,3) = fw(4,3) + fw(4,2)
+          ! hupressure
+          fw(5,3) = fw(5,3) + fw(5,2)
+          ! huchi
+          fw(6,3) = fw(6,3) + fw(6,2)
+          
+      endif
+         fw(3,2) = 0.d0
+         fw(4,2) = 0.d0
+         fw(5,2) = 0.d0
+         fw(6,2) = 0.d0
+      endif 
+
+
       return
       end !subroutine riemann_dig2_aug_sswave_ez
 

@@ -77,7 +77,7 @@ params = dict(
 # Material parameter values
 # src2methods = [(-1, 0), (0,0), (2,1)]
 src2methods = [
-    (2, 1),
+    (-1, 0), (2, 1),
 ]
 
 krs = [
