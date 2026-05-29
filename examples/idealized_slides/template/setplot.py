@@ -202,182 +202,59 @@ def setplot(plotdata=None):
     # Figure for rheology
     # -----------------------
 
-    plotfigure = plotdata.new_plotfigure(name="rheology1", figno=1)
+    plotfigure = plotdata.new_plotfigure(name="apparent_fc", figno=1)
     plotfigure.show = True
 
-    def aa_rheo(current_data):
-        # try:
-        #     gca().set_xscale("log", base=10)
-        #     gca().set_yscale("log", base=10)
-        # except:
-        #     pass
-        plotaxes.xlimits = [0.1, 300]
-        plotaxes.ylimits = [10, 10000]
+    def aa_apparent_fc(current_data):
+        gca().set_ylim([0, 1])
+        gca().set_xscale('log')
+        gca().set_xlim([1e-7, 1])
 
     # Set up for axes in this figure:
     plotaxes = plotfigure.new_plotaxes()
-    # plotaxes.xlimits = [0.1,300]
-    # plotaxes.ylimits = [10, 10000]
-    plotaxes.title = "Rheology"
+    plotaxes.title = "Apparent FC"
     plotaxes.grid = True
-    plotaxes.afteraxes = aa_rheo
-    plotaxes.xlabel = "Shear strain rate [s$^{-1}$]"
-    plotaxes.ylabel = "Shear stress [Pa]"
+    plotaxes.afteraxes = aa_apparent_fc
+    plotaxes.xlabel = "Modified Inertial Number [-]"
+    plotaxes.ylabel = "Apparent friction coefficient [-]"
 
-    def shear_rate_stress(current_data):
+    def shear_rate_fc(current_data):
 
-        x = current_data.x
-        y = current_data.y
-        q = current_data.q
+        phi = 35
+        mu = np.tan(np.deg2rad(phi))
 
         shear = dplot.shear(current_data)
+        depth = dplot.depth(current_data)
 
-        # approxmate shear stress as rho*g*h*S/(dx*dy)
-        rhof = 1000
-        rhos = 2700
-        g = 9.81
-        m = dplot.solid_frac(current_data)
-        h = dplot.depth(current_data)
+        N = dplot.N(current_data)
+        N[N==0] = 1e-10
+        sigma_e_over_lithostatic = dplot.sigma_e_over_lithostatic(current_data)
 
-        rho = m * rhos + (1 - m) * rhof
-        slope = np.abs(dplot.local_slope(current_data))
-        sintheta = np.sin(np.deg2rad(slope))
-        stress = rho * g * h * sintheta
+        mu_eff = mu*sigma_e_over_lithostatic
 
-        # mask very thin and barely moving
-        stress[h < 0.001] = np.nan
-        shear[h < 0.001] = np.nan
-
-        stress[shear < 0.001] = np.nan
-        shear[shear < 0.001] = np.nan
-
-        return shear, stress, dplot.basal_pressure_over_hydrostatic(current_data)
+        return N, mu_eff, depth
         # ADD color mapping for plots
 
     plotitem = plotaxes.new_plotitem(plot_type="1d_from_2d_data")
-    plotitem.map_2d_to_1d = shear_rate_stress
+    plotitem.map_2d_to_1d = shear_rate_fc
 
     plotitem.plotstyle = "o"
     plotitem.map_color = True
-    plotitem.plot_cmap = "BrBG"
-    plotitem.plot_norm = mpl.colors.TwoSlopeNorm(vcenter=1, vmin=0, vmax=2.5)
+    plotitem.plot_cmap = "viridis"
+    plotitem.plot_norm = mpl.colors.LogNorm(vmin=0.1, vmax=2)
     plotitem.add_colorbar = True
     plotitem.colorbar_kwargs = {
         "shrink": 0.5,
         "location": "right",
         "orientation": "vertical",
     }
-    plotitem.colorbar_label = "P_b/Hydrostatic (-)"
+    plotitem.colorbar_label = "Depth (m)"
 
     plotitem.amr_data_show = [True, False, False]
     plotitem.kwargs = {"markersize": 1}
     plotitem.show = True  # show on plot?
 
-    # -----------------------
-    # Figure for viscosity
-    # -----------------------
-    plotfigure = plotdata.new_plotfigure(name="viscosity", figno=2)
-    plotfigure.show = True
 
-    def aa_visco(current_data):
-        # try:
-        #     gca().set_xscale("log", base=10)
-        #     gca().set_yscale("log", base=10)
-        # except:
-        #     pass
-        plotaxes.xlimits = [1e-3, 1e3]
-        plotaxes.ylimits = [0.0001, 1e9]
-
-        gca().plot([1e-3, 1e3], [0.0010518, 0.0010518], "b", label="Water")
-        gca().plot([1e-3, 1e3], [20, 20], "r", label="Honey")
-        plt.legend(loc="lower left")
-
-    # Set up for axes in this figure:
-    plotaxes = plotfigure.new_plotaxes()
-    plotaxes.xlimits = "auto"  # [0.1,300]
-    plotaxes.ylimits = "auto"  # [0.1,300]
-    plotaxes.title = "Viscosity"
-    plotaxes.grid = True
-    plotaxes.afteraxes = aa_visco
-    plotaxes.ylabel = "Effective viscosity [Pa$\\cdot$s]"
-    plotaxes.xlabel = "Shear strain rate [s$^{-1}$]"
-
-    def shear_rate_visco(current_data):
-        shear, stress, basal_pressure_over_hydrostatic = shear_rate_stress(current_data)
-        return shear, stress / shear, basal_pressure_over_hydrostatic
-
-    plotitem = plotaxes.new_plotitem(plot_type="1d_from_2d_data")
-    plotitem.map_2d_to_1d = shear_rate_visco
-    plotitem.plotstyle = "o"
-    plotitem.map_color = True
-    plotitem.plot_cmap = "BrBG"
-    plotitem.plot_norm = mpl.colors.TwoSlopeNorm(vcenter=1, vmin=0, vmax=2.5)
-    plotitem.add_colorbar = True
-    plotitem.colorbar_kwargs = {
-        "shrink": 0.5,
-        "location": "right",
-        "orientation": "vertical",
-    }
-    plotitem.colorbar_label = "P_b/Hydrostatic (-)"
-
-    plotitem.amr_data_show = [True, False, False]
-    # plotitem.kwargs = {'markersize':1}
-    plotitem.show = True  # show on plot?
-
-    # -----------------------
-    # Figure for shear
-    # -----------------------
-    plotfigure = plotdata.new_plotfigure(name="Shear", figno=3)
-    plotfigure.show = True
-
-    def aa_shear(current_data):
-        # try:
-        #     gca().set_xscale("log", base=10)
-        #     gca().set_yscale("log", base=10)
-        # except:
-        #     pass
-        plotaxes.xlimits = [0, 10]
-        plotaxes.ylimits = [0, 10]
-
-        # gca().plot([1e-3,1e3], [0.0010518, 0.0010518], 'b', label='Water')
-        # gca().plot([1e-3,1e3], [20, 20], 'r', label='Honey')
-        # plt.legend(loc='lower left')
-
-    # Set up for axes in this figure:
-    plotaxes = plotfigure.new_plotaxes()
-    plotaxes.xlimits = [0, 10]
-    plotaxes.ylimits = [0, 10]
-    plotaxes.title = "Viscosity"
-    plotaxes.grid = True
-    plotaxes.afteraxes = aa_shear
-    plotaxes.xlabel = "Depth [m]"
-    plotaxes.ylabel = "Shear strain rate [s$^{-1}$]"
-
-    def depth_shear_rate(current_data):
-        h = dplot.depth(current_data)
-        shear = dplot.shear(current_data)
-        m = dplot.solid_frac(current_data)
-        shear[h < 0.001] = np.nan
-        shear[shear < 0.001] = np.nan
-        return h, shear, m
-
-    plotitem = plotaxes.new_plotitem(plot_type="1d_from_2d_data")
-    plotitem.map_2d_to_1d = depth_shear_rate
-    plotitem.plotstyle = "o"
-    plotitem.map_color = True
-    plotitem.plot_cmap = "pink_r"
-    plotitem.plot_norm = mpl.colors.Normalize(vmin=0, vmax=1)
-    plotitem.add_colorbar = True
-    plotitem.colorbar_kwargs = {
-        "shrink": 0.5,
-        "location": "right",
-        "orientation": "vertical",
-    }
-    plotitem.colorbar_label = "Solid volume fraction (-)"
-
-    plotitem.amr_data_show = [True, False, False]
-    # plotitem.kwargs = {'markersize':1}
-    plotitem.show = True  # show on plot?
 
     # -------------------------------------
     # Plots of timing (CPU and wall time):

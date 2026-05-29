@@ -168,7 +168,7 @@ def setrun(claw_pkg="dclaw"):
     if clawdata.output_style == 1:
         # Output nout frames at equally spaced times up to tfinal:
         dt = 10
-        clawdata.tfinal = 60.0  # 240.
+        clawdata.tfinal = 1000.
         clawdata.num_output_times = int(clawdata.tfinal / dt)
 
         clawdata.output_t0 = True  # output at initial (or restart) time?
