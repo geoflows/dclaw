@@ -414,10 +414,21 @@ subroutine mp_update_FE_4quad(dt,h,u,v,m,p,chi,rhoh,gz,dtk)
                   dts = min(dtr,(m_c-m_0)/(km0*p_exc0*m_0))
                 endif
 
-                ! dtp based on not crossing p_eq_c
+          
+                ! Some some values of m and p are very close to the critical 
+                ! point (but not at it) but have kp0*p_exc0 - c_d0 = 0.d0.
+                ! This typically occurs because p_exc0 = 0, m is small, and 
+                ! m-meq is just above 1e-12 (and therefore this case is not 
+                ! caught by block around L219) this point will fail
+                ! because  kp0*p_exc0 - c_d0 = 0.d0. Outer loop added 2026-06-26
+                ! by KRB. If kp0*p_exc0 - c_d0 = 0.d0 then dtp remains at dtr, 
+                ! which is correct behavior.
 
-                if ((-kp0*p_eq0 - c_d0)/(kp0*p_exc0 - c_d0) >1.d-99) then
-                  dtp = min(dtr,-(1.d0/kp0)*log( (c_d0)/(c_d0 - kp0*p_exc0) ))
+                if ((kp0*p_exc0 - c_d0).ne.0.d0) then
+                  ! set dtp based on not crossing p_eq_c
+                  if ((-kp0*p_eq0 - c_d0)/(kp0*p_exc0 - c_d0) >1.d-99) then
+                     dtp = min(dtr,-(1.d0/kp0)*log( (c_d0)/(c_d0 - kp0*p_exc0) ))
+                  endif
                 endif
 
                 !if (dtp<dts) write(*,*) 'ERROR: QUAD 1: WRONG DIRECTION ACROSS m=m_eq'
